@@ -4,6 +4,18 @@ namespace KrasCore
 {
     public static class NativeListExtensions
     {
+        public static void Remove<T>(this NativeList<T> list, T element)
+            where T : unmanaged
+        {
+            for (int i = list.Length - 1; i >= 0; i--)
+            {
+                if (list[i].GetHashCode() != element.GetHashCode())
+                    continue;
+
+                list.RemoveAt(i);
+            }
+        }
+        
         public static void Reverse<T>(this NativeList<T> list) where T : unmanaged
         {
             int count = list.Length;
