@@ -1,6 +1,6 @@
 ﻿using Unity.Collections;
 
-namespace KrasCore.Runtime
+namespace KrasCore
 {
     public static class NativeParallelHashMapExtensions
     {

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace KrasCore.Runtime
+namespace KrasCore
 {
     public static class MathematicsExtensions
     {

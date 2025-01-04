@@ -1,6 +1,6 @@
 using System;
 
-namespace KrasCore.Runtime
+namespace KrasCore
 {
     public static class Log
     {

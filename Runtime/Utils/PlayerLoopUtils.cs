@@ -3,7 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
-namespace KrasCore.Runtime
+namespace KrasCore
 {
     public static class PlayerLoopUtils
     {

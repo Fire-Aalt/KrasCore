@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
 
-namespace KrasCore.Runtime
+namespace KrasCore
 {
     public static class QuaternionExtensions
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace KrasCore.Runtime
+namespace KrasCore
 {
     public static class ListExtensions
     {
