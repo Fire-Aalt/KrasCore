@@ -16,6 +16,12 @@ namespace KrasCore
             }
         }
         
+        public static unsafe void SetLengthNoClear<T>(this NativeList<T> list, int length) where T : unmanaged
+        {
+            var data = list.m_ListData;
+            data->Length = length;
+        }
+        
         public static void Reverse<T>(this NativeList<T> list) where T : unmanaged
         {
             int count = list.Length;

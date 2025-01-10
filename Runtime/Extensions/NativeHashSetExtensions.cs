@@ -4,6 +4,7 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
+    
     public static class NativeHashSetExtensions
     {
         public static unsafe void ToNativeList<T>(this NativeHashSet<T> set, ref NativeList<T> list) where T : unmanaged, IEquatable<T>
