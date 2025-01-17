@@ -27,15 +27,14 @@ namespace KrasCore
         {
             float sum = 0f;
 
-            int total = weightSum;
-            if (total == 0)
+            if (weightSum == 0)
             {
                 return -1;
             }
 
             for (int variant = 0; variant < weights.Length; variant++)
             {
-                sum += weights[variant] / (float)total;
+                sum += weights[variant] / (float)weightSum;
                 if (sum >= randomValue)
                 {
                     return variant;
@@ -49,15 +48,14 @@ namespace KrasCore
         {
             float sum = 0f;
 
-            int total = weightSum;
-            if (total == 0)
+            if (weightSum == 0)
             {
                 return -1;
             }
 
             for (int variant = 0; variant < weights.Length; variant++)
             {
-                sum += weights[variant] / (float)total;
+                sum += weights[variant] / (float)weightSum;
                 if (sum >= randomValue)
                 {
                     return variant;
