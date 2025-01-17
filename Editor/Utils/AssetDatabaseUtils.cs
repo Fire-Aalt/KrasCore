@@ -60,7 +60,7 @@ namespace KrasCore.Editor
             }
             SaveAssetToDatabase(instance, waveAssetPath);
 
-            return AssetDatabase.LoadAssetAtPath<T>(waveAssetPath);
+            return instance;
         }
 
         public static string GetFolderPath(string path)
