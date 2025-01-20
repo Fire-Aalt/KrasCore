@@ -1,0 +1,12 @@
+{
+  "name": "com.firealt.krascore",
+  "version": "1.0.0",
+  "displayName": "KrasCore",
+  "description": "A collection of editor and runtime utils/extensions",
+  "unity": "6000.23",
+  "documentationUrl": "https://github.com/Fire-Aalt/KrasCore/blob/main/README.md",
+  "author": {
+    "name": "Maksim Krasutski",
+    "email": "krasutskimaksim@gmail.com"
+  }
+}
