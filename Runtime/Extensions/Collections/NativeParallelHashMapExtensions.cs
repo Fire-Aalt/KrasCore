@@ -14,36 +14,50 @@ namespace KrasCore
             {
                 map.Capacity *= 2;
             }
-        }
+        }       
         
         public static void ToNativeLists<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map,
-            ref NativeList<TKey> keyList, ref NativeList<TValue> valueList) 
+            ref NativeList<TKey> keyList, ref NativeList<TValue> valueList, int offset = 0) 
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
-            map.m_HashMapData.ConvertToList(ref keyList, ref valueList);
+            map.m_HashMapData.ConvertToList(ref keyList, ref valueList, offset);
         }
         
         private static unsafe void ConvertToList<TKey, TValue>(this UnsafeParallelHashMap<TKey, TValue> data, 
-            ref NativeList<TKey> keyList, ref NativeList<TValue> valueList)
+            ref NativeList<TKey> keyList, ref NativeList<TValue> valueList, int offset)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {
             var dataCount = data.Count();
             
-            keyList.Clear();
-            valueList.Clear();
             if (keyList.Capacity < dataCount)
             {
                 keyList.Capacity = dataCount;
                 valueList.Capacity = dataCount;
             }
-            GetKeyValueLists(data.m_Buffer, dataCount, ref keyList, ref valueList);
+            GetKeyValueArrays(data.m_Buffer, dataCount, keyList.AsArray(), valueList.AsArray(), offset);
+        }
+        
+        public static void ToNativeArrays<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map,
+            ref NativeArray<TKey> keyArray, ref NativeArray<TValue> valueArray, int offset = 0) 
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            map.m_HashMapData.ConvertToArray(ref keyArray, ref valueArray, offset);
+        }
+        
+        private static unsafe void ConvertToArray<TKey, TValue>(this UnsafeParallelHashMap<TKey, TValue> data, 
+            ref NativeArray<TKey> keyList, ref NativeArray<TValue> valueList, int offset)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            GetKeyValueArrays(data.m_Buffer, data.Count(), keyList, valueList, offset);
         }
         
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new [] { typeof(int), typeof(int) })]
-        private static unsafe void GetKeyValueLists<TKey, TValue>(UnsafeParallelHashMapData* data, int dataCount,
-            ref NativeList<TKey> keyList, ref NativeList<TValue> valueList)
+        private static unsafe void GetKeyValueArrays<TKey, TValue>(UnsafeParallelHashMapData* data, int dataCount,
+            NativeArray<TKey> keyList, NativeArray<TValue> valueList, int offset)
             where TKey : unmanaged
             where TValue : unmanaged
         {
@@ -59,8 +73,8 @@ namespace KrasCore
 
                 while (bucket != -1)
                 {
-                    keyList.Add(UnsafeUtility.ReadArrayElement<TKey>(data->keys, bucket));
-                    valueList.Add(UnsafeUtility.ReadArrayElement<TValue>(data->values, bucket));
+                    keyList[offset + count] = UnsafeUtility.ReadArrayElement<TKey>(data->keys, bucket);
+                    valueList[offset + count] = UnsafeUtility.ReadArrayElement<TValue>(data->values, bucket);
                     count++;
                     bucket = bucketNext[bucket];
                 }

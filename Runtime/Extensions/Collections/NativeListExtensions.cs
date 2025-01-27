@@ -1,4 +1,5 @@
 using Unity.Collections;
+using Unity.Mathematics;
 
 namespace KrasCore
 {
@@ -13,6 +14,21 @@ namespace KrasCore
                     continue;
 
                 list.RemoveAt(i);
+            }
+        }
+        
+        public static void EnsureCapacity<T>(this NativeList<T> list, int minCapacity, bool setLengthNoClear = false) where T : unmanaged
+        {
+            var newCapacity = math.max(list.Capacity, minCapacity);
+
+            while (list.Capacity < newCapacity)
+            {
+                list.Capacity *= 2;
+            }
+
+            if (setLengthNoClear)
+            {
+                list.SetLengthNoClear(minCapacity);
             }
         }
         
