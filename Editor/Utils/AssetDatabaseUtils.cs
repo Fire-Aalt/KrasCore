@@ -59,7 +59,8 @@ namespace KrasCore.Editor
                 i++;
             }
             SaveAssetToDatabase(instance, waveAssetPath);
-
+            EditorUtility.SetDirty(caller);
+            EditorUtility.SetDirty(instance);
             return instance;
         }
 
