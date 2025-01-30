@@ -14,7 +14,17 @@ namespace KrasCore
             {
                 map.Capacity *= 2;
             }
-        }       
+        }
+        
+        public static void EnsureCapacity<TKey, TValue>(this NativeParallelMultiHashMap<TKey, TValue> map, int newDataCount) where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
+        {
+            int newCount = map.Count() + newDataCount;
+
+            while (map.Capacity < newCount)
+            {
+                map.Capacity *= 2;
+            }
+        }
         
         public static void ToNativeLists<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map,
             ref NativeList<TKey> keyList, ref NativeList<TValue> valueList, int offset = 0) 
