@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 namespace KrasCore
 {
     [RequireMatchingQueriesForUpdate]
-    [UpdateInGroup(typeof(InitializationSystemGroup), OrderLast = true)]
+    [UpdateInGroup(typeof(RuntimeBakingSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     public partial class RuntimeMaterialSystem : SystemBase
     {
