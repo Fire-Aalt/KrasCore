@@ -20,6 +20,18 @@ namespace KrasCore
 
             return query.GetSingleton<T>();
         }
+        
+        public static RefRW<T> GetSingletonRW<T>(this EntityManager em, bool completeDependency = true)
+            where T : unmanaged, IComponentData
+        {
+            using var query = new EntityQueryBuilder(Allocator.Temp).WithAllRW<T>().WithOptions(QueryOptions).Build(em);
+            if (completeDependency)
+            {
+                query.CompleteDependency();
+            }
+
+            return query.GetSingletonRW<T>();
+        }
 
         // From https://forum.unity.com/threads/really-hoped-for-refrw-refro-getcomponentrw-ro-entity.1369275/
         /// <summary>

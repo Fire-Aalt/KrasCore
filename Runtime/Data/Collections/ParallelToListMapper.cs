@@ -32,11 +32,15 @@ namespace KrasCore
         {
             return ParallelList.CopyToArraySingle(ref List, dependency);
         }
-        
-        public JobHandle CopyParallelToListMulti(JobHandle dependency)
-        {
-            return ParallelList.CopyToArrayMulti(ref List, dependency);
-        }
+
+        /// <summary>
+        /// Really unsafe. Sometimes copies data that is out of bounds
+        /// </summary>
+        /// <returns></returns>
+        // public JobHandle CopyParallelToListMulti(JobHandle dependency)
+        // {
+        //     return ParallelList.CopyToArrayMulti(ref List, dependency);
+        // }
 
         public ParallelList<T>.ThreadWriter AsThreadWriter() => ParallelList.AsThreadWriter();
         public ParallelList<T>.ThreadReader AsThreadReader() => ParallelList.AsThreadReader();
