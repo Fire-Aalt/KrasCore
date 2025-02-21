@@ -2,10 +2,14 @@
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
+namespace Unity.Collections.LowLevel.Unsafe
+{
+}
 namespace KrasCore
 {
     public static class NativeParallelHashMapExtensions
     {
+        
         public static void EnsureCapacity<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map, int newDataCount) where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
         {
             int newCount = map.Count() + newDataCount;
