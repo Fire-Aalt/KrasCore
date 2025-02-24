@@ -1,10 +1,22 @@
+using System.Threading;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
 namespace KrasCore
 {
     public static class NativeListExtensions
     {
+        public static unsafe void RemoveAtSwapBack<T>(this UnsafeList<T>.ParallelWriter writer, int index) where T : unmanaged
+        {
+            var newLength = Interlocked.Decrement(ref writer.ListData->m_length);
+            
+            if (index < newLength)
+            {
+                writer.ListData->Ptr[index] = writer.ListData->Ptr[newLength];
+            }
+        }
+        
         public static void Remove<T>(this NativeList<T> list, T element)
             where T : unmanaged
         {

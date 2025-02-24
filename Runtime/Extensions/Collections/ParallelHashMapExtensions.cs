@@ -7,9 +7,20 @@ namespace Unity.Collections.LowLevel.Unsafe
 }
 namespace KrasCore
 {
-    public static class NativeParallelHashMapExtensions
+    public static class ParallelHashMapExtensions
     {
-        
+        public static unsafe UnsafeParallelMultiHashMap<TKey, TValue>.ParallelWriter AsParallelWriter<TKey, TValue>(this UnsafeParallelMultiHashMap<TKey, TValue> map, int threadIndex)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            UnsafeParallelMultiHashMap<TKey, TValue>.ParallelWriter writer;
+
+            writer.m_ThreadIndex = threadIndex;
+            writer.m_Buffer = map.m_Buffer;
+
+            return writer;
+        }
+            
         public static void EnsureCapacity<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map, int newDataCount) where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
         {
             int newCount = map.Count() + newDataCount;
