@@ -278,7 +278,7 @@ namespace KrasCore
                     var index = -1;
                     for (int i = 0; i < length; i++)
                     {
-                        if (Array->Buffer[baseIndex + i].Equals(element))
+                        if (UnsafeUtility.ReadArrayElement<T>(Array->Buffer, baseIndex + i).Equals(element))
                         {
                             index = i;
                             break;
