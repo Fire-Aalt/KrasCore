@@ -29,7 +29,7 @@ namespace KrasCore.NZCore
         public bool IsCreated;
 
         public int Length => Count();
-
+        
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
         internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
