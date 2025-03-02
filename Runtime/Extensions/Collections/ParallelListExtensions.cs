@@ -16,14 +16,14 @@ namespace KrasCore
             return new Enumerator<T>(ref list);
         }
         
-        public struct Enumerator<T> : IEnumerator<T>, IEnumerator, IDisposable
+        public struct Enumerator<T> : IEnumerator<T>
             where T: unmanaged
         {
             private UnsafeList<T> _threadList;
             private ParallelList<T> _list;
-            private int m_Index;
+            private int _index;
             private int _thread;
-            private T value;
+            private T _value;
 
             public void Dispose()
             {
@@ -32,58 +32,58 @@ namespace KrasCore
             public Enumerator(ref ParallelList<T> list) 
             {
                 _list = list;
-                m_Index = -1;
+                _index = 0;
                 _thread = 0;
-                value = default(T);
+                _value = default(T);
                 _threadList = _list.GetUnsafeList(_thread);
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                if (m_Index < _threadList.Length)
+                if (_index < _threadList.Length)
                 {
-                    this.value = _threadList[m_Index];
-                    m_Index++;
+                    _value = _threadList[_index];
+                    _index++;
                     return true;
                 }
 
                 _thread++;
-                m_Index = 0;
+                _index = 0;
                 
                 while (_thread < JobsUtility.ThreadIndexCount)
                 {
                     _threadList = _list.GetUnsafeList(_thread);
                     
-                    if (m_Index < _threadList.Length)
+                    if (_index < _threadList.Length)
                     {
-                        this.value = _threadList[m_Index];
-                        m_Index++;
+                        _value = _threadList[_index];
+                        _index++;
                         return true;
                     }
                     
                     _thread++;
-                    m_Index = 0;
+                    _index = 0;
                 }
                 
-                this.value = default (T);
+                _value = default;
                 return false;
             }
 
             public void Reset()
             {
                 _thread = 0;
-                this.m_Index = -1;
+                _index = 0;
             }
 
             public T Current
             {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => this.value;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => _value;
             }
 
             object IEnumerator.Current
             {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => (object) this.Current;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => Current;
             }
         }
     }
