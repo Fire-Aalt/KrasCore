@@ -41,10 +41,10 @@ namespace KrasCore
             if (IsRunning && CurrentTime - _initialTime < _duration)
             {
                 CurrentTime += deltaTime;
+                return false;
             }
-            else if (IsRunning)
+            if (IsRunning)
             {
-                IsRunning = false;
                 return true;
             }
             return false;
