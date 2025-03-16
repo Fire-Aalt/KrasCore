@@ -24,6 +24,11 @@
             "name": "com.bovinelabs.core",
             "expression": "1.0.0",
             "define": "BL_CORE"
+        },
+        {
+            "name": "com.unity.addressables",
+            "expression": "",
+            "define": "ADDRESSABLES"
         }
     ],
     "noEngineReferences": false

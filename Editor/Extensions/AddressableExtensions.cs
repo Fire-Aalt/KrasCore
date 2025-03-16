@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if ADDRESSABLES
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
