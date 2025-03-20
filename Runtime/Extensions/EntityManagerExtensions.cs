@@ -2,6 +2,9 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Physics.GraphicsIntegration;
+using Unity.Transforms;
 
 namespace KrasCore
 {
@@ -19,6 +22,38 @@ namespace KrasCore
             }
 
             return query.GetSingleton<T>();
+        }
+
+        public static void SetEntityInitialTransform(this EntityManager em, Entity entity,
+            in float3 positionOffset = default, in quaternion rotationOffset = default, in float scaleOffset = 1)
+        {
+            var localTransformRW = em.GetComponentDataRW<LocalTransform>(entity);
+            localTransformRW.ValueRW.Position += positionOffset;
+            localTransformRW.ValueRW.Scale *= scaleOffset;
+            
+            if (!rotationOffset.Equals(default))
+            {
+                localTransformRW.ValueRW.Rotation = math.mul(localTransformRW.ValueRW.Rotation, rotationOffset);
+            }
+
+            FixInterpolationBufferTransform(em, entity, localTransformRW);
+        }
+
+        public static void SetEntityInitialTransform(this EntityManager em, Entity entity, in LocalTransform initialTransform)
+        {
+            var localTransformRW = em.GetComponentDataRW<LocalTransform>(entity);
+            localTransformRW.ValueRW = initialTransform;
+
+            FixInterpolationBufferTransform(em, entity, localTransformRW);
+        }
+        
+        private static void FixInterpolationBufferTransform(EntityManager em, Entity instance, RefRW<LocalTransform> localTransformRW)
+        {
+            if (em.HasComponent<PhysicsGraphicalInterpolationBuffer>(instance))
+            {
+                em.GetComponentDataRW<PhysicsGraphicalInterpolationBuffer>(instance).ValueRW.PreviousTransform 
+                    = math.RigidTransform(localTransformRW.ValueRW.Rotation, localTransformRW.ValueRW.Position);
+            }
         }
         
         public static RefRW<T> GetSingletonRW<T>(this EntityManager em, bool completeDependency = true)
