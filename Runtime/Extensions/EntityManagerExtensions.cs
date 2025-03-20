@@ -33,7 +33,7 @@ namespace KrasCore
             
             if (!rotationOffset.Equals(default))
             {
-                localTransformRW.ValueRW.Rotation = math.mul(localTransformRW.ValueRW.Rotation, rotationOffset);
+                localTransformRW.ValueRW.Rotation = math.mul(rotationOffset, math.inverse(localTransformRW.ValueRW.Rotation));
             }
 
             FixInterpolationBufferTransform(em, entity, localTransformRW);
