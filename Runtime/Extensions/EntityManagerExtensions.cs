@@ -23,38 +23,6 @@ namespace KrasCore
 
             return query.GetSingleton<T>();
         }
-
-        public static void SetEntityInitialTransform(this EntityManager em, Entity entity,
-            in float3 positionOffset = default, in quaternion rotationOffset = default, in float scaleOffset = 1)
-        {
-            var localTransformRW = em.GetComponentDataRW<LocalTransform>(entity);
-            localTransformRW.ValueRW.Position += positionOffset;
-            localTransformRW.ValueRW.Scale *= scaleOffset;
-            
-            if (!rotationOffset.Equals(default))
-            {
-                localTransformRW.ValueRW.Rotation = math.mul(rotationOffset, math.inverse(localTransformRW.ValueRW.Rotation));
-            }
-
-            FixInterpolationBufferTransform(em, entity, localTransformRW);
-        }
-
-        public static void SetEntityInitialTransform(this EntityManager em, Entity entity, in LocalTransform initialTransform)
-        {
-            var localTransformRW = em.GetComponentDataRW<LocalTransform>(entity);
-            localTransformRW.ValueRW = initialTransform;
-
-            FixInterpolationBufferTransform(em, entity, localTransformRW);
-        }
-        
-        private static void FixInterpolationBufferTransform(EntityManager em, Entity instance, RefRW<LocalTransform> localTransformRW)
-        {
-            if (em.HasComponent<PhysicsGraphicalInterpolationBuffer>(instance))
-            {
-                em.GetComponentDataRW<PhysicsGraphicalInterpolationBuffer>(instance).ValueRW.PreviousTransform 
-                    = math.RigidTransform(localTransformRW.ValueRW.Rotation, localTransformRW.ValueRW.Position);
-            }
-        }
         
         public static RefRW<T> GetSingletonRW<T>(this EntityManager em, bool completeDependency = true)
             where T : unmanaged, IComponentData
