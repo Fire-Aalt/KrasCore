@@ -1,57 +1,33 @@
-using Unity.Burst;
+using System;
+using Unity.Assertions;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
+using Random = Unity.Mathematics.Random;
 
 namespace KrasCore
 {
-    [BurstCompile]
     public static class RandomUtils
     {
-        [BurstCompile]
         public static int NextVariant(ref Random rng, in NativeArray<int> weights, int weightSum)
         {
-            float randomValue = rng.NextFloat();
-            return NextVariant(randomValue, weights, weightSum);
+            return NextVariant(rng.NextFloat(), weights, weightSum);
         }
         
-        [BurstCompile]
         public static int NextVariant(ref Random rng, ref BlobArray<int> weights, int weightSum)
         {
-            float randomValue = rng.NextFloat();
-            return NextVariant(randomValue, ref weights, weightSum);
+            return NextVariant(rng.NextFloat(), ref weights, weightSum);
         }
 
-        [BurstCompile]
-        public static int NextVariant(float randomValue, in NativeArray<int> weights, int weightSum)
+        public static int NextVariant<T>(ref Random rng, ref BlobArray<T> weights, int weightSum)
+            where T : unmanaged, IWeightedRandom
         {
-            float sum = 0f;
-
-            if (weightSum == 0)
-            {
-                return -1;
-            }
-
-            for (int variant = 0; variant < weights.Length; variant++)
-            {
-                sum += weights[variant] / (float)weightSum;
-                if (sum >= randomValue)
-                {
-                    return variant;
-                }
-            }
-            return -1;
+            return NextVariant(rng.NextFloat(), ref weights, weightSum);
         }
         
-        [BurstCompile]
-        public static int NextVariant(float randomValue, ref BlobArray<int> weights, int weightSum)
+        public static int NextVariant(float randomValue, in NativeArray<int> weights, int weightSum)
         {
-            float sum = 0f;
-
-            if (weightSum == 0)
-            {
-                return -1;
-            }
+            Assert.IsFalse(weightSum == 0, "WeightSum is zero");
+            var sum = 0f;
 
             for (int variant = 0; variant < weights.Length; variant++)
             {
@@ -61,7 +37,45 @@ namespace KrasCore
                     return variant;
                 }
             }
-            return -1;
+            throw new Exception("Result is out of range");
         }
+        
+        public static int NextVariant(float randomValue, ref BlobArray<int> weights, int weightSum)
+        {
+            Assert.IsFalse(weightSum == 0, "WeightSum is zero");
+            var sum = 0f;
+
+            for (int variant = 0; variant < weights.Length; variant++)
+            {
+                sum += weights[variant] / (float)weightSum;
+                if (sum >= randomValue)
+                {
+                    return variant;
+                }
+            }
+            throw new Exception("Result is out of range");
+        }
+        
+        public static int NextVariant<T>(float randomValue, ref BlobArray<T> weights, int weightSum)
+            where T : unmanaged, IWeightedRandom
+        {
+            Assert.IsFalse(weightSum == 0, "WeightSum is zero");
+            var sum = 0f;
+
+            for (int variant = 0; variant < weights.Length; variant++)
+            {
+                sum += weights[variant].GetWeight() / (float)weightSum;
+                if (sum >= randomValue)
+                {
+                    return variant;
+                }
+            }
+            throw new Exception("Result is out of range");
+        }
+    }
+
+    public interface IWeightedRandom
+    {
+        int GetWeight();
     }
 }
