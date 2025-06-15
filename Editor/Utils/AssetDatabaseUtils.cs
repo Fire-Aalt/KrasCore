@@ -1,9 +1,7 @@
-#if UNITY_EDITOR
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.U2D;
 
 namespace KrasCore.Editor
 {
@@ -165,4 +163,3 @@ namespace KrasCore.Editor
         }
     }
 }
-#endif
