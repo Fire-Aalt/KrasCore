@@ -6,6 +6,19 @@ namespace KrasCore
 {
     public static class UnsafeExtensions
     {
+        public static unsafe T* GetTempPtr<T>(this T[] source) where T : unmanaged
+        {
+            var dest = new NativeArray<T>(source.Length, Allocator.Temp);
+            
+            fixed (T* array = source)
+            {
+                var byteLength = source.Length * UnsafeUtility.SizeOf<T>();
+                UnsafeUtility.MemCpy(dest.GetUnsafePtr(), array, byteLength);
+            }
+
+            return (T*)dest.GetUnsafePtr();
+        }
+        
         public static unsafe void CopyToUnsafe<T1, T2>(this NativeList<T2> source, T1[] destination, int count) where T1 : unmanaged where T2 : unmanaged
         {
             if (UnsafeUtility.SizeOf<T1>() != UnsafeUtility.SizeOf<T2>()) throw new Exception("Stride size is not the same");
