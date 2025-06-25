@@ -1,9 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace KrasCore.Editor
+namespace KrasCore
 {
-    public class MemoryUtils
+    public static class MemoryUtils
     {
         public static object ByteArrayToStructure(byte[] bytes, Type type)
         {
