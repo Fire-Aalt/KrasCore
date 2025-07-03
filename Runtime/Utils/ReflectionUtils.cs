@@ -1,10 +1,22 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace KrasCore
 {
     public static class ReflectionUtils
     {
+        public static Assembly GetAssemblyWithType<T>()
+        {
+            var assemblyName = typeof(T).Assembly.GetName().Name;
+            
+            var assembly = AppDomain.CurrentDomain.GetAssemblies()
+                .First(a => a.GetName().Name == assemblyName);
+
+            return assembly;
+        }
+        
         public static void CallMethod(object targetObject, string methodName, params object[] parameters)
         {
             var method = GetCallMethod(targetObject, methodName);
