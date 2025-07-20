@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using BovineLabs.Core.Cache;
-using BovineLabs.Core.Collections;
 
 namespace Unity.Collections.LowLevel.Unsafe
 {

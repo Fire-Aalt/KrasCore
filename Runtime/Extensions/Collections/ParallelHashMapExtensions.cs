@@ -1,15 +1,52 @@
 ﻿using System;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace Unity.Collections.LowLevel.Unsafe
-{
-}
 namespace KrasCore
 {
-    public static class ParallelHashMapExtensions
+    public static unsafe class ParallelHashMapExtensions
     {
-        public static unsafe UnsafeParallelMultiHashMap<TKey, TValue>.ParallelWriter AsParallelWriter<TKey, TValue>(this UnsafeParallelMultiHashMap<TKey, TValue> map, int threadIndex)
+        public static ref TValue GetValueByRef<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map, TKey key)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            return ref map.m_HashMapData.m_Buffer->GetValueByRef<TKey, TValue>(key);
+        }
+        
+        internal static ref TValue GetValueByRef<TKey, TValue>(this ref UnsafeParallelHashMapData data, TKey key)
+            where TKey : struct, IEquatable<TKey>
+            where TValue : struct
+        {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+            if (data.allocatedIndexLength <= 0)
+            {
+                throw new KeyNotFoundException();
+            }
+#endif
+
+            // First find the slot based on the hash
+            var buckets = (int*)data.buckets;
+            var bucket = key.GetHashCode() & data.bucketCapacityMask;
+            var entryIdx = buckets[bucket];
+
+            var nextPtrs = (int*)data.next;
+            while (!UnsafeUtility.ReadArrayElement<TKey>(data.keys, entryIdx).Equals(key))
+            {
+                entryIdx = nextPtrs[entryIdx];
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                if (entryIdx < 0 || entryIdx >= data.keyCapacity)
+                {
+                    throw new KeyNotFoundException();
+                }
+#endif
+            }
+
+            // Read the value
+            return ref UnsafeUtility.ArrayElementAsRef<TValue>(data.values, entryIdx);
+        }
+        
+        public static UnsafeParallelMultiHashMap<TKey, TValue>.ParallelWriter AsParallelWriter<TKey, TValue>(this UnsafeParallelMultiHashMap<TKey, TValue> map, int threadIndex)
             where TKey : unmanaged, IEquatable<TKey>
             where TValue : unmanaged
         {

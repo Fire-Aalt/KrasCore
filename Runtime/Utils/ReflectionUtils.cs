@@ -59,14 +59,14 @@ namespace KrasCore
             return true;
         }
         
-        private static MethodInfo GetCallMethod(object targetObject, string methodName)
+        public static MethodInfo GetCallMethod(object targetObject, string methodName)
         {
             if (string.IsNullOrEmpty(methodName)) 
                 throw new Exception($"Method name is null or empty");
             return GetMethodSignature(targetObject, methodName);
         }
 
-        private static bool TryGetCallMethod(object targetObject, string methodName, out MethodInfo method)
+        public static bool TryGetCallMethod(object targetObject, string methodName, out MethodInfo method)
         {
             if (string.IsNullOrEmpty(methodName))
             {

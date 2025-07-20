@@ -63,7 +63,6 @@ namespace KrasCore
                     }
                     
                     _thread++;
-                    _index = 0;
                 }
                 
                 _value = default;
