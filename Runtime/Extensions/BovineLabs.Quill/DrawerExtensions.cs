@@ -1,5 +1,4 @@
-#if BL_CORE
-#if BL_DEBUG || UNITY_EDITOR
+#if BL_QUILL
 using BovineLabs.Quill;
 using Unity.Mathematics;
 using UnityEngine;
@@ -32,5 +31,4 @@ namespace KrasCore
         }
     }
 }
-#endif
 #endif

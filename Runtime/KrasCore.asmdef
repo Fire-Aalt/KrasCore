@@ -28,6 +28,11 @@
             "define": "BL_CORE"
         },
         {
+            "name": "com.bovinelabs.quill",
+            "expression": "",
+            "define": "BL_QUILL"
+        },
+        {
             "name": "com.unity.addressables",
             "expression": "",
             "define": "ADDRESSABLES"
