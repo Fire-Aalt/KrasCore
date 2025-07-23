@@ -3,9 +3,23 @@ using System.Collections.Generic;
 
 namespace Unity.Collections.LowLevel.Unsafe
 {
-    public static class NativeHashMapExtensions
+    public static unsafe class NativeHashMapExtensions
     {
-        public static unsafe ref TValue GetValueAsRef<TKey, TValue>(
+        public static ref TValue GetValueAsRef<TKey, TValue>(ref this UnsafeHashMap<TKey, TValue> hashMap, TKey key)
+            where TKey : unmanaged, IEquatable<TKey>
+            where TValue : unmanaged
+        {
+            var idx = hashMap.m_Data.Find(key);
+
+            if (idx != -1)
+            {
+                return ref UnsafeUtility.ArrayElementAsRef<TValue>(hashMap.m_Data.Ptr, idx);
+            }
+
+            throw new KeyNotFoundException($"Key '{key}' not found in the NativeHashMap.");
+        }
+        
+        public static ref TValue GetValueAsRef<TKey, TValue>(
             this NativeHashMap<TKey, TValue> hashMap,
             in TKey key)
             where TValue : unmanaged
@@ -22,7 +36,7 @@ namespace Unity.Collections.LowLevel.Unsafe
             throw new KeyNotFoundException($"Key '{key}' not found in the NativeHashMap.");
         }
         
-        public static unsafe TValue* GetValueAsPointer<TKey, TValue>(
+        public static TValue* GetValueAsPointer<TKey, TValue>(
             this NativeHashMap<TKey, TValue> hashMap,
             in TKey key)
             where TValue : unmanaged
