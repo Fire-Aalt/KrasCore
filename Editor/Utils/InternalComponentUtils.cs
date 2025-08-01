@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using System.Reflection;
 using UnityEngine;
 
@@ -31,4 +30,3 @@ namespace KrasCore.Editor
         }
     }
 }
-#endif
