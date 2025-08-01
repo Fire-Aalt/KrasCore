@@ -23,5 +23,18 @@ namespace KrasCore
             Assert.IsTrue(index >= 0 && index < unsafeArray.Length);
             return ref UnsafeUtility.ArrayElementAsRef<T>(unsafeArray.GetUnsafePtr(), index);
         }
+        
+        public static unsafe void Clear<T>(this UnsafeArray<T> array)
+            where T : unmanaged
+        {
+            UnsafeUtility.MemClear(array.GetUnsafePtr(), UnsafeUtility.SizeOf<T>() * array.Length);
+        }
+        
+        public static unsafe void Set<T>(this UnsafeArray<T> array, T value)
+            where T : unmanaged
+        {
+            UnsafeUtility.MemCpyReplicate(array.GetUnsafePtr(), UnsafeUtility.AddressOf(ref value),
+                UnsafeUtility.SizeOf<T>(), array.Length);
+        }
     }
 }
