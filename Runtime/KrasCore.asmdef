@@ -12,7 +12,8 @@
         "Unity.Entities.Hybrid",
         "BovineLabs.Core.Extensions",
         "BovineLabs.Core",
-        "BovineLabs.Quill"
+        "BovineLabs.Quill",
+        "Unity.Scenes"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

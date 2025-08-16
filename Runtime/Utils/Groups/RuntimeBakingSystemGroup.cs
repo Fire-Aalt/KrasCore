@@ -1,8 +1,10 @@
 using Unity.Entities;
+using Unity.Scenes;
 
 namespace KrasCore
 {
-    [UpdateInGroup(typeof(InitializationSystemGroup), OrderLast = true)]
+    [UpdateAfter(typeof(SceneSystemGroup))]
+    [UpdateInGroup(typeof(InitializationSystemGroup))]
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     public partial class RuntimeBakingSystemGroup : ComponentSystemGroup { }
 }
