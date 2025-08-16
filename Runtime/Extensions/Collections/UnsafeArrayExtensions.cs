@@ -1,3 +1,4 @@
+#if BL_CORE
 using BovineLabs.Core.Collections;
 using Unity.Assertions;
 using Unity.Collections;
@@ -38,3 +39,4 @@ namespace KrasCore
         }
     }
 }
+#endif
