@@ -1,5 +1,6 @@
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace KrasCore
 {
@@ -13,6 +14,16 @@ namespace KrasCore
             NativeArrayUnsafeUtility.SetAtomicSafetyHandle(ref array, AtomicSafetyHandle.GetTempMemoryHandle());
 #endif
             return array;
+        }
+        
+        public static void EnsureCapacity<T>(this ref UnsafeList<T> list, int minCapacity) where T : unmanaged
+        {
+            var newCapacity = math.max(list.Capacity, minCapacity);
+
+            while (list.Capacity < newCapacity)
+            {
+                list.Capacity *= 2;
+            }
         }
     }
 }

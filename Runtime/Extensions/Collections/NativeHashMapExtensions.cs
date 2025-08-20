@@ -18,7 +18,7 @@ namespace Unity.Collections.LowLevel.Unsafe
 
             throw new KeyNotFoundException($"Key '{key}' not found in the NativeHashMap.");
         }
-        
+
         public static ref TValue GetValueAsRef<TKey, TValue>(
             this NativeHashMap<TKey, TValue> hashMap,
             in TKey key)
