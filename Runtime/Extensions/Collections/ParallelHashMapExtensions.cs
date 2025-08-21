@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace KrasCore
 {
@@ -57,8 +58,22 @@ namespace KrasCore
 
             return writer;
         }
-            
-        public static void EnsureCapacity<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map, int newDataCount) where TKey : unmanaged, IEquatable<TKey> where TValue : unmanaged
+        
+        public static void EnsureMinCapacity<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map, int minCapacity)
+            where TKey : unmanaged,
+            IEquatable<TKey> where TValue : unmanaged
+        {
+            var newCapacity = math.max(map.Capacity, minCapacity);
+        
+            while (map.Capacity < newCapacity)
+            {
+                map.Capacity *= 2;
+            }
+        }
+        
+        public static void EnsureCapacity<TKey, TValue>(this NativeParallelHashMap<TKey, TValue> map, int newDataCount)
+            where TKey : unmanaged,
+            IEquatable<TKey> where TValue : unmanaged
         {
             int newCount = map.Count() + newDataCount;
 
