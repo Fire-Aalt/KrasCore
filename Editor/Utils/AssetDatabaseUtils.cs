@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace KrasCore.Editor
 {
@@ -20,14 +22,6 @@ namespace KrasCore.Editor
         public static Unity.Entities.Hash128 ToGuidHash(Object asset)
         {
             return AssetDatabase.GUIDFromAssetPath(AssetDatabase.GetAssetPath(asset));
-        }
-        
-        public static void ShowMessageInSceneView(string message) 
-        {
-            foreach (SceneView scene in SceneView.sceneViews)
-            {
-                scene.ShowNotification(new GUIContent(message));
-            }
         }
 
         public static void EnsureValidFolder(string assetPath)
@@ -79,6 +73,47 @@ namespace KrasCore.Editor
             AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        /// <summary>
+        /// Searches in "Editor Resources"
+        /// </summary>
+        public static T LoadEditorResource<T>(string relativeFilePath, string rootFolderValidationName = "") where T : Object
+        {
+            const string editorResources = "Editor Resources";
+            
+            var guids = AssetDatabase.FindAssets("\"" + editorResources + "\"");
+            var objectList = new List<Object>(guids.Length);
+            
+            foreach (var guid in guids)
+            {
+                var editorResourcesFolderPath = AssetDatabase.GUIDToAssetPath(guid);
+                var rootDirectoryName = Directory.GetParent(editorResourcesFolderPath).Name;
+                
+                if (!string.IsNullOrEmpty(rootFolderValidationName) && rootDirectoryName != rootFolderValidationName)
+                {
+                    continue;
+                }
+
+                var assetPath = Path.Combine(editorResourcesFolderPath, relativeFilePath);
+                    
+                if (AssetDatabase.AssetPathExists(assetPath))
+                {
+                    var asset = AssetDatabase.LoadAssetAtPath(assetPath, typeof(Object));
+                    objectList.Add(asset);
+                }
+            }
+
+            if (objectList.Count == 1)
+            {
+                return objectList[0] as T;
+            }
+
+            if (objectList.Count > 1)
+            {
+                throw new Exception($"Found {objectList.Count} objects with relative path: Editor Resources/{relativeFilePath}");
+            }
+            throw new Exception($"Not found anything at path: Editor Resources/{relativeFilePath}");
         }
         
         public static Object[] LoadAllAssetsAtPath(string path)
