@@ -1,23 +1,44 @@
-using Sirenix.OdinInspector.Editor;
+using ArtificeToolkit.Editor;
+using BovineLabs.Core.Editor.Helpers;
+using BovineLabs.Core.Editor.Inspectors;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
 {
-    [DrawerPriority(1, 0, 0)]
-    public class InlineNoFoldoutAttributeDrawer : OdinAttributeDrawer<InlineNoFoldoutAttribute>
+    [CustomPropertyDrawer(typeof(InlineNoFoldoutAttribute))]
+    public class InlineNoFoldoutAttributeDrawer : PropertyDrawer
     {
-        protected override void DrawPropertyLayout(GUIContent label)
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            if (Attribute.DrawPropertyName)
+            var root = new VisualElement();
+
+            if (((InlineNoFoldoutAttribute)attribute).DrawPropertyName)
             {
-                EditorGUI.LabelField(EditorGUILayout.GetControlRect(GUILayout.ExpandWidth(true)), label);
+                var lbl = new Label
+                {
+                    text = property.displayName,
+                };
+                root.Add(lbl);
             }
             
-            foreach (var property in Property.Children)
+            foreach (var prop in SerializedHelper.GetChildren(property))
             {
-                property.Draw();
+                var element = CreateElement(prop);
+                if (element != null)
+                {
+                    root.Add(element);
+                }
             }
+            
+            return root;
+        }
+        
+        protected virtual VisualElement CreateElement(SerializedProperty property)
+        {
+            return PropertyUtil.CreateProperty(property, property.serializedObject);
         }
     }
 }

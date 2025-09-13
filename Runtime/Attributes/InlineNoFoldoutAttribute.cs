@@ -1,8 +1,8 @@
-using System;
+using UnityEngine;
 
 namespace KrasCore
 {
-    public class InlineNoFoldoutAttribute : Attribute
+    public class InlineNoFoldoutAttribute : PropertyAttribute
     {
         public bool DrawPropertyName = false;
     }
