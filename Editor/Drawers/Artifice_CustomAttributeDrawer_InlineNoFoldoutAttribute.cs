@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 namespace KrasCore.Editor
 {
     [Artifice_CustomAttributeDrawer(typeof(InlineNoFoldoutAttribute))]
-    public class InlineNoFoldoutAttributeDrawer : Artifice_CustomAttributeDrawer
+    public class Artifice_CustomAttributeDrawer_InlineNoFoldoutAttribute : Artifice_CustomAttributeDrawer
     {
         public override bool IsReplacingPropertyField => true;
 
