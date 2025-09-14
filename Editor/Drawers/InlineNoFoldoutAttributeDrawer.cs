@@ -1,21 +1,20 @@
 using ArtificeToolkit.Editor;
-using BovineLabs.Core.Editor.Helpers;
-using BovineLabs.Core.Editor.Inspectors;
+using ArtificeToolkit.Editor.Artifice_CustomAttributeDrawers;
 using UnityEditor;
-using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
 {
-    [CustomPropertyDrawer(typeof(InlineNoFoldoutAttribute))]
-    public class InlineNoFoldoutAttributeDrawer : PropertyDrawer
+    [Artifice_CustomAttributeDrawer(typeof(InlineNoFoldoutAttribute))]
+    public class InlineNoFoldoutAttributeDrawer : Artifice_CustomAttributeDrawer
     {
-        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        public override bool IsReplacingPropertyField => true;
+
+        public override VisualElement OnPropertyGUI(SerializedProperty property)
         {
             var root = new VisualElement();
 
-            if (((InlineNoFoldoutAttribute)attribute).DrawPropertyName)
+            if (((InlineNoFoldoutAttribute)Attribute).DrawPropertyName)
             {
                 var lbl = new Label
                 {
@@ -23,22 +22,15 @@ namespace KrasCore.Editor
                 };
                 root.Add(lbl);
             }
+
+            var artificeDrawer = new ArtificeDrawer();
             
-            foreach (var prop in SerializedHelper.GetChildren(property))
+            foreach (var prop in property.GetVisibleChildren())
             {
-                var element = CreateElement(prop);
-                if (element != null)
-                {
-                    root.Add(element);
-                }
+                root.Add(artificeDrawer.CreatePropertyGUI(prop, forceArtificeStyle: true));
             }
-            
+
             return root;
-        }
-        
-        protected virtual VisualElement CreateElement(SerializedProperty property)
-        {
-            return PropertyUtil.CreateProperty(property, property.serializedObject);
         }
     }
 }

@@ -1,8 +1,8 @@
-using UnityEngine;
+using ArtificeToolkit.Attributes;
 
 namespace KrasCore
 {
-    public class InlineNoFoldoutAttribute : PropertyAttribute
+    public class InlineNoFoldoutAttribute : CustomAttribute
     {
         public bool DrawPropertyName = false;
     }
