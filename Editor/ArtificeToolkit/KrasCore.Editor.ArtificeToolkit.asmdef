@@ -1,0 +1,33 @@
+{
+    "name": "KrasCore.Editor.ArtificeToolkit",
+    "rootNamespace": "KrasCore.Editor.ArtificeToolkit",
+    "references": [
+        "Unity.Mathematics",
+        "Unity.Collections",
+        "Unity.Entities",
+        "abzorba.artificetoolkit.runtime",
+        "abzorba.artificetoolkit.editor",
+        "KrasCore",
+        "KrasCore.Editor",
+        "KrasCore.ArtificeToolkit"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ARTIFICE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.abzorba.artificetoolkit",
+            "expression": "",
+            "define": "ARTIFICE"
+        }
+    ],
+    "noEngineReferences": false
+}
