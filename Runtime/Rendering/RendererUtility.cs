@@ -10,9 +10,12 @@ namespace KrasCore
     {
         public static float4 GetUvAtlas(Sprite sprite)
         {
-            var ratio = new Vector2(1f / sprite.texture.width, 1f / sprite.texture.height);
-            var size = Vector2.Scale(sprite.textureRect.size, ratio);
-            var offset = Vector2.Scale(sprite.textureRect.position, ratio);
+            var rect = sprite.textureRect;
+            var texture = sprite.texture;
+            
+            var ratio = new Vector2(1f / texture.width, 1f / texture.height);
+            var size = Vector2.Scale(rect.size, ratio);
+            var offset = Vector2.Scale(rect.position, ratio);
             return new float4(size.x, size.y, offset.x, offset.y);
         }
         
@@ -62,7 +65,7 @@ namespace KrasCore
                 motionVectorMode = meshRenderer.motionVectorGenerationMode,
                 receiveShadows = meshRenderer.receiveShadows,
                 reflectionProbeUsage = meshRenderer.reflectionProbeUsage,
-                instanceID = meshRenderer.GetInstanceID(),
+                entityId = meshRenderer.GetEntityId(),
             };
         }
     }
