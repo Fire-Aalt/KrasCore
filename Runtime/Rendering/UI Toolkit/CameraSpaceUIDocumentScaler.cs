@@ -20,16 +20,16 @@ namespace KrasCore
         [Tooltip("Z axis distance. Can be used for sorting planes")]
         public float planeDistance = 100f;
         
-        [Header("Scale Params")]
+        [Header("Scale With Screen Size")]
         [Tooltip("Match Width Or Height: Scale the ui document with the width as reference, the height as reference, or something in between.\nExpand: Expand the ui document either horizontally or vertically, so the size of the ui document will never be smaller than the reference.\nShrink: Crop the ui document either horizontally or vertically, so the size of the ui document will never be larger than the reference.")]
-        public ScreenMatchMode screenMatchMode;
+        [SerializeField] private PanelScreenMatchMode _screenMatchMode;
 
         [Tooltip("Determines if the scaling is using the width or height as reference, or a mix in between.")]
         [Range(0, 1)]
-        [SerializeField] public float matchWidthOrHeight;
+        [SerializeField] private float _matchWidthOrHeight;
 
         [Tooltip("Target logical UI resolution (width x height) in UI Toolkit pixels.")]
-        public Vector2 referenceResolution = new(1920, 1080);
+        [SerializeField] private Vector2 _referenceResolution = new(1920, 1080);
 
         private Vector2 _curResolution;
         private float _curCameraScaleFactor;
@@ -88,17 +88,22 @@ namespace KrasCore
                 _prevRootSize = new Vector2(newRoot.resolvedStyle.width, newRoot.resolvedStyle.height);
             }
         }
-        
+
         /// <summary>
         /// Forces recalculation
         /// </summary>
         public void ForceUpdate()
         {
+            HandleScaleWithScreenSize();
+        }
+        
+        private void HandleScaleWithScreenSize()
+        {
             var scaleFactor = 0f;
             
-            switch (screenMatchMode)
+            switch (_screenMatchMode)
             {
-                case ScreenMatchMode.MatchWidthOrHeight:
+                case PanelScreenMatchMode.MatchWidthOrHeight:
                 {
                     const float logBase = 2f;
                     
@@ -108,36 +113,41 @@ namespace KrasCore
                     // If one axis has twice resolution and the other has half, it should even out if widthOrHeight value is at 0.5.
                     // In normal space the average would be (0.5 + 2) / 2 = 1.25
                     // In logarithmic space the average is (-1 + 1) / 2 = 0
-                    float logWidth = Mathf.Log(_curResolution.x / referenceResolution.x, logBase);
-                    float logHeight = Mathf.Log(_curResolution.y / referenceResolution.y, logBase);
-                    float logWeightedAverage = Mathf.Lerp(logWidth, logHeight, matchWidthOrHeight);
+                    float logWidth = Mathf.Log(_curResolution.x / _referenceResolution.x, logBase);
+                    float logHeight = Mathf.Log(_curResolution.y / _referenceResolution.y, logBase);
+                    float logWeightedAverage = Mathf.Lerp(logWidth, logHeight, _matchWidthOrHeight);
                     scaleFactor = Mathf.Pow(logBase, logWeightedAverage);
                     break;
                 }
-                case ScreenMatchMode.Expand:
+                case PanelScreenMatchMode.Expand:
                 {
-                    scaleFactor = Mathf.Min(_curResolution.x / referenceResolution.x, _curResolution.y / referenceResolution.y);
+                    scaleFactor = Mathf.Min(_curResolution.x / _referenceResolution.x, _curResolution.y / _referenceResolution.y);
                     break;
                 }
-                case ScreenMatchMode.Shrink:
+                case PanelScreenMatchMode.Shrink:
                 {
-                    scaleFactor = Mathf.Max(_curResolution.x / referenceResolution.x, _curResolution.y / referenceResolution.y);
+                    scaleFactor = Mathf.Max(_curResolution.x / _referenceResolution.x, _curResolution.y / _referenceResolution.y);
                     break;
                 }
             }
 
-            var resolutionRatio = referenceResolution / _curResolution;
-            var finalScaleFactor = resolutionRatio * scaleFactor;
+            SetScaleFactor(scaleFactor);
+        }
+
+        private void SetScaleFactor(float factor)
+        {
+            var resolutionRatio = _referenceResolution / _curResolution;
+            var finalScaleFactor = resolutionRatio * factor;
 
             // Only depends on height as observed from CanvasScaler
             var transformUniformScale = finalScaleFactor.y * _curCameraScaleFactor;
             transform.localScale = referenceCamera.transform.lossyScale * transformUniformScale;
             
-            var scaledResolution = new Vector2(referenceResolution.x * finalScaleFactor.y, referenceResolution.y * finalScaleFactor.x);
+            var scaledResolution = new Vector2(_referenceResolution.x * finalScaleFactor.y, _referenceResolution.y * finalScaleFactor.x);
             _curRoot.style.width = scaledResolution.x;
             _curRoot.style.height = scaledResolution.y;
         }
-
+        
         private float GetOrthographicCameraScale()
         {
             return referenceCamera.orthographicSize / OrthoGraphicCameraRefSize;
@@ -157,25 +167,6 @@ namespace KrasCore
             
             var cameraScale = (currentDistance * tanCurrent) / (PerspectiveCameraRefDistance * tanBase);
             return cameraScale;
-        }
-        
-        /// <summary>
-        /// Scale the ui document with the width as reference, the height as reference, or something in between.
-        /// </summary>
-        public enum ScreenMatchMode
-        {
-            /// <summary>
-            /// Scale the ui document with the width as reference, the height as reference, or something in between.
-            /// </summary>
-            MatchWidthOrHeight = 0,
-            /// <summary>
-            /// Expand the ui document either horizontally or vertically, so the size of the ui document will never be smaller than the reference.
-            /// </summary>
-            Expand = 1,
-            /// <summary>
-            /// Crop the ui document either horizontally or vertically, so the size of the ui document will never be larger than the reference.
-            /// </summary>
-            Shrink = 2
         }
     }
 }
