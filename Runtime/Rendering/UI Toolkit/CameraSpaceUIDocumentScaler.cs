@@ -1,0 +1,181 @@
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace KrasCore
+{
+    [ExecuteInEditMode]
+    [RequireComponent(typeof(UIDocument))]
+    public class CameraSpaceUIDocumentScaler : MonoBehaviour
+    {
+        private const float OrthoGraphicCameraRefSize = 5.39f;
+        private const float PerspectiveCameraRefFOV = 56.6f;
+        private const float PerspectiveCameraRefDistance = 10f;
+        
+        [SerializeField, HideInInspector]
+        private UIDocument _uiDocument;
+        
+        [Header("Camera")]
+        [Tooltip("Camera used for scaling / distance reference.")]
+        public Camera referenceCamera;
+        [Tooltip("Z axis distance. Can be used for sorting planes")]
+        public float planeDistance = 100f;
+        
+        [Header("Scale Params")]
+        [Tooltip("Match Width Or Height: Scale the ui document with the width as reference, the height as reference, or something in between.\nExpand: Expand the ui document either horizontally or vertically, so the size of the ui document will never be smaller than the reference.\nShrink: Crop the ui document either horizontally or vertically, so the size of the ui document will never be larger than the reference.")]
+        public ScreenMatchMode screenMatchMode;
+
+        [Tooltip("Determines if the scaling is using the width or height as reference, or a mix in between.")]
+        [Range(0, 1)]
+        [SerializeField] public float matchWidthOrHeight;
+
+        [Tooltip("Target logical UI resolution (width x height) in UI Toolkit pixels.")]
+        public Vector2 referenceResolution = new(1920, 1080);
+
+        private Vector2 _curResolution;
+        private float _curCameraScaleFactor;
+        private VisualElement _curRoot;
+        private Vector2 _prevRootSize;
+
+        private void OnValidate()
+        {
+            _uiDocument = GetComponent<UIDocument>();
+            _uiDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Dynamic;
+            _uiDocument.pivot = Pivot.Center;
+        }
+
+        private void Update()
+        {
+            if (referenceCamera == null) 
+                return;
+            
+            var newRoot = _uiDocument.rootVisualElement;
+            if (newRoot == null) 
+                return;
+            
+            var cameraTransform = referenceCamera.transform;
+            var newScreenResolution = referenceCamera.pixelRect.size;
+            var newCameraScaleFactor = referenceCamera.orthographic ? GetOrthographicCameraScale() : GetPerspectiveCameraScale();
+            
+            transform.position = cameraTransform.position + new Vector3(0f, 0f, planeDistance);
+            transform.rotation = cameraTransform.rotation;
+            
+            var shouldUpdate = false;
+            
+            // UI Document layout recalculation can be expansive so during runtime only update when cached values changed
+            if (Application.isPlaying)
+            {
+                var rootChanged = newRoot != _curRoot 
+                                  || newRoot.resolvedStyle.width != _prevRootSize.x 
+                                  || newRoot.resolvedStyle.height != _prevRootSize.y;
+                
+                if (_curResolution != newScreenResolution || _curCameraScaleFactor != newCameraScaleFactor || rootChanged)
+                {
+                    shouldUpdate = true;
+                }
+            }
+            else
+            {
+                shouldUpdate = true;
+            }
+            
+            if (shouldUpdate)
+            {
+                _curResolution = newScreenResolution;
+                _curCameraScaleFactor = newCameraScaleFactor;
+                _curRoot = newRoot;
+                
+                ForceUpdate();
+                _prevRootSize = new Vector2(newRoot.resolvedStyle.width, newRoot.resolvedStyle.height);
+            }
+        }
+        
+        /// <summary>
+        /// Forces recalculation
+        /// </summary>
+        public void ForceUpdate()
+        {
+            var scaleFactor = 0f;
+            
+            switch (screenMatchMode)
+            {
+                case ScreenMatchMode.MatchWidthOrHeight:
+                {
+                    const float logBase = 2f;
+                    
+                    // We take the log of the relative width and height before taking the average.
+                    // Then we transform it back in the original space.
+                    // the reason to transform in and out of logarithmic space is to have better behavior.
+                    // If one axis has twice resolution and the other has half, it should even out if widthOrHeight value is at 0.5.
+                    // In normal space the average would be (0.5 + 2) / 2 = 1.25
+                    // In logarithmic space the average is (-1 + 1) / 2 = 0
+                    float logWidth = Mathf.Log(_curResolution.x / referenceResolution.x, logBase);
+                    float logHeight = Mathf.Log(_curResolution.y / referenceResolution.y, logBase);
+                    float logWeightedAverage = Mathf.Lerp(logWidth, logHeight, matchWidthOrHeight);
+                    scaleFactor = Mathf.Pow(logBase, logWeightedAverage);
+                    break;
+                }
+                case ScreenMatchMode.Expand:
+                {
+                    scaleFactor = Mathf.Min(_curResolution.x / referenceResolution.x, _curResolution.y / referenceResolution.y);
+                    break;
+                }
+                case ScreenMatchMode.Shrink:
+                {
+                    scaleFactor = Mathf.Max(_curResolution.x / referenceResolution.x, _curResolution.y / referenceResolution.y);
+                    break;
+                }
+            }
+
+            var resolutionRatio = referenceResolution / _curResolution;
+            var finalScaleFactor = resolutionRatio * scaleFactor;
+
+            // Only depends on height as observed from CanvasScaler
+            var transformUniformScale = finalScaleFactor.y * _curCameraScaleFactor;
+            transform.localScale = referenceCamera.transform.lossyScale * transformUniformScale;
+            
+            var scaledResolution = new Vector2(referenceResolution.x * finalScaleFactor.y, referenceResolution.y * finalScaleFactor.x);
+            _curRoot.style.width = scaledResolution.x;
+            _curRoot.style.height = scaledResolution.y;
+        }
+
+        private float GetOrthographicCameraScale()
+        {
+            return referenceCamera.orthographicSize / OrthoGraphicCameraRefSize;
+        }
+        
+        private float GetPerspectiveCameraScale()
+        {
+            const float deg2Rad = Mathf.PI / 180f;
+            
+            var currentDistance = Vector3.Distance(referenceCamera.transform.position, transform.position);
+
+            const float halfBase = 0.5f * PerspectiveCameraRefFOV * deg2Rad;
+            var halfCurrent = 0.5f * referenceCamera.fieldOfView * deg2Rad;
+
+            var tanBase = Mathf.Tan(halfBase);
+            var tanCurrent = Mathf.Tan(halfCurrent);
+            
+            var cameraScale = (currentDistance * tanCurrent) / (PerspectiveCameraRefDistance * tanBase);
+            return cameraScale;
+        }
+        
+        /// <summary>
+        /// Scale the ui document with the width as reference, the height as reference, or something in between.
+        /// </summary>
+        public enum ScreenMatchMode
+        {
+            /// <summary>
+            /// Scale the ui document with the width as reference, the height as reference, or something in between.
+            /// </summary>
+            MatchWidthOrHeight = 0,
+            /// <summary>
+            /// Expand the ui document either horizontally or vertically, so the size of the ui document will never be smaller than the reference.
+            /// </summary>
+            Expand = 1,
+            /// <summary>
+            /// Crop the ui document either horizontally or vertically, so the size of the ui document will never be larger than the reference.
+            /// </summary>
+            Shrink = 2
+        }
+    }
+}
