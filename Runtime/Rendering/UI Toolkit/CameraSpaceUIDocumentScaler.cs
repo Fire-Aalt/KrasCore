@@ -168,5 +168,19 @@ namespace KrasCore
             var cameraScale = (currentDistance * tanCurrent) / (PerspectiveCameraRefDistance * tanBase);
             return cameraScale;
         }
+        
+        public static Vector2 CameraToPanel(UIDocument document, Vector2 cameraPixelPosition, Vector2 cameraPixelSize)
+        {
+            var root = document.rootVisualElement;
+
+            // Flip Y axis to match how UI Toolkit treats it
+            cameraPixelPosition.y = cameraPixelSize.y - cameraPixelPosition.y;
+            var panelResolution = new Vector2(root.resolvedStyle.width, root.resolvedStyle.height);
+
+            var normalizedPos = new Vector2(Mathf.InverseLerp(0f, cameraPixelSize.x, cameraPixelPosition.x),
+                Mathf.InverseLerp(0f, cameraPixelSize.y, cameraPixelPosition.y));
+            
+            return normalizedPos * panelResolution;
+        }
     }
 }
