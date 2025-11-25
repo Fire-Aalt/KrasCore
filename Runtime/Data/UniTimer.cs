@@ -1,3 +1,4 @@
+using Mono.CSharp;
 using Unity.Core;
 
 namespace KrasCore
@@ -48,6 +49,25 @@ namespace KrasCore
                 return true;
             }
             return false;
+        }
+        
+        public bool TickUntilFinished(TimeData timeData)
+        {
+            return TickUntilFinished(timeData.DeltaTime);
+        }
+        
+        public bool TickUntilFinished(float deltaTime)
+        {
+            if (!IsRunning) return false;
+            
+            if (CurrentTime - _initialTime < _duration)
+            {
+                CurrentTime += deltaTime;
+                return false;
+            }
+
+            IsRunning = false;
+            return true;
         }
     }
 }
