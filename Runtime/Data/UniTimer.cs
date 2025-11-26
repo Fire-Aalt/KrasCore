@@ -32,30 +32,35 @@ namespace KrasCore
         public void Reset() => _initialTime = CurrentTime;
         public float Progress => (CurrentTime - _initialTime) / _duration;
         
-        public bool Tick(TimeData timeData)
+        public void Tick(TimeData timeData)
         {
-            return Tick(timeData.DeltaTime);
-        }
-
-        public bool Tick(float deltaTime)
-        {
-            if (IsRunning && CurrentTime - _initialTime < _duration)
-            {
-                CurrentTime += deltaTime;
-                return false;
-            }
-            if (IsRunning)
-            {
-                return true;
-            }
-            return false;
+            Tick(timeData.DeltaTime);
         }
         
+        public void Tick(float deltaTime)
+        {
+            if (!IsRunning) return;
+            
+            if (CurrentTime - _initialTime < _duration)
+            {
+                CurrentTime += deltaTime;
+                return;
+            }
+
+            IsRunning = false;
+        }
+        
+        /// <summary>
+        /// Returns true when finished in the same frame
+        /// </summary>
         public bool TickUntilFinished(TimeData timeData)
         {
             return TickUntilFinished(timeData.DeltaTime);
         }
         
+        /// <summary>
+        /// Returns true when finished in the same frame
+        /// </summary>
         public bool TickUntilFinished(float deltaTime)
         {
             if (!IsRunning) return false;
@@ -68,6 +73,31 @@ namespace KrasCore
 
             IsRunning = false;
             return true;
+        }
+        
+        /// <summary>
+        /// Returns true when IsRunning is true
+        /// </summary>
+        public bool TickWhileIsRunning(TimeData timeData)
+        {
+            return TickWhileIsRunning(timeData.DeltaTime);
+        }
+        
+        /// <summary>
+        /// Returns true when IsRunning is true
+        /// </summary>
+        public bool TickWhileIsRunning(float deltaTime)
+        {
+            if (!IsRunning) return false;
+            
+            if (CurrentTime - _initialTime < _duration)
+            {
+                CurrentTime += deltaTime;
+                return true;
+            }
+
+            IsRunning = false;
+            return false;
         }
     }
 }
