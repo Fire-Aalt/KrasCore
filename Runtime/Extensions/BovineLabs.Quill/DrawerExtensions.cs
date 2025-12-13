@@ -3,7 +3,7 @@ using BovineLabs.Quill;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace KrasCore
+namespace KrasCore.Quill
 {
     public static class DrawerExtensions
     {
