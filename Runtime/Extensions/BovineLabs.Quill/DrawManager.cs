@@ -42,7 +42,7 @@ namespace KrasCore.Quill
             DrawersBuffer.Clear();
             foreach (var drawer in Drawers)
             {
-                if (drawer == null || drawer.gameObject == null)
+                if (drawer == null || !drawer.gameObject.scene.IsValid())
                 {
                     DrawersBuffer.Add(drawer);
                 }
