@@ -8,6 +8,17 @@ namespace KrasCore
 {
     public static class UnsafeArrayExtensions
     {
+        public static string ToArrayString<T>(this UnsafeArray<T> list)
+            where T : unmanaged
+        {
+            var s = "";
+            foreach (var value in list)
+            {
+                s += value + ", ";
+            }
+            return s;
+        }
+        
         public static unsafe NativeArray<T> AsNativeArray<T>(this UnsafeArray<T> unsafeArray)
             where T : unmanaged
         {

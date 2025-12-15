@@ -5,6 +5,17 @@ namespace KrasCore
 {
     public static class NativeListExtensions
     {
+        public static string ToListString<T>(this NativeList<T> list)
+            where T : unmanaged
+        {
+            var s = "";
+            foreach (var value in list)
+            {
+                s += value + ", ";
+            }
+            return s;
+        }
+        
         public static void Remove<T>(this NativeList<T> list, T element)
             where T : unmanaged
         {

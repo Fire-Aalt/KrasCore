@@ -7,7 +7,6 @@ namespace KrasCore.Quill
     {
         public MonoBehaviourDraw()
         {
-            Debug.Log("Created");
             DrawManager.Register(this);
         }
         
