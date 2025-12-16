@@ -67,8 +67,10 @@ namespace KrasCore.Quill
             // Check if already selected
             foreach (var drawer in UninitializedDrawers)
             {
-                var transform = ((MonoBehaviour)drawer).transform;
-            
+                var mb = drawer as MonoBehaviour;
+                if (mb == null) continue;
+                
+                var transform = mb.transform;
                 var isSelected = false;
                 while (!isSelected && transform.parent != null)
                 {
