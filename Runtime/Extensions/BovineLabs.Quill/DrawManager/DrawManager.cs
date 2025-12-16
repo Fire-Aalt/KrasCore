@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using BovineLabs.Quill;
 using Unity.Collections;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -59,6 +60,10 @@ namespace KrasCore.Quill
                 return;
             }
             
+            var currentStage = StageUtility.GetCurrentStage();
+            var isInNonMainStage = currentStage != StageUtility.GetMainStage();
+            var currentStageHandle = currentStage.stageHandle;
+
             // Check if already selected
             foreach (var drawer in UninitializedDrawers)
             {
@@ -96,7 +101,7 @@ namespace KrasCore.Quill
 
                 foreach (var drawer in drawers)
                 {
-                    if (!CanDraw(drawer))
+                    if (!CanDraw(drawer, isInNonMainStage, currentStageHandle))
                     {
                         continue;
                     }
@@ -111,7 +116,7 @@ namespace KrasCore.Quill
                 
                 foreach (var drawer in drawers)
                 {
-                    if (!CanDraw(drawer))
+                    if (!CanDraw(drawer, isInNonMainStage, currentStageHandle))
                     {
                         continue;
                     }
@@ -128,11 +133,16 @@ namespace KrasCore.Quill
             return enabled;
         }
 
-        private static bool CanDraw(IDraw drawer)
+        private static bool CanDraw(IDraw drawer, bool isInNonMainStage, StageHandle currentStageHandle)
         {
             var mb = drawer as MonoBehaviour;
-            if (mb == null) return false;
-            return mb.isActiveAndEnabled && (mb.hideFlags & HideFlags.HideInHierarchy) == 0;
+            if (mb == null || !mb.isActiveAndEnabled || (mb.hideFlags & HideFlags.HideInHierarchy) != 0)
+            {
+                return false;
+            }
+
+            var disabledDueToIsolationMode = isInNonMainStage && !currentStageHandle.Contains(mb.gameObject);
+            return !disabledDueToIsolationMode;
         }
         
         private static void AddToMap(IDraw drawer, Dictionary<Type, List<IDraw>> map)
