@@ -16,7 +16,7 @@ namespace KrasCore.Quill
         private static readonly Dictionary<Type, List<IDraw>> SelectedDrawers = new(8);
         
         private static readonly List<IDraw> UninitializedDrawers = new(64);
-        private static readonly HashSet<GameObject> SelectedGameObjects = new();
+        private static readonly HashSet<GameObject> SelectedGameObjects = new(16);
         
         static DrawManager()
         {
@@ -62,10 +62,10 @@ namespace KrasCore.Quill
             // Check if already selected
             foreach (var drawer in UninitializedDrawers)
             {
-                var transform = (drawer as MonoBehaviour).transform;
+                var transform = ((MonoBehaviour)drawer).transform;
             
                 var isSelected = false;
-                while (transform.parent != null && !isSelected)
+                while (!isSelected && transform.parent != null)
                 {
                     isSelected = SelectedGameObjects.Contains(transform.gameObject);
                     transform = transform.parent;
