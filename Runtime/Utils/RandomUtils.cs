@@ -1,4 +1,5 @@
 using System;
+using BovineLabs.Core.Utility;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Entities;
@@ -71,6 +72,26 @@ namespace KrasCore
                 }
             }
             throw new Exception("Result is out of range");
+        }
+
+        public static NativeList<int> SelectRandomIndices(ref Random rng, int indicesCount, int maxSelectedCount)
+        {
+            var possibleIndices = PooledNativeList<int>.Make();
+            for (int i = 0; i < indicesCount; i++)
+            {
+                possibleIndices.List.Add(i);
+            }
+            
+            var selectedIndices = new NativeList<int>(indicesCount, Allocator.Temp);
+            while (selectedIndices.Length < maxSelectedCount && !possibleIndices.List.IsEmpty)
+            {
+                var selectedIndex = rng.NextInt(0, possibleIndices.List.Length);
+                selectedIndices.Add(possibleIndices.List[selectedIndex]);
+                possibleIndices.List.RemoveAtSwapBack(selectedIndex);
+            }
+            possibleIndices.Dispose();
+
+            return selectedIndices;
         }
     }
 
