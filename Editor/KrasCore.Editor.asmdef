@@ -8,8 +8,8 @@
         "BovineLabs.Core.Editor",
         "abzorba.artificetoolkit.runtime",
         "abzorba.artificetoolkit.editor",
-        "GUID:9e24947de15b9834991c9d8411ea37cf",
-        "GUID:69448af7b92c7f342b298e06a37122aa",
+        "Unity.Addressables",
+        "Unity.Addressables.Editor",
         "KrasCore"
     ],
     "includePlatforms": [
