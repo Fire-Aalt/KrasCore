@@ -56,7 +56,7 @@ namespace KrasCore
             var newScreenResolution = referenceCamera.pixelRect.size;
             var newCameraScaleFactor = referenceCamera.orthographic ? GetOrthographicCameraScale() : GetPerspectiveCameraScale();
             
-            transform.position = cameraTransform.position + new Vector3(0f, 0f, planeDistance);
+            transform.position = cameraTransform.position + cameraTransform.rotation * new Vector3(0f, 0f, planeDistance);
             transform.rotation = cameraTransform.rotation;
             
             var shouldUpdate = false;
