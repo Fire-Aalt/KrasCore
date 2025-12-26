@@ -13,6 +13,12 @@ namespace KrasCore.Editor
         static GameViewVSyncFix()
         {
             EditorApplication.playModeStateChanged += PlayModeStateChanged;
+            EditorApplication.delayCall += () =>
+            {
+                var gameView = GetGameView();
+                var prop = GetVSyncPropertyInfo(gameView);
+                SetVSyncEnabled(gameView, prop, true);
+            };
         }
 
         private static void PlayModeStateChanged(PlayModeStateChange state)
