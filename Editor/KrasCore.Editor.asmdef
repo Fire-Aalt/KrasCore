@@ -10,7 +10,8 @@
         "abzorba.artificetoolkit.editor",
         "Unity.Addressables",
         "Unity.Addressables.Editor",
-        "KrasCore"
+        "KrasCore",
+        "UniTask"
     ],
     "includePlatforms": [
         "Editor"

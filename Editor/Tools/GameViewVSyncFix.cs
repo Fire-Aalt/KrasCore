@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Cysharp.Threading.Tasks;
 using UnityEditor;
 
 namespace KrasCore.Editor
@@ -13,14 +14,8 @@ namespace KrasCore.Editor
         static GameViewVSyncFix()
         {
             EditorApplication.playModeStateChanged += PlayModeStateChanged;
-            EditorApplication.delayCall += () =>
-            {
-                var gameView = GetGameView();
-                var prop = GetVSyncPropertyInfo(gameView);
-                SetVSyncEnabled(gameView, prop, true);
-            };
         }
-
+        
         private static void PlayModeStateChanged(PlayModeStateChange state)
         {
             if (state == PlayModeStateChange.EnteredPlayMode)
