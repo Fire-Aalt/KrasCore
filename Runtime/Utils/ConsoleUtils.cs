@@ -1,4 +1,10 @@
+using BovineLabs.Core.Extensions;
 using Unity.Entities;
+
+#if BL_ESSENSE
+using BovineLabs.Essence;
+using BovineLabs.Essence.Data;
+#endif
 
 namespace KrasCore
 {
@@ -27,5 +33,18 @@ namespace KrasCore
             var system = world.GetExistingSystemManaged<T>();
             return system;
         }
+
+#if BL_ESSENSE
+        public static IntrinsicWriter.Lookup GetIntrinsicLookup(ref SystemState state)
+        {
+            GetWorld(out var world);
+            
+            var lookup = new IntrinsicWriter.Lookup();
+            lookup.Create(ref state);
+            lookup.Update(ref state, world.EntityManager.GetSingleton<EssenceConfig>());
+
+            return lookup;
+        }
+#endif
     }
 }

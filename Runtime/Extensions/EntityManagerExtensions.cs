@@ -8,6 +8,7 @@ namespace KrasCore
     {
         private const EntityQueryOptions QueryOptions = EntityQueryOptions.IncludeSystems;
         
+#if !BL_CORE
         public static T GetSingleton<T>(this EntityManager em, bool completeDependency = true)
             where T : unmanaged, IComponentData
         {
@@ -31,6 +32,7 @@ namespace KrasCore
 
             return query.GetSingletonRW<T>();
         }
+#endif
 
         // From https://forum.unity.com/threads/really-hoped-for-refrw-refro-getcomponentrw-ro-entity.1369275/
         /// <summary>

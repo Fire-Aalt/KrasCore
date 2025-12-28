@@ -14,7 +14,9 @@
         "BovineLabs.Core.Extensions",
         "BovineLabs.Core",
         "BovineLabs.Quill",
-        "Unity.Scenes"
+        "Unity.Scenes",
+        "BovineLabs.Essence",
+        "BovineLabs.Essence.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -33,6 +35,11 @@
             "name": "com.bovinelabs.quill",
             "expression": "",
             "define": "BL_QUILL"
+        },
+        {
+            "name": "com.bovinelabs.essence",
+            "expression": "",
+            "define": "BL_ESSENSE"
         },
         {
             "name": "com.unity.addressables",
