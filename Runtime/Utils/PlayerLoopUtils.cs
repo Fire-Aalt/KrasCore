@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.LowLevel;
+using UnityEngine.PlayerLoop;
 
 namespace KrasCore
 {
@@ -56,6 +59,36 @@ namespace KrasCore
             if (loop.subSystemList != null) playerLoopSystemList.AddRange(loop.subSystemList);
             playerLoopSystemList.Insert(index, systemToInsert);
             loop.subSystemList = playerLoopSystemList.ToArray();
+            return true;
+        }
+
+        public static bool AddSystem<TTiming>(PlayerLoopSystem system, Action clearAction)
+        {
+            var currentPlayerLoop = PlayerLoop.GetCurrentPlayerLoop();
+
+            if (!InsertSystem<TTiming>(ref currentPlayerLoop, system, 0))
+            {
+                Debug.LogWarning($"{system.type} not initialized, unable to register {system.type} into the Update loop.");
+                return false;
+            }
+            PlayerLoop.SetPlayerLoop(currentPlayerLoop);
+            
+#if UNITY_EDITOR
+            EditorApplication.playModeStateChanged -= OnPlayModeStateUpdateLoop;
+            EditorApplication.playModeStateChanged += OnPlayModeStateUpdateLoop;
+
+            void OnPlayModeStateUpdateLoop(PlayModeStateChange state)
+            {
+                if (state == PlayModeStateChange.ExitingPlayMode)
+                {
+                    var playerLoop = PlayerLoop.GetCurrentPlayerLoop();
+                    RemoveSystem<TTiming>(ref playerLoop, system);
+                    PlayerLoop.SetPlayerLoop(playerLoop);
+                    
+                    clearAction?.Invoke();
+                }
+            }
+#endif
             return true;
         }
 
