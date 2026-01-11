@@ -16,7 +16,8 @@
         "BovineLabs.Quill",
         "Unity.Scenes",
         "BovineLabs.Essence",
-        "BovineLabs.Essence.Data"
+        "BovineLabs.Essence.Data",
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
