@@ -17,7 +17,8 @@
         "Unity.Scenes",
         "BovineLabs.Essence",
         "BovineLabs.Essence.Data",
-        "UniTask"
+        "UniTask",
+        "PrimeTween.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
