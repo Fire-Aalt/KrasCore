@@ -2,7 +2,7 @@ using Unity.Mathematics;
 
 namespace KrasCore
 {
-    public class HashUtils
+    public static class HashUtils
     {
         /// <summary>
         /// Hash function for seeded random seeds, unique for each position
