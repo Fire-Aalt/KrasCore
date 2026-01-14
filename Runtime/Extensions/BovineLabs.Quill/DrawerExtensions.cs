@@ -21,6 +21,13 @@ namespace KrasCore.Quill
             drawer.SolidQuad(p0, p1, p2, p3, color, duration);
         }
         
+        public static void SolidRectangleXY(this Drawer drawer, float3 position, float2 size, Color color, float duration = 0f)
+        {
+            GetSquareXYVertices(position, size, out var p0, out var p1, out var p2, out var p3);
+            
+            drawer.SolidQuad(p0, p1, p2, p3, color, duration);
+        }
+        
         private static void GetSquareXZVertices(in float3 position, in float2 size, out float3 p0, out float3 p1, out float3 p2, out float3 p3)
         {
             var size3Half = new float3(size.x, 0, size.y) / 2f;
@@ -28,6 +35,15 @@ namespace KrasCore.Quill
             p1 = new float3(position.x - size3Half.x, position.y, position.z + size3Half.z);
             p2 = position + size3Half;
             p3 = new float3(position.x + size3Half.x, position.y, position.z - size3Half.z);
+        }
+        
+        private static void GetSquareXYVertices(in float3 position, in float2 size, out float3 p0, out float3 p1, out float3 p2, out float3 p3)
+        {
+            var size3Half = new float3(size.x, size.y, 0) / 2f;
+            p0 = position - size3Half;
+            p1 = new float3(position.x - size3Half.x, position.y + size3Half.y, position.z );
+            p2 = position + size3Half;
+            p3 = new float3(position.x + size3Half.x, position.y - size3Half.y, position.z);
         }
     }
 }
