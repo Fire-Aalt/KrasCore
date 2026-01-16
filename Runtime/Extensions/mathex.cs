@@ -19,5 +19,24 @@ namespace KrasCore
             
             return new float3(0f, 0f, 1f);
         }
+        
+        public static float AngleBetweenDegrees(float2 a, float2 b)
+        {
+            var la = length(a);
+            var lb = length(b);
+            if (la < EPSILON || lb < EPSILON) return 0f;
+
+            var d = dot(a, b) / (la * lb);
+            d = clamp(d, -1f, 1f);
+            return degrees(acos(d));
+        }
+        
+        /// <summary>
+        /// Starts at (1, 0), goes anticlockwise
+        /// </summary>
+        public static float AngleDegrees(float2 v)
+        {
+            return degrees(atan2(v.y, v.x));
+        }
     }
 }
