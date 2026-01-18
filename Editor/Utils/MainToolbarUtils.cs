@@ -6,8 +6,14 @@ using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
 {
-    public static class MainToolbarElementStyler {
-        public static void StyleElement<T>(string elementName, Action<T> styleAction) where T : VisualElement {
+    public static class MainToolbarUtils {
+        public static void StyleElement<T>(string elementName, T cached, Action<T> styleAction) where T : VisualElement {
+            if (cached != null)
+            {
+                styleAction(cached);
+                return;
+            }
+            
             EditorApplication.delayCall += () => {
                 ApplyStyle(elementName, (element) => {
                     T targetElement;

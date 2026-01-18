@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Button = Unity.AppUI.UI.Button;
 
 namespace KrasCore.Editor
 {
@@ -19,6 +20,7 @@ namespace KrasCore.Editor
         [ConfigVar("krascore.anchor-toolbar.show-on-start", true, "Should the toolbar be shown on startup", true, true)]
         private static readonly SharedStatic<bool> ShowOnStart = SharedStatic<bool>.GetOrCreate<ShowAnchorToolbarButton, EnabledVar>();
 
+        private static EditorToolbarButton _button;
         private static bool _isVisible;
 
         [InitializeOnLoadMethod]
@@ -33,15 +35,16 @@ namespace KrasCore.Editor
             {
                 var toolbarView = AnchorApp.current.services.GetRequiredService<ToolbarView>();
                 
+                // Remove 'close' button
                 var button = FindButtonWithTrailingIcon(toolbarView.panel.visualTree, "x");
                 button.RemoveFromHierarchy();
 
                 SetToolbarVisibility(toolbarView, ShowOnStart.Data);
-                QueueStyleUpdate();
+                ApplyStyle();
             }
             else if (change == PlayModeStateChange.EnteredEditMode)
             {
-                QueueStyleUpdate();
+                ApplyStyle();
             }
         }
 
@@ -51,21 +54,22 @@ namespace KrasCore.Editor
             var content = new MainToolbarContent(icon);
             
             var element = new MainToolbarButton(content, ButtonClicked);
-            QueueStyleUpdate();
+            ApplyStyle();
             return element;
         }
 
         private static void ButtonClicked()
         {
-            QueueStyleUpdate();
             if (!Application.isPlaying)
             {
                 ShowOnStart.Data = !ShowOnStart.Data;
+                ApplyStyle();
                 return;
             }
             
             var toolbarView = AnchorApp.current.services.GetRequiredService<ToolbarView>();
             SetToolbarVisibility(toolbarView, !_isVisible);
+            ApplyStyle();
         }
 
         private static void SetToolbarVisibility(ToolbarView toolbarView, bool visible)
@@ -83,10 +87,12 @@ namespace KrasCore.Editor
             }
         }
         
-        private static void QueueStyleUpdate()
+        private static void ApplyStyle()
         {
-            MainToolbarElementStyler.StyleElement<EditorToolbarButton>(Name, element =>
+            MainToolbarUtils.StyleElement(Name, _button, element =>
             {
+                _button = element;
+                
                 if (!Application.isPlaying)
                 {
                     element.style.backgroundColor = ShowOnStart.Data ? new Color(0, 1, 0, 0.1f) : new Color(1, 0, 0, 0.1f);
@@ -99,9 +105,9 @@ namespace KrasCore.Editor
             MainToolbar.Refresh(Name);
         }
         
-        private static Unity.AppUI.UI.Button FindButtonWithTrailingIcon(VisualElement root, string trailingIcon)
+        private static Button FindButtonWithTrailingIcon(VisualElement root, string trailingIcon)
         {
-            return root.Query<Unity.AppUI.UI.Button>().Where(b => b.trailingIcon == trailingIcon).First();
+            return root.Query<Button>().Where(b => b.trailingIcon == trailingIcon).First();
         }
         
         private struct EnabledVar
