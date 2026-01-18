@@ -7,7 +7,6 @@ using UnityEditor;
 using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Color = UnityEngine.Color;
 
 namespace KrasCore.Editor
 {
