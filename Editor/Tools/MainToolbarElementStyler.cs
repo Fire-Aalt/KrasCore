@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -5,10 +7,10 @@ using UnityEngine.UIElements;
 namespace KrasCore.Editor
 {
     public static class MainToolbarElementStyler {
-        public static void StyleElement<T>(string elementName, System.Action<T> styleAction) where T : VisualElement {
+        public static void StyleElement<T>(string elementName, Action<T> styleAction) where T : VisualElement {
             EditorApplication.delayCall += () => {
                 ApplyStyle(elementName, (element) => {
-                    T targetElement = null;
+                    T targetElement;
 
                     if (element is T typedElement) {
                         targetElement = typedElement;
@@ -23,34 +25,39 @@ namespace KrasCore.Editor
             };
         }
 
-        private static void ApplyStyle(string elementName, System.Action<VisualElement> styleCallback) {
+        private static void ApplyStyle(string elementName, Action<VisualElement> styleCallback) {
             var element = FindElementByName(elementName);
             if (element != null) {
                 styleCallback(element);
             }
         }
-
-        private static VisualElement FindElementByName(string name) {
-            var windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
-            foreach (var window in windows) {
-                var root = window.rootVisualElement;
-                if (root == null) continue;
-                
-            
-                VisualElement element;
-                if ((element = root.FindElementByName(name)) != null) return element;
-            }
-            return null;
+        
+        private static Type GetMainToolbarWindowType()
+        {
+            var editorAsm = typeof(EditorWindow).Assembly;
+            var t = editorAsm.GetType("UnityEditor.MainToolbarWindow", throwOnError: true, ignoreCase: false);
+            return t;
         }
         
-        static VisualElement FindElement(this VisualElement element, System.Func<VisualElement, bool> predicate) {
+        private static VisualElement FindElementByName(string name) {
+            var window = (EditorWindow)Resources.FindObjectsOfTypeAll(GetMainToolbarWindowType()).FirstOrDefault();
+            if (window == null) throw new Exception("Unable to find MainToolbarWindow");
+            var root = window.rootVisualElement;
+            
+            VisualElement element;
+            return (element = root.FindElementByName(name)) != null 
+                ? element 
+                : null;
+        }
+        
+        private static VisualElement FindElement(this VisualElement element, Func<VisualElement, bool> predicate) {
             if (predicate(element)) {
                 return element;
             }
             return element.Query<VisualElement>().Where(predicate).First();
         }
         
-        public static VisualElement FindElementByName(this VisualElement element, string name) {
+        private static VisualElement FindElementByName(this VisualElement element, string name) {
             return element.FindElement(e => e.name == name);
         }
     }
