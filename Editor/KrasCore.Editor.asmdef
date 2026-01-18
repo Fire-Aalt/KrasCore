@@ -11,7 +11,12 @@
         "Unity.Addressables",
         "Unity.Addressables.Editor",
         "KrasCore",
-        "UniTask"
+        "UniTask",
+        "BovineLabs.Core",
+        "Unity.Burst",
+        "BovineLabs.Anchor",
+        "Unity.AppUI",
+        "Unity.AppUI.MVVM"
     ],
     "includePlatforms": [
         "Editor"

@@ -65,6 +65,13 @@ namespace KrasCore
             return GetMethodSignature(targetObject, methodName);
         }
 
+        public static FieldInfo GetField(object targetObject, string fieldName)
+        {
+            if (string.IsNullOrEmpty(fieldName)) 
+                throw new Exception($"Field name is null or empty");
+            return GetFieldSignature(targetObject, fieldName);
+        }
+        
         public static bool TryGetCallMethod(object targetObject, string methodName, out MethodInfo method)
         {
             if (string.IsNullOrEmpty(methodName))
@@ -85,6 +92,16 @@ namespace KrasCore
             if (method == null) 
                 throw new Exception($"Method '{methodName}' not found on target object '{targetObject}'.");
             return method;
+        }
+        
+        private static FieldInfo GetFieldSignature(object targetObject, string fieldName)
+        {
+            var field = targetObject.GetType().GetField(fieldName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (field == null) 
+                throw new Exception($"Field '{fieldName}' not found on target object '{targetObject}'.");
+            return field;
         }
     }
 }
