@@ -16,7 +16,9 @@
         "Unity.Burst",
         "BovineLabs.Anchor",
         "Unity.AppUI",
-        "Unity.AppUI.MVVM"
+        "Unity.AppUI.MVVM",
+        "KrasCore.Essentials",
+        "Eflatun.SceneReference"
     ],
     "includePlatforms": [
         "Editor"

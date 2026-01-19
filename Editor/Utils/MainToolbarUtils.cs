@@ -18,6 +18,12 @@ namespace KrasCore.Editor
             return element != null && element.panel != null;
         }
         
+        public static Texture2D GetEditorIcon(string name)
+        {
+            var icon = EditorGUIUtility.IconContent(name).image as Texture2D;
+            return icon;
+        }
+        
         public static void StyleElement<T>(string name, T cached, Action<T> styleAction) where T : VisualElement
         {
             EditorApplication.delayCall += () => {

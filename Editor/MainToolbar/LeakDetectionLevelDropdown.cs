@@ -101,8 +101,7 @@ namespace KrasCore.Editor
                 default:
                     throw new ArgumentOutOfRangeException();
             }
-            var icon = EditorGUIUtility.IconContent(iconName).image as Texture2D;
-            return icon;
+            return MainToolbarUtils.GetEditorIcon(iconName);
         }
     }
 }
