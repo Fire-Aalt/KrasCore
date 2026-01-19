@@ -95,14 +95,13 @@ namespace KrasCore.Editor
                 
                 if (!Application.isPlaying)
                 {
-                    element.style.backgroundColor = ShowOnStart.Data ? new Color(0, 1, 0, 0.1f) : new Color(1, 0, 0, 0.1f);
+                    element.style.backgroundColor = ShowOnStart.Data ? MainToolbarUtils.EnabledColor : MainToolbarUtils.DisabledColor;
                 }
                 else
                 {
-                    element.style.backgroundColor = _isVisible ? new Color(68f / 255f, 93f / 255f, 120f / 255f) : StyleKeyword.None;
+                    element.style.backgroundColor = _isVisible ? MainToolbarUtils.PlaymodeEnabledColor : StyleKeyword.None;
                 }
             });
-            MainToolbar.Refresh(Name);
         }
         
         private static Button FindButtonWithTrailingIcon(VisualElement root, string trailingIcon)

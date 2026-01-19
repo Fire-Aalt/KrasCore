@@ -1,51 +1,85 @@
 using System;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Toolbars;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
 {
-    public static class MainToolbarUtils {
-        public static void StyleElement<T>(string elementName, T cached, Action<T> styleAction) where T : VisualElement {
-            if (cached != null)
-            {
-                styleAction(cached);
-                return;
-            }
-            
+    public static class MainToolbarUtils
+    {
+        public static readonly Color EnabledColor = new(0, 1, 0, 0.15f);
+        public static readonly Color DisabledColor = new(1, 0, 0, 0.15f);
+        public static readonly Color PlaymodeEnabledColor = new Color(68f / 255f, 93f / 255f, 120f / 255f);
+        
+        public static bool Exists(VisualElement element)
+        {
+            return element != null && element.panel != null;
+        }
+        
+        public static void StyleElement<T>(string name, T cached, Action<T> styleAction) where T : VisualElement
+        {
             EditorApplication.delayCall += () => {
-                ApplyStyle(elementName, (element) => {
-                    T targetElement;
+                if (Exists(cached))
+                {
+                    ApplyStyle(name, cached, styleAction);
+                    return;
+                }
 
-                    if (element is T typedElement) {
-                        targetElement = typedElement;
-                    } else {
-                        targetElement = element.Query<T>().First();
-                    }
+                var element = FindElementByName(name);
+                if (element == null) return;
 
-                    if (targetElement != null) {
-                        styleAction(targetElement);
-                    }
-                });
+                T targetElement;
+                if (element is T typedElement) {
+                    targetElement = typedElement;
+                } else {
+                    targetElement = element.Query<T>().First();
+                }
+
+                if (targetElement != null) {
+                    ApplyStyle(name, targetElement, styleAction);
+                }
             };
         }
 
-        private static void ApplyStyle(string elementName, Action<VisualElement> styleCallback) {
-            var element = FindElementByName(elementName);
-            if (element != null) {
-                styleCallback(element);
-            }
-        }
-        
-        private static Type GetMainToolbarWindowType()
+        public static void StyleElement<T>(string name, T cached, Func<VisualElement, T> queryAction,
+            Action<T> styleAction) where T : VisualElement
         {
-            var editorAsm = typeof(EditorWindow).Assembly;
-            var t = editorAsm.GetType("UnityEditor.MainToolbarWindow", throwOnError: true, ignoreCase: false);
-            return t;
+            EditorApplication.delayCall += () => {
+                if (Exists(cached))
+                {
+                    ApplyStyle(name, cached, styleAction);
+                    return;
+                }
+                
+                var element = FindElementByName(name);
+                if (element == null) return;
+                
+                if (queryAction == null)
+                {
+                    if (element is T visualElement)
+                    {
+                        ApplyStyle(name, visualElement, styleAction);
+                    }
+                }
+                else
+                {
+                    var queriedElement = queryAction(element);
+                    ApplyStyle(name, queriedElement, styleAction);
+                }
+            };
+        }
+
+        private static void ApplyStyle<T>(string name, T element, Action<T> styleAction) 
+            where T : VisualElement
+        {
+            styleAction(element);
+            MainToolbar.Refresh(name);
         }
         
-        private static VisualElement FindElementByName(string name) {
+        private static VisualElement FindElementByName(string name) 
+        {
             var window = (EditorWindow)Resources.FindObjectsOfTypeAll(GetMainToolbarWindowType()).FirstOrDefault();
             if (window == null) throw new Exception("Unable to find MainToolbarWindow");
             var root = window.rootVisualElement;
@@ -56,14 +90,23 @@ namespace KrasCore.Editor
                 : null;
         }
         
-        private static VisualElement FindElement(this VisualElement element, Func<VisualElement, bool> predicate) {
+        private static Type GetMainToolbarWindowType()
+        {
+            var editorAsm = typeof(EditorWindow).Assembly;
+            var t = editorAsm.GetType("UnityEditor.MainToolbarWindow", throwOnError: true, ignoreCase: false);
+            return t;
+        }
+        
+        private static VisualElement FindElement(this VisualElement element, Func<VisualElement, bool> predicate) 
+        {
             if (predicate(element)) {
                 return element;
             }
             return element.Query<VisualElement>().Where(predicate).First();
         }
         
-        private static VisualElement FindElementByName(this VisualElement element, string name) {
+        private static VisualElement FindElementByName(this VisualElement element, string name) 
+        {
             return element.FindElement(e => e.name == name);
         }
     }
