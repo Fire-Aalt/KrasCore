@@ -101,7 +101,7 @@ namespace KrasCore.Editor
                 {
                     element.style.backgroundColor = _isVisible ? MainToolbarUtils.PlaymodeEnabledColor : StyleKeyword.None;
                 }
-            });
+            }, immediate: true);
         }
         
         private static Button FindButtonWithTrailingIcon(VisualElement root, string trailingIcon)

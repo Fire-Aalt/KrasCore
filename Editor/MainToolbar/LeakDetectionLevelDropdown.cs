@@ -7,34 +7,34 @@ using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
 {
-    public class LeakDetectionLevelDropdown
+    public static class LeakDetectionLevelDropdown
     {
         private const string Path = "KrasCore/Leak Detection Level";
-        private static readonly string Name = StringUtils.RemoveAllWhitespace(Path);
 
         private static Image _iconImage;
         private static TextElement _label;
         
+        static LeakDetectionLevelDropdown()
+        {
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+        
+        private static void OnPlayModeStateChanged(PlayModeStateChange obj)
+        {
+            switch (obj)
+            {
+                case PlayModeStateChange.EnteredPlayMode:
+                case PlayModeStateChange.ExitingPlayMode:
+                    Refresh();
+                    break;
+            }
+        }
+        
         [MainToolbarElement(Path, defaultDockPosition = MainToolbarDockPosition.Middle)]
         public static MainToolbarElement LeakDetectionLevel()
         {
-            var content = new MainToolbarContent((Texture2D)null);
-            var element = new MainToolbarDropdown(content, ShowDropdownMenu);
-            
-            MainToolbarUtils.StyleElement(Name, null, e => e.Q<EditorToolbarDropdown>(), e =>
-            {
-                if (MainToolbarUtils.Exists(_iconImage)) return;
-                
-                _iconImage = new Image
-                {
-                    image = GetIcon(),
-                    name = "IconImage"
-                };
-                _iconImage.AddToClassList("unity-editor-toolbar-element__icon");
-                e.Add(_iconImage);
-                _iconImage.SendToBack();
-            });
-            ApplyStyle();
+            var content = new MainToolbarContent(GetText(), GetIcon(), string.Empty);
+            var element = new MainToolbarDropdown(content, ShowDropdownMenu) { enabled = !EditorApplication.isPlayingOrWillChangePlaymode };
             return element;
         }
 
@@ -51,37 +51,28 @@ namespace KrasCore.Editor
                 menu.AddItem(new GUIContent(modeName), isOn, () =>
                 {
                     NativeLeakDetection.Mode = mode;
-                    ApplyStyle();
+                    Refresh();
                 });
             }
             menu.DropDown(dropDownRect);
         }
         
-        private static void ApplyStyle()
+        private static string GetText()
         {
-            MainToolbarUtils.StyleElement(Name, _iconImage, null, e =>
+            string text;
+            switch (NativeLeakDetection.Mode)
             {
-                _iconImage = e;
-                _iconImage.image = GetIcon();
-            });
-            MainToolbarUtils.StyleElement(Name, _label, e => e.Q<TextElement>("EditorToolbarButtonText"), e =>
-            {
-                _label = e;
-                switch (NativeLeakDetection.Mode)
-                {
-                    case NativeLeakDetectionMode.Disabled:
-                    case NativeLeakDetectionMode.Enabled:
-                        _label.text = NativeLeakDetection.Mode.ToString();
-                        break;
-                    case NativeLeakDetectionMode.EnabledWithStackTrace:
-                        _label.text = "StackTrace";
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-                _label.style.display = DisplayStyle.Flex;
-                _label.style.maxWidth = 200;
-            });
+                case NativeLeakDetectionMode.Disabled:
+                case NativeLeakDetectionMode.Enabled:
+                    text = NativeLeakDetection.Mode.ToString();
+                    break;
+                case NativeLeakDetectionMode.EnabledWithStackTrace:
+                    text = "StackTrace";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+            return text;
         }
         
         private static Texture2D GetIcon()
@@ -102,6 +93,11 @@ namespace KrasCore.Editor
                     throw new ArgumentOutOfRangeException();
             }
             return MainToolbarUtils.GetEditorIcon(iconName);
+        }
+        
+        private static void Refresh()
+        {
+            MainToolbar.Refresh(Path);
         }
     }
 }

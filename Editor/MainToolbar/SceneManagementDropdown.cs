@@ -11,13 +11,12 @@ namespace KrasCore.Editor
     public static class SceneManagementDropdown
     {
         private const string Path = "KrasCore/Scene Management";
-        private static readonly string Name = StringUtils.RemoveAllWhitespace(Path);
         
         static SceneManagementDropdown()
         {
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-            EditorSceneManager.sceneOpened += (_, _) => Refresh();
-            EditorSceneManager.sceneClosed += _ => Refresh();
+            EditorSceneManager.sceneOpened += (_, _) => Refresh(false);
+            EditorSceneManager.sceneClosed += _ => Refresh(false);
         }
         
         private static void OnPlayModeStateChanged(PlayModeStateChange obj)
@@ -26,7 +25,7 @@ namespace KrasCore.Editor
             {
                 case PlayModeStateChange.EnteredPlayMode:
                 case PlayModeStateChange.ExitingPlayMode:
-                    Refresh();
+                    Refresh(true);
                     break;
             }
         }
@@ -94,7 +93,7 @@ namespace KrasCore.Editor
             {
                 if (isBootloaderOn)
                 {
-                    if (SceneManager.sceneCount > 1)
+                    if (GetNormalScenesCount() > 1)
                     {
                         EditorSceneManager.CloseScene(data.bootLoaderScene.LoadedScene, true);
                     }
@@ -102,10 +101,7 @@ namespace KrasCore.Editor
                 else
                 {
                     var scene = EditorSceneManager.OpenScene(data.bootLoaderScene.Path, OpenSceneMode.Additive);
-                    if (SceneManager.sceneCount > 1)
-                    {
-                        EditorSceneManager.MoveSceneBefore(scene, SceneManager.GetSceneAt(0));
-                    }
+                    EditorSceneManager.MoveSceneBefore(scene, SceneManager.GetSceneAt(0));
                 }
             });
         }
@@ -145,12 +141,16 @@ namespace KrasCore.Editor
             }
         }
 
-        private static Scene[] GetOpenScenes()
+        private static List<Scene> GetOpenScenes()
         {
-            var openScenes = new Scene[SceneManager.sceneCount];
+            var openScenes = new List<Scene>();
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                openScenes[i] = SceneManager.GetSceneAt(i);
+                var scene = SceneManager.GetSceneAt(i);
+                if (!scene.isSubScene)
+                {
+                    openScenes.Add(scene);
+                }
             }
 
             return openScenes;
@@ -158,17 +158,31 @@ namespace KrasCore.Editor
         
         private static bool OnlyBootloader(ScenesDataSO data)
         {
-            return data.bootLoaderScene.LoadedScene.IsValid() && SceneManager.sceneCount == 1;
+            return data.bootLoaderScene.LoadedScene.IsValid() && GetNormalScenesCount() == 1;
         }
-        
+
+        private static int GetNormalScenesCount()
+        {
+            var normalScenes = 0;
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                if (!SceneManager.GetSceneAt(i).isSubScene) 
+                    normalScenes++;
+            }
+            return normalScenes;
+        }
+
         private static bool SceneInGroupOrBootloader(SceneGroup sceneGroup, Scene scene)
         {
             return sceneGroup.IsSceneInGroup(scene) || scene.path == ScenesDataSO.Instance.bootLoaderScene.Path;
         }
         
-        private static void Refresh()
+        private static void Refresh(bool immediate)
         {
-            EditorApplication.delayCall += () => MainToolbar.Refresh(Path);
+            if (immediate)
+                MainToolbar.Refresh(Path);
+            else
+                EditorApplication.delayCall += () => MainToolbar.Refresh(Path);
         }
     }
 }

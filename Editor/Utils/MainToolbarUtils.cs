@@ -24,10 +24,16 @@ namespace KrasCore.Editor
             return icon;
         }
         
-        public static void StyleElement<T>(string name, T cached, Action<T> styleAction) where T : VisualElement
+        public static void StyleElement<T>(string name, T cached, Action<T> styleAction, bool immediate = false) where T : VisualElement
         {
+            if (immediate && Exists(cached))
+            {
+                ApplyStyle(name, cached, styleAction);
+                return;
+            }
+            
             EditorApplication.delayCall += () => {
-                if (Exists(cached))
+                if (!immediate && Exists(cached))
                 {
                     ApplyStyle(name, cached, styleAction);
                     return;
@@ -81,7 +87,6 @@ namespace KrasCore.Editor
             where T : VisualElement
         {
             styleAction(element);
-            MainToolbar.Refresh(name);
         }
         
         private static VisualElement FindElementByName(string name) 
