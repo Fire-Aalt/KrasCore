@@ -18,7 +18,10 @@
         "BovineLabs.Essence",
         "BovineLabs.Essence.Data",
         "UniTask",
-        "PrimeTween.Runtime"
+        "PrimeTween.Runtime",
+        "Unity.Physics.Custom",
+        "Unity.Mathematics.Extensions",
+        "Unity.Physics.Hybrid"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
