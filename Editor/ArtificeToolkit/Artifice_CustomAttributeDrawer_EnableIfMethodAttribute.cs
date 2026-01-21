@@ -3,6 +3,7 @@ using System.Reflection;
 using ArtificeToolkit.Editor;
 using ArtificeToolkit.Editor.Artifice_CustomAttributeDrawers;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
@@ -37,7 +38,6 @@ namespace KrasCore.Editor
         private void UpdateRootVisibility()
         {
             var trackedValue = _trackedMethod.Invoke(_methodOwner, null);
-            
             if (_attribute.Values.Any(value => Artifice_Utilities.AreEqual(trackedValue, value)))
                 _targetElem.RemoveFromClassList("hide");
             else
