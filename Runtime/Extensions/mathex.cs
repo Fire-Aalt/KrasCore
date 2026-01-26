@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Unity.Mathematics;
+using Unity.Transforms;
 using static Unity.Mathematics.math;
 
 namespace KrasCore
@@ -37,6 +38,16 @@ namespace KrasCore
         public static float AngleDegrees(float2 v)
         {
             return degrees(atan2(v.y, v.x));
+        }
+        
+        public static LocalTransform CombineLocalTransforms(LocalTransform root, LocalTransform child)
+        {
+            return new LocalTransform
+            {
+                Position = root.Position + child.Position,
+                Rotation = mul(root.Rotation, child.Rotation),
+                Scale = root.Scale * child.Scale
+            };
         }
     }
 }
