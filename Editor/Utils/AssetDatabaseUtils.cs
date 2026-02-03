@@ -33,6 +33,21 @@ namespace KrasCore.Editor
             AssetDatabase.Refresh();
         }
         
+        public static T GetAsset<T>(string assetPath, bool recreateIfExists, Func<T> createNew) where T : Object
+        {
+            var loadedAsset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
+            if (loadedAsset != null && recreateIfExists)
+            {
+                AssetDatabase.DeleteAsset(assetPath);
+                AssetDatabase.Refresh();
+
+                loadedAsset = null;
+            }
+                
+            var asset = loadedAsset != null ? loadedAsset : createNew();
+            return asset;
+        }
+        
         public static T CreateNewScriptableObjectAsset<T>(string defaultName, ScriptableObject caller) where T : ScriptableObject
         {
             var instance = ScriptableObject.CreateInstance<T>();
@@ -40,20 +55,53 @@ namespace KrasCore.Editor
             var folderPath = GetFolderPath(assetPath);
             
             var i = 0;
-            var waveAssetPath = folderPath + $"/{defaultName}.asset";
-            while (AssetDatabase.AssetPathExists(waveAssetPath))
+            var newAssetPath = folderPath + $"/{defaultName}.asset";
+            while (AssetDatabase.AssetPathExists(newAssetPath))
             {
                 var iStr = '_' + i.ToString();
                 if (i == 0) iStr = "";
                 
-                waveAssetPath = waveAssetPath.Remove(waveAssetPath.Length - 6 - iStr.Length, 6 + iStr.Length);
-                waveAssetPath += $"_{i}.asset";
+                newAssetPath = newAssetPath.Remove(newAssetPath.Length - 6 - iStr.Length, 6 + iStr.Length);
+                newAssetPath += $"_{i}.asset";
                 i++;
             }
-            SaveAssetToDatabase(instance, waveAssetPath);
+            SaveAssetToDatabase(instance, newAssetPath);
             EditorUtility.SetDirty(caller);
             EditorUtility.SetDirty(instance);
             return instance;
+        }
+        
+        public static GameObject GetPrefabVariant(GameObject sourcePrefab, string targetAssetPath, bool recreate, Action<GameObject> modify = null)
+        {
+            if (sourcePrefab == null) throw new ArgumentNullException(nameof(sourcePrefab));
+            if (string.IsNullOrEmpty(targetAssetPath)) throw new ArgumentNullException(nameof(targetAssetPath));
+
+            if (!targetAssetPath.EndsWith(".prefab")) targetAssetPath += ".prefab";
+            EnsureValidFolder(targetAssetPath);
+            
+            var prefab = GetAsset(targetAssetPath, recreate, () =>
+            {
+                // Instantiate a prefab instance (keeps link to source prefab)
+                var instance = (GameObject)PrefabUtility.InstantiatePrefab(sourcePrefab);
+
+                // Save the instance as a new Prefab Asset. Because the input is a prefab instance root,
+                // Unity will create a Prefab Variant that keeps the link to the original prefab.
+                var saved = PrefabUtility.SaveAsPrefabAsset(instance, targetAssetPath);
+                if (saved == null)
+                    Debug.LogError($"Failed to save prefab variant to '{targetAssetPath}'.");
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                NotifyCreated(saved, targetAssetPath);
+
+                Object.DestroyImmediate(instance);
+                return saved;
+            });
+            
+            modify?.Invoke(prefab);
+            SaveAssetToDatabase(prefab, targetAssetPath);
+            
+            return prefab;
         }
 
         public static string GetFolderPath(string path)
@@ -66,13 +114,30 @@ namespace KrasCore.Editor
             return "Assets" + folderPath[Application.dataPath.Length..];
         }
 
-        public static void SaveAssetToDatabase(Object asset, string assetPath)
+        public static void SaveAssetToDatabase(Object asset, string assetPath, bool notifyOnCreate = true)
         {
             EnsureValidFolder(assetPath);
+
+            if (AssetDatabase.Contains(asset))
+            {
+                EditorUtility.SetDirty(asset);
+            }
+            else
+            {
+                AssetDatabase.CreateAsset(asset, assetPath);
+                if (notifyOnCreate)
+                {
+                    NotifyCreated(asset, assetPath);
+                }
+            }
             
-            AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        private static void NotifyCreated(Object asset, string assetPath)
+        {
+            Debug.Log($"Created {asset} asset at '{assetPath}'");
         }
 
         /// <summary>
