@@ -6,6 +6,21 @@ namespace KrasCore
 {
     public static class ReflectionUtils
     {
+        // Finds a field by name on the type or any base type (including private fields).
+        public static FieldInfo GetFieldInHierarchy(Type startType, string fieldName)
+        {
+            var t = startType;
+            while (t != null)
+            {
+                // DeclaredOnly so we check the fields declared on this exact type.
+                var fi = t.GetField(fieldName,
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly);
+                if (fi != null) return fi;
+                t = t.BaseType;
+            }
+            return null;
+        }
+        
         public static Assembly GetAssemblyWithType<T>()
         {
             var assemblyName = typeof(T).Assembly.GetName().Name;

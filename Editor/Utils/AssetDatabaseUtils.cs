@@ -33,7 +33,7 @@ namespace KrasCore.Editor
             AssetDatabase.Refresh();
         }
         
-        public static T GetAsset<T>(string assetPath, bool recreateIfExists, Func<T> createNew) where T : Object
+        public static T GetOrCreateAsset<T>(string assetPath, bool recreateIfExists, Func<T> createNew) where T : Object
         {
             var loadedAsset = AssetDatabase.LoadAssetAtPath<T>(assetPath);
             if (loadedAsset != null && recreateIfExists)
@@ -43,9 +43,14 @@ namespace KrasCore.Editor
 
                 loadedAsset = null;
             }
+
+            if (loadedAsset == null)
+            {
+                loadedAsset = createNew();
+                Debug.Log($"Created {loadedAsset} asset at '{assetPath}'");
+            }
                 
-            var asset = loadedAsset != null ? loadedAsset : createNew();
-            return asset;
+            return loadedAsset;
         }
         
         public static T CreateNewScriptableObjectAsset<T>(string defaultName, ScriptableObject caller) where T : ScriptableObject
@@ -71,7 +76,7 @@ namespace KrasCore.Editor
             return instance;
         }
         
-        public static GameObject GetPrefabVariant(GameObject sourcePrefab, string targetAssetPath, bool recreate, Action<GameObject> modify = null)
+        public static GameObject GetOrCreatePrefabVariant(GameObject sourcePrefab, string targetAssetPath, bool recreate, Action<GameObject> modify = null)
         {
             if (sourcePrefab == null) throw new ArgumentNullException(nameof(sourcePrefab));
             if (string.IsNullOrEmpty(targetAssetPath)) throw new ArgumentNullException(nameof(targetAssetPath));
@@ -79,7 +84,7 @@ namespace KrasCore.Editor
             if (!targetAssetPath.EndsWith(".prefab")) targetAssetPath += ".prefab";
             EnsureValidFolder(targetAssetPath);
             
-            var prefab = GetAsset(targetAssetPath, recreate, () =>
+            var prefab = GetOrCreateAsset(targetAssetPath, recreate, () =>
             {
                 // Instantiate a prefab instance (keeps link to source prefab)
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(sourcePrefab);
@@ -92,7 +97,6 @@ namespace KrasCore.Editor
 
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                NotifyCreated(saved, targetAssetPath);
 
                 Object.DestroyImmediate(instance);
                 return saved;
@@ -114,7 +118,7 @@ namespace KrasCore.Editor
             return "Assets" + folderPath[Application.dataPath.Length..];
         }
 
-        public static void SaveAssetToDatabase(Object asset, string assetPath, bool notifyOnCreate = true)
+        public static void SaveAssetToDatabase(Object asset, string assetPath)
         {
             EnsureValidFolder(assetPath);
 
@@ -125,19 +129,10 @@ namespace KrasCore.Editor
             else
             {
                 AssetDatabase.CreateAsset(asset, assetPath);
-                if (notifyOnCreate)
-                {
-                    NotifyCreated(asset, assetPath);
-                }
             }
             
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-        }
-
-        private static void NotifyCreated(Object asset, string assetPath)
-        {
-            Debug.Log($"Created {asset} asset at '{assetPath}'");
         }
 
         /// <summary>
