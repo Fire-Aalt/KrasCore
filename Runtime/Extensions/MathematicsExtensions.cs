@@ -38,5 +38,15 @@ namespace KrasCore
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float2 xz(this Vector3 vector) => new(vector.x, vector.z);
+        
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 oxy(this float2 a) => new(0, a.x, a.y);
+                
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 xoy(this float2 a) => new(a.x, 0, a.y);
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 xyo(this float2 a) => new(a.x, a.y, 0);
     }
 }

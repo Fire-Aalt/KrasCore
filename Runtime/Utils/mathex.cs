@@ -49,5 +49,40 @@ namespace KrasCore
                 Scale = root.Scale * child.Scale
             };
         }
+        
+        public static quaternion RotationFromUpToDirection(float3 dir, float3 up)
+        {
+            var len = length(dir);
+            if (len <= 1e-6f) return Unity.Mathematics.quaternion.identity;
+
+            var b = dir / len;
+            var a = up;
+            var dot = math.dot(a, b);
+
+            // If nearly equal, return identity
+            if (dot > 0.999999f)
+            {
+                return Unity.Mathematics.quaternion.identity;
+            }
+
+            // If nearly opposite, rotate 180 degrees around any axis perpendicular to 'a'
+            if (dot < -0.999999f)
+            {
+                var axis = cross(a, new float3(1f, 0f, 0f));
+                if (lengthsq(axis) < 1e-6f)
+                {
+                    axis = cross(a, new float3(0f, 0f, 1f));
+                }
+                axis = normalize(axis);
+                return Unity.Mathematics.quaternion.AxisAngle(axis, PI); // 180 degrees
+            }
+
+            // General case: quaternion that rotates a -> b
+            var v = cross(a, b);
+            var s = sqrt((1f + dot) * 2f);
+            var invs = 1f / s;
+            var q = new float4(v * invs, s * 0.5f); // (x,y,z,w)
+            return new quaternion(q);
+        }
     }
 }
