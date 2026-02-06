@@ -130,7 +130,7 @@ namespace KrasCore.Editor
                     EditorSceneManager.OpenScene(sceneData.Reference.Path, OpenSceneMode.Additive);
                 }
 
-                if (sceneData.Reference == sceneGroup.MainScene.Reference)
+                if (sceneData.Reference.Path == sceneGroup.MainScene.Reference.Path)
                 {
                     SceneManager.SetActiveScene(sceneData.Reference.LoadedScene);
                 }
