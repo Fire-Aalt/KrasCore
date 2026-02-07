@@ -32,6 +32,23 @@ namespace KrasCore
             return degrees(acos(d));
         }
         
+        public static float3 DirectionFromUpAngle(float2 directionXZ, float upAngleRad)
+        {
+            var len = sqrt(directionXZ.x * directionXZ.x + directionXZ.y * directionXZ.y);
+
+            if (len > 0f)
+            {
+                var ux = directionXZ.x / len;
+                var uz = directionXZ.y / len;
+
+                var c = cos(upAngleRad);
+                var s = sin(upAngleRad);
+
+                return new float3(ux * c, s, uz * c);
+            }
+            return new float3(0f, upAngleRad < 0 ? 1f : -1f, 0f);
+        }
+        
         /// <summary>
         /// Starts at (1, 0), goes anticlockwise
         /// </summary>
