@@ -7,10 +7,6 @@ namespace KrasCore
 {
     // Single
     // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.UnsafeParallelListToArraySingleThreaded))]
-    
-    // Multi
-    // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.PrepareParallelListCopyJob))]
-    // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.ParallelListToArrayMultiThreaded))]
     public struct ParallelToListMapper<T> : IDisposable where T : unmanaged
     {
         public ParallelList<T> ParallelList;
