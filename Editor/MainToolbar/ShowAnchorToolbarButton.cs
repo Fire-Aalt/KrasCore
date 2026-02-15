@@ -33,6 +33,7 @@ namespace KrasCore.Editor
         {
             if (change == PlayModeStateChange.EnteredPlayMode)
             {
+                if (AnchorApp.current == null) return;
                 var toolbarView = AnchorApp.current.services.GetRequiredService<ToolbarView>();
                 
                 // Remove 'close' button
