@@ -24,9 +24,9 @@ namespace KrasCore
             List.Clear();
         }
 
-        public JobHandle CopyParallelToListSingle(JobHandle dependency)
+        public JobHandle CopyParallelToListSingle(JobHandle dependency, ParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
-            return ParallelList.CopyToArraySingle(ref List, dependency);
+            return ParallelList.CopyToListSingle(ref List, dependency, jobStud);
         }
 
         public ParallelList<T>.ThreadWriter AsThreadWriter() => ParallelList.AsThreadWriter();
