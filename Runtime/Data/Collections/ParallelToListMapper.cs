@@ -5,8 +5,6 @@ using Unity.Jobs;
 
 namespace KrasCore
 {
-    // Single
-    // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.UnsafeParallelListToArraySingleThreaded))]
     public struct ParallelToListMapper<T> : IDisposable where T : unmanaged
     {
         public ParallelList<T> ParallelList;
