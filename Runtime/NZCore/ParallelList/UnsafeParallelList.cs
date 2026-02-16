@@ -432,49 +432,39 @@ namespace KrasCore.NZCore
             [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* _list;
 
             [NativeSetThreadIndex] private int _threadIndex;
-            private int _currentThreadIndex;
             
             internal ThreadWriter(ref UnsafeParallelList<T> stream)
             {
                 _perThreadListsPtr = stream.perThreadLists;
 
                 _threadIndex = 0;
-                _currentThreadIndex = -1;
                 _list = null;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin()
             {
-                if (_currentThreadIndex != _threadIndex)
-                {
-                    _list = (UnsafeList<T>*)(_perThreadListsPtr + _threadIndex * PER_THREAD_LIST_SIZE);
-                    _currentThreadIndex = _threadIndex;
-                }
+                if (_list == null)
+                    _list = GetListPtr(_threadIndex);
             }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Begin(int newThreadIndex)
-            {
-                if (_currentThreadIndex != newThreadIndex)
-                {
-                    _list = (UnsafeList<T>*)(_perThreadListsPtr + newThreadIndex * PER_THREAD_LIST_SIZE);
-                    _currentThreadIndex = (_threadIndex = newThreadIndex);
-                }
-            }
-
+            
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Add(in T value)
             {
                 Begin();
                 _list->Add(in value);
             }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void AddNoBegin(in T value)
+            {
+                _list->Add(in value);
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Add(in T value, int threadIndex)
             {
-                Begin(threadIndex);
-                _list->Add(in value);
+                GetListPtr(threadIndex)->Add(in value);
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -495,6 +485,12 @@ namespace KrasCore.NZCore
             public int GetThreadIndex()
             {
                 return _threadIndex;
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private UnsafeList<T>* GetListPtr(int threadIndex)
+            {
+                return (UnsafeList<T>*)(_perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
             }
         }
 

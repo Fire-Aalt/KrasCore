@@ -314,22 +314,22 @@ namespace KrasCore.NZCore
 #endif
             }
 
-            // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            // public void Begin()
-            // {
-            //     threadWriter.Begin();
-            // }
-            //
-            // [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            // public void Begin(int threadIndex)
-            // {
-            //     threadWriter.Begin(threadIndex);
-            // }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Begin()
+            {
+                threadWriter.Begin();
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Add(in T value)
             {
                 threadWriter.Add(in value);
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void AddNoBegin(in T value)
+            {
+                threadWriter.AddNoBegin(in value);
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
