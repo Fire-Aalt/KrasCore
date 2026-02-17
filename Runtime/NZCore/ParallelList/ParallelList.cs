@@ -210,15 +210,15 @@ namespace KrasCore.NZCore
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Write(in T value)
+            public void Add(in T value)
             {
-                chunkWriter.Write(in value);
+                chunkWriter.Add(in value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void WriteMemCpy(ref T value)
+            public void AddMemCpy(ref T value)
             {
-                chunkWriter.WriteMemCpy(ref value);
+                chunkWriter.AddMemCpy(ref value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,28 +314,34 @@ namespace KrasCore.NZCore
 #endif
             }
 
+            // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            // public void Begin()
+            // {
+            //     threadWriter.Begin();
+            // }
+            //
+            // [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            // public void Begin(int threadIndex)
+            // {
+            //     threadWriter.Begin(threadIndex);
+            // }
+
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Begin()
+            public void Add(in T value)
             {
-                threadWriter.Begin();
+                threadWriter.Add(in value);
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Add(in T value, int threadIndex)
+            {
+                threadWriter.Add(in value, threadIndex);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Begin(int threadIndex)
+            public void AddMemCpy(ref T value)
             {
-                threadWriter.Begin(threadIndex);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Write(in T value)
-            {
-                threadWriter.Write(in value);
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void WriteMemCpy(ref T value)
-            {
-                threadWriter.WriteMemCpy(ref value);
+                threadWriter.AddMemCpy(ref value);
             }
 
             public int GetThreadIndex()
@@ -393,11 +399,11 @@ namespace KrasCore.NZCore
 
         // helper jobs
 
-        public JobHandle CopyToArraySingle(
+        public JobHandle CopyToListSingle(
             ref NativeList<T> nativeList,
-            JobHandle dependency)
+            JobHandle dependency, UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
-            return new UnsafeParallelListToArraySingleThreaded()
+            return new UnsafeParallelListToArraySingleThreaded
             {
                 ParallelList = _unsafeParallelList,
                 List = nativeList.m_ListData
@@ -435,36 +441,6 @@ namespace KrasCore.NZCore
         //         ArrayHashMap2 = arrayHashMap2
         //     }.Schedule(dependency);
         // }
-
-        [BurstCompile]
-        public struct ParallelListToArraySingleThreaded : IJob
-        {
-            [ReadOnly] public ParallelList<T> ParallelList;
-            public NativeList<T> Array;
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Execute()
-            {
-                int parallelListLength = ParallelList.Length;
-                int oldArrayLength = Array.Length;
-
-                Array.ResizeUninitialized(oldArrayLength + parallelListLength);
-
-                //Debug.Log($"Copying {parallelListLength} elements");
-
-                var sizeOf = sizeof(T);
-                UnsafeList<T>* listData = Array.m_ListData;
-
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
-                {
-                    ref var threadList = ref ParallelList.GetUnsafeList(i);
-
-                    void* dst = ((byte*)listData->Ptr) + oldArrayLength * sizeOf;
-                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
-                    oldArrayLength += threadList.m_length;
-                }
-            }
-        }
 
         [BurstCompile]
         public struct UnsafeParallelListToArraySingleThreaded : IJob
@@ -596,24 +572,24 @@ namespace KrasCore.NZCore
         /////////////////////////////// 
         /// parallel
         ///////////////////////////////
-        public JobHandle CopyToArrayMulti(
-            ref NativeList<T> list,
-            JobHandle dependency)
-        {
-            var prepareHandle = new PrepareParallelListCopyJob()
-            {
-                ParallelList = this,
-                List = list
-            }.Schedule(dependency);
-
-            var copyHandle = new ParallelListToArrayMultiThreaded()
-            {
-                ParallelList = this,
-                List = list
-            }.ScheduleParallel(JobsUtility.ThreadIndexCount, 1, prepareHandle);
-
-            return copyHandle;
-        }
+        // public JobHandle CopyToArrayMulti(
+        //     ref NativeList<T> list,
+        //     JobHandle dependency)
+        // {
+        //     var prepareHandle = new PrepareParallelListCopyJob()
+        //     {
+        //         ParallelList = this,
+        //         List = list
+        //     }.Schedule(dependency);
+        //
+        //     var copyHandle = new ParallelListToArrayMultiThreaded()
+        //     {
+        //         ParallelList = this,
+        //         List = list
+        //     }.ScheduleParallel(JobsUtility.ThreadIndexCount, 1, prepareHandle);
+        //
+        //     return copyHandle;
+        // }
 
         // public JobHandle CopyToArrayParallelAndIndex<TKey>(ref NativeList<T> nativeList, ref ArrayHashMap<TKey, T> arrayHashMap, JobHandle dependency)
         //     where TKey : unmanaged, IEquatable<TKey>
@@ -657,44 +633,44 @@ namespace KrasCore.NZCore
         //     return copyAndIndexHandle1;
         // }
 
-        [BurstCompile]
-        public struct PrepareParallelListCopyJob : IJob
-        {
-            [ReadOnly] public ParallelList<T> ParallelList;
-            public NativeList<T> List;
-
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public void Execute()
-            {
-                int parallelListCount = ParallelList.Length;
-                List.SetCapacity(List.Length + parallelListCount);
-            }
-        }
-
-        [BurstCompile]
-        public struct ParallelListToArrayMultiThreaded : IJobFor
-        {
-            [ReadOnly] public ParallelList<T> ParallelList;
-
-            [NativeDisableContainerSafetyRestriction]
-            public NativeList<T> List;
-
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public void Execute(int index)
-            {
-                var threadList = ParallelList.GetUnsafeList(index);
-                int threadListLength = threadList.Length;
-
-                if (threadListLength == 0)
-                    return;
-
-                var sizeOf = sizeof(T);
-
-                void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
-                Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
-                UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
-            }
-        }
+        // [BurstCompile]
+        // public struct PrepareParallelListCopyJob : IJob
+        // {
+        //     [ReadOnly] public ParallelList<T> ParallelList;
+        //     public NativeList<T> List;
+        //
+        //     [MethodImpl(MethodImplOptions.NoInlining)]
+        //     public void Execute()
+        //     {
+        //         int parallelListCount = ParallelList.Length;
+        //         List.SetCapacity(List.Length + parallelListCount);
+        //     }
+        // }
+        //
+        // [BurstCompile]
+        // public struct ParallelListToArrayMultiThreaded : IJobFor
+        // {
+        //     [ReadOnly] public ParallelList<T> ParallelList;
+        //
+        //     [NativeDisableContainerSafetyRestriction]
+        //     public NativeList<T> List;
+        //
+        //     [MethodImpl(MethodImplOptions.NoInlining)]
+        //     public void Execute(int index)
+        //     {
+        //         var threadList = ParallelList.GetUnsafeList(index);
+        //         int threadListLength = threadList.Length;
+        //
+        //         if (threadListLength == 0)
+        //             return;
+        //
+        //         var sizeOf = sizeof(T);
+        //
+        //         void* dst = List.GetUnsafePtr() + List.m_ListData->m_length;
+        //         Interlocked.Add(ref List.m_ListData->m_length, threadListLength);
+        //         UnsafeUtility.MemCpy(dst, threadList.Ptr, threadListLength * sizeOf);
+        //     }
+        // }
 
         // [BurstCompile]
         // public struct PrepareParallelListCopyAndIndexJob<TKey> : IJob

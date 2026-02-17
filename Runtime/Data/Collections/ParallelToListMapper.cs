@@ -7,10 +7,6 @@ namespace KrasCore
 {
     // Single
     // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.UnsafeParallelListToArraySingleThreaded))]
-    
-    // Multi
-    // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.PrepareParallelListCopyJob))]
-    // [assembly: RegisterGenericJobType(typeof(ParallelList<YourType>.ParallelListToArrayMultiThreaded))]
     public struct ParallelToListMapper<T> : IDisposable where T : unmanaged
     {
         public ParallelList<T> ParallelList;
@@ -28,9 +24,9 @@ namespace KrasCore
             List.Clear();
         }
 
-        public JobHandle CopyParallelToListSingle(JobHandle dependency)
+        public JobHandle CopyParallelToListSingle(JobHandle dependency, ParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
-            return ParallelList.CopyToArraySingle(ref List, dependency);
+            return ParallelList.CopyToListSingle(ref List, dependency, jobStud);
         }
 
         public ParallelList<T>.ThreadWriter AsThreadWriter() => ParallelList.AsThreadWriter();

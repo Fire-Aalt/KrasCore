@@ -321,12 +321,12 @@ namespace KrasCore.NZCore
                 startIndex = list->m_length;
             }
 
-            public void Write(in T value)
+            public void Add(in T value)
             {
                 list->Add(in value);
             }
 
-            public void WriteMemCpy(ref T value)
+            public void AddMemCpy(ref T value)
             {
                 var idx = list->m_length;
 
@@ -428,55 +428,73 @@ namespace KrasCore.NZCore
 
         public struct ThreadWriter
         {
-            [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadListsPtr;
-            [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* list;
+            [NativeDisableUnsafePtrRestriction] private readonly byte* _perThreadListsPtr;
+            [NativeDisableUnsafePtrRestriction] private UnsafeList<T>* _list;
 
-            [NativeSetThreadIndex] private int threadIndex;
-
+            [NativeSetThreadIndex] private int _threadIndex;
+            private int _currentThreadIndex;
+            
             internal ThreadWriter(ref UnsafeParallelList<T> stream)
             {
-                perThreadListsPtr = stream.perThreadLists;
+                _perThreadListsPtr = stream.perThreadLists;
 
-                threadIndex = 0;
-                list = null;
+                _threadIndex = 0;
+                _currentThreadIndex = -1;
+                _list = null;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin()
             {
-                list = (UnsafeList<T>*)(perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
+                if (_currentThreadIndex != _threadIndex)
+                {
+                    _list = (UnsafeList<T>*)(_perThreadListsPtr + _threadIndex * PER_THREAD_LIST_SIZE);
+                    _currentThreadIndex = _threadIndex;
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Begin(int newThreadIndex)
             {
-                threadIndex = newThreadIndex;
-                list = (UnsafeList<T>*)(perThreadListsPtr + newThreadIndex * PER_THREAD_LIST_SIZE);
+                if (_currentThreadIndex != newThreadIndex)
+                {
+                    _list = (UnsafeList<T>*)(_perThreadListsPtr + newThreadIndex * PER_THREAD_LIST_SIZE);
+                    _currentThreadIndex = (_threadIndex = newThreadIndex);
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void Write(in T value)
+            public void Add(in T value)
             {
-                list->Add(in value);
+                Begin();
+                _list->Add(in value);
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void WriteMemCpy(ref T value)
+            public void Add(in T value, int threadIndex)
             {
-                var idx = list->m_length;
+                Begin(threadIndex);
+                _list->Add(in value);
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void AddMemCpy(ref T value)
+            {
+                Begin();
+                var idx = _list->m_length;
 
-                if (list->m_length + 1 > list->Capacity)
-                    list->Resize(idx + 1);
+                if (_list->m_length + 1 > _list->Capacity)
+                    _list->Resize(idx + 1);
                 else
-                    list->m_length += 1;
+                    _list->m_length += 1;
 
-                UnsafeUtility.MemCpy(list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
+                UnsafeUtility.MemCpy(_list->Ptr + idx, UnsafeUtility.AddressOf(ref value), UnsafeUtility.SizeOf<T>());
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public int GetThreadIndex()
             {
-                return threadIndex;
+                return _threadIndex;
             }
         }
 

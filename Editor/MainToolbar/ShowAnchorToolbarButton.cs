@@ -2,6 +2,7 @@ using BovineLabs.Anchor;
 using BovineLabs.Anchor.Toolbar;
 using BovineLabs.Core.ConfigVars;
 using Unity.AppUI.MVVM;
+using Unity.AppUI.UI;
 using Unity.Burst;
 using UnityEditor;
 using UnityEditor.Toolbars;
@@ -33,8 +34,9 @@ namespace KrasCore.Editor
         {
             if (change == PlayModeStateChange.EnteredPlayMode)
             {
+                if (AnchorApp.current == null) return;
                 var toolbarView = AnchorApp.current.services.GetRequiredService<ToolbarView>();
-                
+
                 // Remove 'close' button
                 var button = FindButtonWithTrailingIcon(toolbarView.panel.visualTree, "x");
                 button.RemoveFromHierarchy();

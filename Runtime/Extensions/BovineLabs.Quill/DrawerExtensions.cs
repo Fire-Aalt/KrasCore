@@ -45,6 +45,25 @@ namespace KrasCore.Quill
             p2 = position + size3Half;
             p3 = new float3(position.x + size3Half.x, position.y - size3Half.y, position.z);
         }
+        
+        public static void CapsuleFromPoints(this Drawer drawer, float3 start, float3 end, float radius, int sideCount, Color color, float duration = 0f)
+        {
+            var dir = end - start;
+            var length = math.length(dir);
+
+            var center = (start + end) * 0.5f;
+
+            var cylinderHeight = length + 2f * radius;
+            var rot = mathex.RotationFromUpToDirection(dir, math.up());
+            
+            if (length <= 1e-6f)
+            {
+                cylinderHeight = 2f * radius;
+                rot = quaternion.identity;
+            }
+            
+            drawer.Capsule(center, rot, cylinderHeight, radius, sideCount, color, duration);
+        }
     }
 }
 #endif
