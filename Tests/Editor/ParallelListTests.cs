@@ -1,6 +1,4 @@
 using System;
-using System.Threading.Tasks;
-using KrasCore.NZCore;
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Jobs;
@@ -130,6 +128,54 @@ namespace KrasCore.Tests.Editor
                     reader.Reset(chunk);
                     Assert.That(reader.Read(), Is.EqualTo(chunk * itemsPerChunk));
                 }
+            }
+            finally
+            {
+                list.Dispose();
+            }
+        }
+        
+        [Test]
+        public void Enumerator_IteratesAllValuesInExpectedOrder_AndResetWorks()
+        {
+            var slotCount = Math.Min(JobsUtility.ThreadIndexCount, ManagedParallelSlotCap);
+            var itemsPerSlot = 13;
+            var expectedCount = slotCount * itemsPerSlot;
+            var valueStride = 10_000;
+
+            var list = new ParallelList<int>(1, Allocator.Persistent);
+
+            try
+            {
+                var writer = list.AsThreadWriter();
+                for (var slot = 0; slot < slotCount; slot++)
+                {
+                    var baseValue = slot * valueStride;
+                    for (var i = 0; i < itemsPerSlot; i++)
+                    {
+                        var value = baseValue + i;
+                        writer.Add(in value, slot);
+                    }
+                }
+
+                var enumerator = list.GetEnumerator();
+                var visited = 0;
+
+                while (enumerator.MoveNext())
+                {
+                    var expectedSlot = visited / itemsPerSlot;
+                    var expectedInSlot = visited % itemsPerSlot;
+                    var expected = expectedSlot * valueStride + expectedInSlot;
+
+                    Assert.That(enumerator.Current, Is.EqualTo(expected));
+                    visited++;
+                }
+
+                Assert.That(visited, Is.EqualTo(expectedCount));
+
+                enumerator.Reset();
+                Assert.That(enumerator.MoveNext(), Is.True);
+                Assert.That(enumerator.Current, Is.EqualTo(0));
             }
             finally
             {

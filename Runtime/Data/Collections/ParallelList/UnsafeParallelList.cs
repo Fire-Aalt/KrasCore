@@ -11,7 +11,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace KrasCore.NZCore
+namespace KrasCore
 {
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct UnsafeParallelList<T> : INativeDisposable
