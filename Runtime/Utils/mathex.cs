@@ -32,6 +32,13 @@ namespace KrasCore
             return degrees(acos(d));
         }
         
+        public static float3 ForwardXZ(quaternion q)
+        {
+            var fwd = mul(q, new float3(1f, 0f, 0f));
+            fwd.y = 0f;
+            return normalizesafe(fwd);
+        }
+        
         public static float3 DirectionFromUpAngle(float2 directionXZ, float upAngleRad)
         {
             var len = sqrt(directionXZ.x * directionXZ.x + directionXZ.y * directionXZ.y);
