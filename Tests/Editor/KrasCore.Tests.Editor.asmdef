@@ -1,0 +1,24 @@
+{
+    "name": "KrasCore.Tests.Editor",
+    "rootNamespace": "KrasCore.Tests.Editor",
+    "references": [
+        "KrasCore",
+        "Unity.Entities",
+        "Unity.Collections",
+        "Unity.Jobs"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}

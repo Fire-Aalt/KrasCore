@@ -23,6 +23,7 @@ This repo is a Unity package (not a standalone app), so commands run from a host
 ## Coding Style & Naming Conventions
 - Language: C# (Unity). Use 4-space indentation and Allman braces, consistent with current files.
 - Use `PascalCase` for types, methods, and filenames.
+- Use `var` for variable declarations whenever possible; use explicit types only where `var` is not possible.
 - Keep helper naming consistent: `*Extensions`, `*Utils`, `*SystemGroup`, etc.
 - Runtime namespaces should stay under `KrasCore`; editor code under `KrasCore.Editor`.
 - Keep editor-only APIs inside `Editor/` assemblies; do not leak `UnityEditor` references into runtime assemblies.
