@@ -4,8 +4,10 @@
     "references": [
         "KrasCore",
         "Unity.Entities",
+        "Unity.PerformanceTesting",
         "Unity.Collections",
-        "Unity.Jobs"
+        "Unity.Jobs",
+        "Unity.Burst"
     ],
     "includePlatforms": [
         "Editor"
