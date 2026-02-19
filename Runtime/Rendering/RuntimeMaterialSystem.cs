@@ -52,35 +52,28 @@ namespace KrasCore
         {
             if (!_materials.TryGetValue(lookup, out var batchMaterial))
             {
-                var mat = new Material(lookup.SrcMaterial)
-                {
-                    mainTexture = lookup.Texture
-                };
-
-                BatchMaterialID matId = default;
-                if (registerIfMissing)
-                    matId = entitiesGraphicsSystem.RegisterMaterial(mat);
-                
-                batchMaterial = new BatchMaterial(mat, matId);
+                batchMaterial = CreateAndRegister(lookup, entitiesGraphicsSystem, registerIfMissing);
                 _materials.Add(lookup, batchMaterial);
             }
 #if UNITY_EDITOR
             else if (batchMaterial.Material == null)
             {
-                var mat = new Material(lookup.SrcMaterial)
-                {
-                    mainTexture = lookup.Texture
-                };
-                
-                BatchMaterialID matId = default;
-                if (registerIfMissing)
-                    matId = entitiesGraphicsSystem.RegisterMaterial(mat);
-                
-                batchMaterial = new BatchMaterial(mat, matId);
+                batchMaterial = CreateAndRegister(lookup, entitiesGraphicsSystem, registerIfMissing);
                 _materials[lookup] = batchMaterial;
             }
 #endif
             return batchMaterial;
+        }
+
+        private static BatchMaterial CreateAndRegister(MaterialLookup lookup, EntitiesGraphicsSystem entitiesGraphicsSystem, bool registerIfMissing)
+        {
+            var mat = CloneMaterialUtility.CloneFromLookup(lookup);
+            
+            BatchMaterialID matId = default;
+            if (registerIfMissing)
+                matId = entitiesGraphicsSystem.RegisterMaterial(mat);
+            
+            return new BatchMaterial(mat, matId);
         }
 
         protected override void OnDestroy()
