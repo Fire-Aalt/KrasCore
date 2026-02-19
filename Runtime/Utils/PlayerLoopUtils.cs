@@ -18,7 +18,9 @@ namespace KrasCore
             {
                 return AddRuntimeSystem<TTiming>(type, updateCallback, null);
             }
+#if UNITY_EDITOR
             EditorApplication.update += () => updateCallback();
+#endif
             return true;
         }
         
