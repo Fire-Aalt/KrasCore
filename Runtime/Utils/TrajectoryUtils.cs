@@ -1,4 +1,3 @@
-using BovineLabs.Quill;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -9,52 +8,17 @@ namespace KrasCore
     [BurstCompile]
     public static class TrajectoryUtils
     {
-        private const int PreviewLinesCount = 64;
-        private const int PreviewSamples = 256;
-
-        [BurstCompile]
-        public static void DrawTrajectory(in float3 initialPos, float gravity, float initialVelocity, float angleDeg, float angleDivergence, in Color color)
-        {
-            if (angleDivergence == 0f)
-            {
-                var maxPreviewX = GetMaxPreviewX(initialPos.y, gravity, initialVelocity, angleDeg);
-                DrawTrajectory(initialPos, gravity, initialVelocity, color, angleDeg, maxPreviewX);
-            }
-            else
-            {
-                for (var i = 0; i < PreviewSamples; i++)
-                {
-                    var t = (float)i / (PreviewSamples - 1);
-                    var divergentAngleDeg = angleDeg + math.lerp(-angleDivergence, angleDivergence, t);
-                    var maxPreviewX = GetMaxPreviewX(initialPos.y, gravity, initialVelocity, divergentAngleDeg);
-
-                    DrawTrajectory(initialPos, gravity, initialVelocity, color, divergentAngleDeg, maxPreviewX);
-                }
-            }
-        }
-
-        private static void DrawTrajectory(float3 initialPos, float gravity, float initialVelocity, Color color, float angleDeg, float maxPreviewX)
-        {
-            if (maxPreviewX <= 0f)
-            {
-                return;
-            }
-
-            EvaluateProjectileMotion(initialPos, gravity, initialVelocity, angleDeg, maxPreviewX, Allocator.Temp, out var linePoints);
-            GlobalDraw.Lines(linePoints.ToArray(Allocator.Temp), color);
-        }
-
         [BurstCompile]
         public static void EvaluateProjectileMotion(in float3 initialPos, float gravity, float initialVelocity,
-            float angleDeg, float maxPreviewX, Allocator allocator, out NativeList<float3> linePoints)
+            float angleDeg, float maxDistance, float linesCount, Allocator allocator, out NativeList<float3> linePoints)
         {
             linePoints = new NativeList<float3>(64, allocator);
 
             var angleRad = angleDeg * Mathf.Deg2Rad;
             linePoints.Add(GetProjectilePos(initialPos, gravity, initialVelocity, angleRad, 0f));
-            for (var i = 1; i <= PreviewLinesCount; i++)
+            for (var i = 1; i <= linesCount; i++)
             {
-                var xDisplacement = maxPreviewX * i / PreviewLinesCount;
+                var xDisplacement = maxDistance * i / linesCount;
                 var pos = GetProjectilePos(initialPos, gravity, initialVelocity, angleRad, xDisplacement);
 
                 linePoints.Add(pos);
@@ -64,7 +28,7 @@ namespace KrasCore
                     break;
                 }
 
-                if (i < PreviewLinesCount)
+                if (i < linesCount)
                 {
                     linePoints.Add(pos);
                 }
@@ -87,7 +51,7 @@ namespace KrasCore
             return h + x * tanA - g * (x * x) / (2f * v0 * v0 * (cosA * cosA));
         }
 
-        private static float GetMaxPreviewX(float initialHeight, float gravity, float initialVelocity, float angleDeg)
+        public static float GetMaxTrajectoryDistance(float initialHeight, float gravity, float initialVelocity, float angleDeg)
         {
             if (gravity <= 0f || initialVelocity <= 0f)
             {
@@ -97,16 +61,17 @@ namespace KrasCore
             var angleRad = angleDeg * Mathf.Deg2Rad;
             var sinA = math.sin(angleRad);
             var cosA = math.cos(angleRad);
-            var velocitySquared = initialVelocity * initialVelocity;
-            var discriminant = sinA * sinA + 2f * gravity * initialHeight / velocitySquared;
+            var verticalVelocity = initialVelocity * sinA;
+            var horizontalVelocity = initialVelocity * cosA;
+            var discriminant = verticalVelocity * verticalVelocity + 2f * gravity * initialHeight;
 
             if (discriminant < 0f)
             {
                 return 0f;
             }
 
-            var maxPreviewX = velocitySquared * cosA * (sinA + math.sqrt(discriminant)) / gravity;
-            return math.max(maxPreviewX, 0f);
+            var timeToGround = (verticalVelocity + math.sqrt(discriminant)) / gravity;
+            return horizontalVelocity * math.max(timeToGround, 0f);
         }
     }
 }
