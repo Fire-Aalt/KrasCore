@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace KrasCore.Tests.Editor
 {
-    public class RuntimeMaterialSystemTests
+    public class RuntimeMaterialTests
     {
         private World _world;
         private RuntimeMaterialSystem _system;
@@ -13,7 +13,7 @@ namespace KrasCore.Tests.Editor
         [SetUp]
         public void SetUp()
         {
-            _world = new World(nameof(RuntimeMaterialSystemTests), WorldFlags.Editor);
+            _world = new World(nameof(RuntimeMaterialTests), WorldFlags.Editor);
             _system = _world.GetOrCreateSystemManaged<RuntimeMaterialSystem>();
             _entityManager = _world.EntityManager;
         }
@@ -31,7 +31,7 @@ namespace KrasCore.Tests.Editor
         }
 
         [Test]
-        public void Update_AssignsMaterialAndDisablesLookup()
+        public void Update_AssignsMaterialFromTextureAndDisablesLookup()
         {
             var srcMaterial = CreateMaterial();
             var texture = CreateTexture(Color.red);
@@ -59,6 +59,38 @@ namespace KrasCore.Tests.Editor
         }
 
         [Test]
+        public void Update_AssignsSecondarySpriteTextures_WhenLookupUsesSprite()
+        {
+            var srcMaterial = CreateMaterialWithSecondaryTextureProperty(out var secondaryTextureProperty);
+            var mainTexture = CreateTexture(Color.gray, "RuntimeMaterialTests_MainTexture");
+            var secondaryTexture = CreateTexture(Color.black, "RuntimeMaterialTests_SecondaryTexture");
+            var sprite = CreateSprite(mainTexture, secondaryTextureProperty, secondaryTexture);
+
+            try
+            {
+                var entity = CreateRuntimeMaterialEntity(srcMaterial, sprite, isEnabled: true, isPrefab: false);
+
+                _system.Update();
+
+                var runtimeMaterial = _entityManager.GetComponentData<RuntimeMaterial>(entity);
+                Assert.That(runtimeMaterial.Value.IsValid(), Is.True);
+
+                var assigned = runtimeMaterial.Value.Value;
+                Assert.That(assigned, Is.Not.Null);
+                Assert.That(assigned.mainTexture, Is.EqualTo(mainTexture));
+                Assert.That(assigned.GetTexture(secondaryTextureProperty), Is.EqualTo(secondaryTexture));
+                Assert.That(_entityManager.IsComponentEnabled<RuntimeMaterialLookup>(entity), Is.False);
+            }
+            finally
+            {
+                DestroyObject(sprite);
+                DestroyObject(secondaryTexture);
+                DestroyObject(mainTexture);
+                DestroyObject(srcMaterial);
+            }
+        }
+
+        [Test]
         public void Update_ProcessesPrefabEntities()
         {
             var srcMaterial = CreateMaterial();
@@ -72,6 +104,7 @@ namespace KrasCore.Tests.Editor
 
                 var runtimeMaterial = _entityManager.GetComponentData<RuntimeMaterial>(prefabEntity);
                 Assert.That(runtimeMaterial.Value.IsValid(), Is.True);
+                Assert.That(runtimeMaterial.Value.Value.mainTexture, Is.EqualTo(texture));
                 Assert.That(_entityManager.IsComponentEnabled<RuntimeMaterialLookup>(prefabEntity), Is.False);
             }
             finally
@@ -111,7 +144,7 @@ namespace KrasCore.Tests.Editor
         }
 
         [Test]
-        public void Update_ReusesCachedMaterialForIdenticalLookup()
+        public void Update_ReusesCachedMaterialForIdenticalTextureLookup()
         {
             var srcMaterial = CreateMaterial();
             var texture = CreateTexture(Color.yellow);
@@ -129,6 +162,8 @@ namespace KrasCore.Tests.Editor
                 Assert.That(firstMaterial, Is.Not.Null);
                 Assert.That(secondMaterial, Is.Not.Null);
                 Assert.That(ReferenceEquals(firstMaterial, secondMaterial), Is.True);
+                Assert.That(_entityManager.IsComponentEnabled<RuntimeMaterialLookup>(first), Is.False);
+                Assert.That(_entityManager.IsComponentEnabled<RuntimeMaterialLookup>(second), Is.False);
             }
             finally
             {
@@ -210,6 +245,20 @@ namespace KrasCore.Tests.Editor
             return entity;
         }
 
+        private Entity CreateRuntimeMaterialEntity(Material srcMaterial, Sprite sprite, bool isEnabled, bool isPrefab)
+        {
+            var entity = _entityManager.CreateEntity(typeof(RuntimeMaterial), typeof(RuntimeMaterialLookup));
+            _entityManager.SetComponentData(entity, new RuntimeMaterialLookup(srcMaterial, sprite));
+            _entityManager.SetComponentEnabled<RuntimeMaterialLookup>(entity, isEnabled);
+
+            if (isPrefab)
+            {
+                _entityManager.AddComponent<Prefab>(entity);
+            }
+
+            return entity;
+        }
+
         private static Material CreateMaterial()
         {
             var shader = Shader.Find("Unlit/Texture")
@@ -222,17 +271,91 @@ namespace KrasCore.Tests.Editor
 
             var material = new Material(shader)
             {
-                name = "RuntimeMaterialSystemTests_SrcMaterial"
+                name = "RuntimeMaterialTests_SrcMaterial"
             };
 
             return material;
         }
 
-        private static Texture2D CreateTexture(Color color)
+        private static Material CreateMaterialWithSecondaryTextureProperty(out string secondaryTextureProperty)
+        {
+            var shaderNames = new[]
+            {
+                "Standard",
+                "Universal Render Pipeline/Lit",
+                "Universal Render Pipeline/Simple Lit"
+            };
+            var textureProperties = new[]
+            {
+                "_BumpMap",
+                "_MetallicGlossMap",
+                "_OcclusionMap",
+                "_EmissionMap",
+                "_DetailMask",
+                "_SpecGlossMap"
+            };
+
+            foreach (var shaderName in shaderNames)
+            {
+                var shader = Shader.Find(shaderName);
+                if (shader == null)
+                {
+                    continue;
+                }
+
+                var material = new Material(shader)
+                {
+                    name = "RuntimeMaterialTests_SrcMaterial_WithSecondaryTexture"
+                };
+
+                foreach (var property in textureProperties)
+                {
+                    if (!material.HasTexture(property))
+                    {
+                        continue;
+                    }
+
+                    secondaryTextureProperty = property;
+                    return material;
+                }
+
+                DestroyObject(material);
+            }
+
+            Assert.Fail("No suitable shader with a secondary texture property was found for RuntimeMaterialSystem tests.");
+            secondaryTextureProperty = null;
+            return null;
+        }
+
+        private static Sprite CreateSprite(Texture2D mainTexture, string secondaryTextureProperty, Texture2D secondaryTexture)
+        {
+            var sprite = Sprite.Create(
+                mainTexture,
+                new Rect(0f, 0f, mainTexture.width, mainTexture.height),
+                new Vector2(0.5f, 0.5f),
+                100f,
+                0,
+                SpriteMeshType.FullRect,
+                Vector4.zero,
+                false,
+                new[]
+                {
+                    new SecondarySpriteTexture
+                    {
+                        name = secondaryTextureProperty,
+                        texture = secondaryTexture
+                    }
+                });
+
+            sprite.name = "RuntimeMaterialTests_Sprite";
+            return sprite;
+        }
+
+        private static Texture2D CreateTexture(Color color, string name = "RuntimeMaterialTests_Texture")
         {
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false)
             {
-                name = "RuntimeMaterialSystemTests_Texture"
+                name = name
             };
 
             texture.SetPixel(0, 0, color);
