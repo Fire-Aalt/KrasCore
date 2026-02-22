@@ -10,6 +10,17 @@ namespace KrasCore
     [SuppressMessage("ReSharper", "IdentifierTypo", Justification = "lower case causes issues")]
     public static class mathex
     {
+        public static quaternion FromToRotation(quaternion a, quaternion b)
+        {
+            // a = normalize(a);
+            // b = normalize(b);
+
+            // Delta that maps a -> b under Unity's multiplication convention:
+            // b = delta * a  => delta = b * inverse(a)
+            var delta = mul(b, inverse(a));
+            return normalize(delta);
+        }
+        
         public static float3 ForwardXZFromLocalToWorld(float4x4 localToWorld)
         {
             // Use right (local +X) projected to XZ
