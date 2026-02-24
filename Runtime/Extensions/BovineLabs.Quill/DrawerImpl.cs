@@ -143,22 +143,16 @@ namespace KrasCore.Quill
             }
         }
         
-        public static void SquareXZ(in float3 position, in float2 size, out float3 p0, out float3 p1, out float3 p2, out float3 p3)
+        public static void Square(in float3 position, in float2 size, in float3 up, out float3 p0, out float3 p1, out float3 p2, out float3 p3)
         {
-            var size3Half = new float3(size.x, 0, size.y) / 2f;
-            p0 = position - size3Half;
-            p1 = new float3(position.x - size3Half.x, position.y, position.z + size3Half.z);
-            p2 = position + size3Half;
-            p3 = new float3(position.x + size3Half.x, position.y, position.z - size3Half.z);
-        }
-        
-        public static void SquareXY(in float3 position, in float2 size, out float3 p0, out float3 p1, out float3 p2, out float3 p3)
-        {
-            var size3Half = new float3(size.x, size.y, 0) / 2f;
-            p0 = position - size3Half;
-            p1 = new float3(position.x - size3Half.x, position.y + size3Half.y, position.z );
-            p2 = position + size3Half;
-            p3 = new float3(position.x + size3Half.x, position.y - size3Half.y, position.z);
+            var upNormalized = math.normalizesafe(up, math.up());
+            var rotation = mathex.RotationFromUpToDirection(upNormalized, math.up());
+            var halfSize = size * 0.5f;
+            
+            p0 = position + math.mul(rotation, new float3(-halfSize.x, 0f, -halfSize.y));
+            p1 = position + math.mul(rotation, new float3(-halfSize.x, 0f, halfSize.y));
+            p2 = position + math.mul(rotation, new float3(halfSize.x, 0f, halfSize.y));
+            p3 = position + math.mul(rotation, new float3(halfSize.x, 0f, -halfSize.y));
         }
         
         public static void Trajectory(NativeList<float3> points, float3 initialPos, float gravity, float initialVelocity,

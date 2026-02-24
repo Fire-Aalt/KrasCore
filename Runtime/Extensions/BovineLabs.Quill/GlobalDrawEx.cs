@@ -15,7 +15,7 @@ namespace KrasCore.Quill
         
         public static void SquareXZ(float3 position, float2 size, Color color, float duration = 0f)
         {
-            DrawerImpl.SquareXZ(position, size, out var p0, out var p1, out var p2, out var p3);
+            DrawerImpl.Square(position, size, math.up(), out var p0, out var p1, out var p2, out var p3);
             GlobalDraw.Quad(p0, p1, p2, p3, color, duration);
         }
         
@@ -29,13 +29,13 @@ namespace KrasCore.Quill
         
         public static void SolidSquareXZ(float3 position, float2 size, Color color, float duration = 0f)
         {
-            DrawerImpl.SquareXZ(position, size, out var p0, out var p1, out var p2, out var p3);
+            DrawerImpl.Square(position, size, math.up(), out var p0, out var p1, out var p2, out var p3);
             GlobalDraw.SolidQuad(p0, p1, p2, p3, color, duration);
         }
         
         public static void SolidSquareXY(float3 position, float2 size, Color color, float duration = 0f)
         {
-            DrawerImpl.SquareXY(position, size, out var p0, out var p1, out var p2, out var p3);
+            DrawerImpl.Square(position, size, new float3(0f, 0f, -1f), out var p0, out var p1, out var p2, out var p3);
             GlobalDraw.SolidQuad(p0, p1, p2, p3, color, duration);
         }
 
