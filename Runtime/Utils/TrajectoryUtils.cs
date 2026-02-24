@@ -1,21 +1,17 @@
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace KrasCore
 {
-    [BurstCompile]
     public static class TrajectoryUtils
     {
-        [BurstCompile]
-        public static void EvaluateProjectileMotion(in float3 initialPos, float gravity, float initialVelocity,
-            float angleDeg, float maxDistance, float linesCount, Allocator allocator, out NativeList<float3> linePoints)
+        public static void EvaluateProjectileMotion(NativeList<float3> linePoints, in float3 initialPos, float gravity,
+            float initialVelocity, float angleDeg, float maxDistance, int linesCount)
         {
-            linePoints = new NativeList<float3>(64, allocator);
-
             var angleRad = angleDeg * Mathf.Deg2Rad;
             linePoints.Add(GetProjectilePos(initialPos, gravity, initialVelocity, angleRad, 0f));
+            
             for (var i = 1; i <= linesCount; i++)
             {
                 var xDisplacement = maxDistance * i / linesCount;
