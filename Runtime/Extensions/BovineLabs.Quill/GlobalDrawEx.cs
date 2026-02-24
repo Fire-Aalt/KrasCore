@@ -39,6 +39,22 @@ namespace KrasCore.Quill
             GlobalDraw.SolidQuad(p0, p1, p2, p3, color, duration);
         }
 
+        public static void SolidCircle(float3 center, float radius, float3 up, int sideCount, Color color, float duration = 0f)
+        {
+            using var pooledTriangles = PooledNativeList<float3x3>.Make();
+
+            var triangles = DrawerImpl.SolidCircle(pooledTriangles, center, radius, up, sideCount);
+            GlobalDraw.SolidTriangles(triangles, color, duration);
+        }
+
+        public static void SolidPlane(float3 center, float2 size, float3 up, Color color, float duration = 0f)
+        {
+            using var pooledTriangles = PooledNativeList<float3x3>.Make();
+
+            var triangles = DrawerImpl.SolidPlane(pooledTriangles, center, size, up);
+            GlobalDraw.SolidTriangles(triangles, color, duration);
+        }
+
         public static void SolidSphere(float3 center, float radius, int sideCount, Color color, float duration = 0f)
         {
             using var pooledTriangles = PooledNativeList<float3x3>.Make();

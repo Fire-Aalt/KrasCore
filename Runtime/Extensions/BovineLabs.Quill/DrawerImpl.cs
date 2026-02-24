@@ -7,6 +7,54 @@ namespace KrasCore.Quill
 {
     public static class DrawerImpl
     {
+        public static NativeArray<float3x3> SolidCircle(PooledNativeList<float3x3> pooledTriangles, float3 center, float radius, float3 up, int sideCount)
+        {
+            Assert.IsTrue(radius > 0f, "Radius must be greater than 0.");
+            Assert.IsTrue(math.lengthsq(up) > 1e-6f, "Up vector must have a non-zero length.");
+
+            var triangles = pooledTriangles.AsArray(sideCount);
+            var upNormalized = math.normalize(up);
+            var rotation = mathex.RotationFromUpToDirection(upNormalized, math.up());
+
+            for (var side = 0; side < sideCount; side++)
+            {
+                var theta = (2f * math.PI * side) / sideCount;
+                var nextTheta = (2f * math.PI * (side + 1)) / sideCount;
+
+                var pointLocal = new float3(math.cos(theta) * radius, 0f, math.sin(theta) * radius);
+                var nextPointLocal = new float3(math.cos(nextTheta) * radius, 0f, math.sin(nextTheta) * radius);
+
+                var point = center + math.mul(rotation, pointLocal);
+                var nextPoint = center + math.mul(rotation, nextPointLocal);
+
+                triangles[side] = new float3x3(center, nextPoint, point);
+            }
+
+            return triangles;
+        }
+
+        public static NativeArray<float3x3> SolidPlane(PooledNativeList<float3x3> pooledTriangles, float3 center, float2 size, float3 up)
+        {
+            Assert.IsTrue(size.x > 0f, "Size X must be greater than 0.");
+            Assert.IsTrue(size.y > 0f, "Size Y must be greater than 0.");
+            Assert.IsTrue(math.lengthsq(up) > 1e-6f, "Up vector must have a non-zero length.");
+
+            var triangles = pooledTriangles.AsArray(2);
+            var upNormalized = math.normalize(up);
+            var rotation = mathex.RotationFromUpToDirection(upNormalized, math.up());
+            var halfSize = size * 0.5f;
+
+            var p0 = center + math.mul(rotation, new float3(-halfSize.x, 0f, -halfSize.y));
+            var p1 = center + math.mul(rotation, new float3(-halfSize.x, 0f, halfSize.y));
+            var p2 = center + math.mul(rotation, new float3(halfSize.x, 0f, halfSize.y));
+            var p3 = center + math.mul(rotation, new float3(halfSize.x, 0f, -halfSize.y));
+
+            triangles[0] = new float3x3(p1, p2, p0);
+            triangles[1] = new float3x3(p2, p3, p0);
+
+            return triangles;
+        }
+
         public static NativeArray<float3x3> SolidSphere(PooledNativeList<float3x3> pooledTriangles, float3 center, float radius, int sideCount)
         {
             Assert.IsTrue(radius > 0f, "Radius must be greater than 0.");
