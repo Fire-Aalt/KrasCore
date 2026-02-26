@@ -15,7 +15,7 @@ namespace KrasCore
             world = World.DefaultGameObjectInjectionWorld;
         }
         
-        public static ref T GetSystem<T>(out World world) 
+        public static ref T GetSystemRef<T>(out World world) 
             where T : unmanaged, ISystem
         {
             GetWorld(out world);
