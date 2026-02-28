@@ -8,7 +8,7 @@
 - Practical fix: if you already have full size, pass `size / 2f`.
 - Passing `AABB.Extents / 2f` makes the cast box too small and can cause confusing misses/interactions.
 
-Reference signature:
+Reference signature in `CollisionWorld`:
 
 ```csharp
 public bool BoxCast(
