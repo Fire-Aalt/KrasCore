@@ -349,6 +349,12 @@ namespace KrasCore
             {
                 return threadWriter.GetThreadIndex();
             }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public UnsafeList<T>* GetUnsafeThreadList()
+            {
+                return threadWriter.GetUnsafeThreadList();
+            }
         }
 
         [NativeContainer]

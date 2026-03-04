@@ -488,6 +488,13 @@ namespace KrasCore
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public UnsafeList<T>* GetUnsafeThreadList()
+            {
+                Begin();
+                return _list;
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             private UnsafeList<T>* GetListPtr(int threadIndex)
             {
                 return (UnsafeList<T>*)(_perThreadListsPtr + threadIndex * PER_THREAD_LIST_SIZE);
