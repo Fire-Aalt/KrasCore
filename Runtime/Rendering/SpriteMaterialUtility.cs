@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace KrasCore
 {
-    public static class CloneMaterialUtility
+    public static class SpriteMaterialUtility
     {
         private static readonly SecondarySpriteTexture[] Buffer = new SecondarySpriteTexture[64];
 
@@ -16,7 +16,13 @@ namespace KrasCore
         public static Material Clone(Material srcMaterial, Sprite sprite)
         {
             var mat = Clone(srcMaterial, sprite.texture);
-            
+            SetSecondaryTextures(sprite, mat);
+
+            return mat;
+        }
+
+        public static void SetSecondaryTextures(Sprite sprite, Material mat)
+        {
             var count = sprite.GetSecondaryTextures(Buffer);
             for (int i = 0; i < count; i++)
             {
@@ -27,8 +33,6 @@ namespace KrasCore
                     mat.SetTexture(secondaryTexture.name, secondaryTexture.texture);
                 }
             }
-            
-            return mat;
         }
 
         public static Material Clone(Material srcMaterial, Texture texture)

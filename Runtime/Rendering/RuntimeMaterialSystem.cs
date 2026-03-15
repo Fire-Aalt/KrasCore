@@ -67,7 +67,7 @@ namespace KrasCore
 
         private static BatchMaterial CreateAndRegister(MaterialLookup lookup, EntitiesGraphicsSystem entitiesGraphicsSystem, bool registerIfMissing)
         {
-            var mat = CloneMaterialUtility.CloneFromLookup(lookup);
+            var mat = SpriteMaterialUtility.CloneFromLookup(lookup);
             
             BatchMaterialID matId = default;
             if (registerIfMissing)
