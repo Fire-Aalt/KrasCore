@@ -1,5 +1,6 @@
 using System;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace KrasCore
@@ -36,17 +37,17 @@ namespace KrasCore
         {
             SrcMaterial = srcMaterial;
             Sprite = sprite;
-            Texture = default;
+            Texture = sprite.texture;
         }
         
         public bool Equals(MaterialLookup other)
         {
-            return SrcMaterial.Equals(other.SrcMaterial) && Texture.Equals(other.Texture) && Sprite.Equals(other.Sprite);
+            return SrcMaterial.Equals(other.SrcMaterial) && Texture.Equals(other.Texture);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(SrcMaterial, Texture, Sprite);
+            return (int)math.hash(new int2(SrcMaterial.GetHashCode(), Texture.GetHashCode()));
         }
     }
 }

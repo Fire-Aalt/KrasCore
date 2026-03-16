@@ -12,22 +12,15 @@ namespace KrasCore
         /// <summary>
         /// Adds an update callback that will be called both in editor and at runtime
         /// </summary>
-        public static bool AddPersistentSystem<TTiming>(Type type, Action updateCallback)
+        public static bool AddPlayerLoopSystem<TTiming>(Type type, Action updateCallback)
         {
-            if (Application.isPlaying)
-            {
-                return AddRuntimeSystem<TTiming>(type, updateCallback, null);
-            }
-#if UNITY_EDITOR
-            EditorApplication.update += () => updateCallback();
-#endif
-            return true;
+            return AddPlayerLoopSystem<TTiming>(type, updateCallback, null);
         }
         
         /// <summary>
         /// Adds an update callback that will be called at runtime
         /// </summary>
-        public static bool AddRuntimeSystem<TTiming>(Type type, Action updateCallback, Action disposeCallback)
+        public static bool AddPlayerLoopSystem<TTiming>(Type type, Action updateCallback, Action disposeCallback)
         {
             var currentPlayerLoop = PlayerLoop.GetCurrentPlayerLoop();
 

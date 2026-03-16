@@ -16,7 +16,7 @@ namespace Game
 #endif
         private static void Initialize()
         {
-            PlayerLoopUtils.AddPersistentSystem<Update>(typeof(GlobalUnscaledShaderTimeSystem), UpdateGlobalUnscaledShaderTime);
+            PlayerLoopUtils.AddPlayerLoopSystem<Update>(typeof(GlobalUnscaledShaderTimeSystem), UpdateGlobalUnscaledShaderTime);
         }
 
         private static void UpdateGlobalUnscaledShaderTime()

@@ -9,13 +9,13 @@ namespace KrasCore
         public static Material CloneFromLookup(MaterialLookup lookup)
         {
             return lookup.Sprite != default 
-                ? Clone(lookup.SrcMaterial, lookup.Sprite) 
+                ? Clone(lookup.SrcMaterial, lookup.Sprite, lookup.Texture) 
                 : Clone(lookup.SrcMaterial, lookup.Texture);
         }
         
-        public static Material Clone(Material srcMaterial, Sprite sprite)
+        public static Material Clone(Material srcMaterial, Sprite sprite, Texture texture)
         {
-            var mat = Clone(srcMaterial, sprite.texture);
+            var mat = Clone(srcMaterial, texture);
             SetSecondaryTextures(sprite, mat);
 
             return mat;
