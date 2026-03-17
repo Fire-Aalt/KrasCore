@@ -42,15 +42,20 @@ namespace KrasCore.Quill
             SelectedDrawers.Clear();
             foreach (var root in SelectedGameObjects)
             {
-                ListPool<IDraw>.Get(out var buffer);
-                root.GetComponentsInChildren(false, buffer);
-            
-                foreach (var drawer in buffer)
-                {
-                    AddToMap(drawer, SelectedDrawers);
-                }
-                ListPool<IDraw>.Release(buffer);
+                AddSelectedDrawers(root);
             }
+        }
+
+        private static void AddSelectedDrawers(GameObject root)
+        {
+            ListPool<IDraw>.Get(out var buffer);
+            root.GetComponentsInChildren(false, buffer);
+            
+            foreach (var drawer in buffer)
+            {
+                AddToMap(drawer, SelectedDrawers);
+            }
+            ListPool<IDraw>.Release(buffer);
         }
 
         private static void Update()
@@ -69,6 +74,12 @@ namespace KrasCore.Quill
             {
                 var mb = drawer as MonoBehaviour;
                 if (mb == null) continue;
+                
+                var go = mb.gameObject;
+                if (go == Selection.activeGameObject)
+                {
+                    AddSelectedDrawers(go);
+                }
                 
                 var transform = mb.transform;
                 var isSelected = false;
