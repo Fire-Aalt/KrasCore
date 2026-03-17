@@ -44,9 +44,6 @@ namespace KrasCore.Quill
             {
                 AddSelectedDrawers(root);
             }
-
-            // Trigger update for immediate draw
-            Update();
         }
 
         private static void AddSelectedDrawers(GameObject root)
