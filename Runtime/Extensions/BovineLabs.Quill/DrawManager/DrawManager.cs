@@ -44,6 +44,9 @@ namespace KrasCore.Quill
             {
                 AddSelectedDrawers(root);
             }
+
+            // Trigger update for immediate draw
+            Update();
         }
 
         private static void AddSelectedDrawers(GameObject root)
@@ -60,7 +63,9 @@ namespace KrasCore.Quill
 
         private static void Update()
         {
-            if (!SceneView.lastActiveSceneView.drawGizmos)
+            // lastActiveSceneView can be null if no SceneView exists
+            var lastActiveSceneView = SceneView.lastActiveSceneView;
+            if (lastActiveSceneView == null || !lastActiveSceneView.drawGizmos)
             {
                 return;
             }
@@ -75,6 +80,7 @@ namespace KrasCore.Quill
                 var mb = drawer as MonoBehaviour;
                 if (mb == null) continue;
                 
+                // Initial selection does not trigger selectionChanged event so this has to be done manually
                 var go = mb.gameObject;
                 if (go == Selection.activeGameObject)
                 {
