@@ -7,9 +7,9 @@ namespace KrasCore
     public class CameraDistort : MonoBehaviour
     {
         [SerializeField, HideInInspector]
-        Camera _camera;
+        private Camera _camera;
 
-        void OnValidate()
+        private void OnValidate()
         {
             TryGetComponent(out _camera);
         }
@@ -18,21 +18,27 @@ namespace KrasCore
         //// or when the window is being resized, but it's cheap
         //// enough to do every frame in the absence of a built-in
         //// OnProjectionChanged event.
-        void LateUpdate()
+        private void LateUpdate()
         {
+#if BL_BRIDGE
+            if (Application.isPlaying) return;
+#endif
             // Get the default projection matrix for this camera.
             _camera.ResetProjectionMatrix();
-            var mat = _camera.projectionMatrix;
+            DistortProjectionMatrix(_camera);
+        }
+
+        public void DistortProjectionMatrix(Camera camera)
+        {
+            var mat = camera.projectionMatrix;
 
             // Scale the vertical axis by 1/sin(angle).
             mat[1, 1] *= Mathf.Sqrt(2);
-            //mat[2, 2] *= Mathf.Sqrt(2);
 
-            // Use our modified matrix.
-            _camera.projectionMatrix = mat;
+            camera.projectionMatrix = mat;
         }
 
-        void OnDisable()
+        private void OnDisable()
         {
             _camera.ResetProjectionMatrix();
         }

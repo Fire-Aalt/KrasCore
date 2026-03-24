@@ -14,6 +14,8 @@
         "BovineLabs.Core.Extensions",
         "BovineLabs.Core",
         "BovineLabs.Quill",
+        "BovineLabs.Bridge",
+        "BovineLabs.Bridge.Data",
         "Unity.Scenes",
         "BovineLabs.Essence",
         "BovineLabs.Essence.Data",
@@ -45,6 +47,11 @@
             "name": "com.bovinelabs.essence",
             "expression": "",
             "define": "BL_ESSENSE"
+        },
+        {
+            "name": "com.bovinelabs.bridge",
+            "expression": "",
+            "define": "BL_BRIDGE"
         },
         {
             "name": "com.unity.addressables",

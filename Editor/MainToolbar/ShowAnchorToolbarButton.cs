@@ -1,8 +1,7 @@
 using BovineLabs.Anchor;
-using BovineLabs.Anchor.Toolbar;
+using BovineLabs.Anchor.Debug.Toolbar;
+using BovineLabs.Anchor.MVVM;
 using BovineLabs.Core.ConfigVars;
-using Unity.AppUI.MVVM;
-using Unity.AppUI.UI;
 using Unity.Burst;
 using UnityEditor;
 using UnityEditor.Toolbars;
@@ -34,8 +33,8 @@ namespace KrasCore.Editor
         {
             if (change == PlayModeStateChange.EnteredPlayMode)
             {
-                if (AnchorApp.current == null) return;
-                var toolbarView = AnchorApp.current.services.GetRequiredService<ToolbarView>();
+                if (AnchorApp.Current == null) return;
+                var toolbarView = AnchorApp.Current.Services.GetRequiredService<ToolbarView>();
 
                 // Remove 'close' button
                 var button = FindButtonWithTrailingIcon(toolbarView.panel.visualTree, "x");
@@ -69,7 +68,7 @@ namespace KrasCore.Editor
                 return;
             }
             
-            var toolbarView = AnchorApp.current.services.GetRequiredService<ToolbarView>();
+            var toolbarView = AnchorApp.Current.Services.GetRequiredService<ToolbarView>();
             SetToolbarVisibility(toolbarView, !_isVisible);
             ApplyStyle();
         }
