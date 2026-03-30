@@ -24,14 +24,16 @@ namespace KrasCore
             if (Application.isPlaying) return;
 #endif
             // Get the default projection matrix for this camera.
-            _camera.ResetProjectionMatrix();
-            DistortProjectionMatrix(_camera);
+            DistortProjectionMatrix(_camera, true);
         }
 
-        public void DistortProjectionMatrix(Camera camera)
+        public void DistortProjectionMatrix(Camera camera, bool resetMatrix)
         {
+            if (resetMatrix)
+            {
+                camera.ResetProjectionMatrix();
+            }
             var mat = camera.projectionMatrix;
-
             // Scale the vertical axis by 1/sin(angle).
             mat[1, 1] *= Mathf.Sqrt(2);
 

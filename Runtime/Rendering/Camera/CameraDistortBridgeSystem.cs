@@ -12,14 +12,14 @@ namespace KrasCore
     {
         protected override void OnUpdate()
         {
-            foreach (var cameraComponent in SystemAPI.Query<RefRW<CameraBridge>>())
+            foreach (var (cameraComponent, entity) in SystemAPI.Query<RefRW<CameraBridge>>().WithEntityAccess())
             {
                 var camera = cameraComponent.ValueRW.Value.Value;
                 if (camera == null || !camera.TryGetComponent(out CameraDistort cameraDistort))
                 {
-                    return;
+                    continue;
                 }
-                cameraDistort.DistortProjectionMatrix(camera);
+                cameraDistort.DistortProjectionMatrix(camera, !EntityManager.HasComponent<CameraViewSpaceOffset>(entity));
             }
         }
     }
