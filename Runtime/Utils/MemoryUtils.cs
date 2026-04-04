@@ -1,5 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
@@ -31,6 +33,15 @@ namespace KrasCore
             {
                 Marshal.FreeHGlobal(ptr);
             }
+        }
+        
+        public static unsafe NativeArray<byte> StructureToNativeByteArray(object obj, Allocator allocator)
+        {
+            var size = Marshal.SizeOf(obj);
+            var dest = new NativeArray<byte>(size, allocator);
+            
+            Marshal.StructureToPtr(obj, (IntPtr)dest.GetUnsafePtr(), false);
+            return dest;
         }
     }
 }
