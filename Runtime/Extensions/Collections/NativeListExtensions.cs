@@ -30,13 +30,14 @@ namespace KrasCore
         
         public static void EnsureCapacity<T>(this NativeList<T> list, int minCapacity, bool setLengthNoClear = false) where T : unmanaged
         {
-            var newCapacity = math.max(list.Capacity, minCapacity);
+            var targetCapacity = math.max(list.Capacity, minCapacity);
 
-            while (list.Capacity < newCapacity)
+            if (list.Capacity < targetCapacity)
             {
-                list.Capacity *= 2;
+                var newCapacity = math.ceilpow2(math.max(targetCapacity, list.Capacity * 2));
+                list.Capacity = newCapacity;
             }
-
+            
             if (setLengthNoClear)
             {
                 list.SetLengthNoClear(minCapacity);
