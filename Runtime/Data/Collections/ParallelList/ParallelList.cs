@@ -408,44 +408,13 @@ namespace KrasCore
 
         public JobHandle CopyToListSingle(
             ref NativeList<T> nativeList,
-            JobHandle dependency, UnsafeParallelListToArraySingleThreaded jobStud = default)
+            JobHandle dependency, UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
-            return new UnsafeParallelListToArraySingleThreaded
+            return new UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded
             {
-                ParallelList = _unsafeParallelList,
+                ParallelList = *_unsafeParallelList,
                 List = nativeList.m_ListData
             }.Schedule(dependency);
-        }
-        
-        [BurstCompile]
-        public struct UnsafeParallelListToArraySingleThreaded : IJob
-        {
-            [NativeDisableUnsafePtrRestriction] [ReadOnly]
-            public UnsafeParallelList<T>* ParallelList;
-
-            [NativeDisableUnsafePtrRestriction] public UnsafeList<T>* List;
-
-            [MethodImpl(MethodImplOptions.NoInlining)]
-            public void Execute()
-            {
-                var parallelListLength = ParallelList->Length;
-                var oldListLength = List->Length;
-
-                List->Resize(oldListLength + parallelListLength);
-                var listPtr = (byte*)List->Ptr;
-
-                var sizeOf = sizeof(T);
-                var perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList->GetPerThreadListPtr();
-
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
-                {
-                    var threadList = perThreadListPtr[i].List;
-
-                    void* dst = listPtr + oldListLength * sizeOf;
-                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
-                    oldListLength += threadList.m_length;
-                }
-            }
         }
         
         public Enumerator GetEnumerator()

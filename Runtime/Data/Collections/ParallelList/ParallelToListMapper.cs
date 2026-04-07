@@ -1,6 +1,5 @@
 using System;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 
 namespace KrasCore
@@ -22,7 +21,7 @@ namespace KrasCore
             List.Clear();
         }
 
-        public JobHandle CopyParallelToListSingle(JobHandle dependency, ParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
+        public JobHandle CopyParallelToListSingle(JobHandle dependency, UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
             return ParallelList.CopyToListSingle(ref List, dependency, jobStud);
         }
