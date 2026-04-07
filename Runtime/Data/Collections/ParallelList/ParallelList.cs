@@ -455,66 +455,32 @@ namespace KrasCore
         
         public struct Enumerator : IEnumerator
         {
-            private UnsafeList<T> _threadList;
-            private ParallelList<T> _list;
-            private int _index;
-            private int _thread;
-            private T _value;
+            private UnsafeParallelList<T>.Enumerator _enumerator;
 
             public void Dispose()
             {
+                _enumerator.Dispose();
             }
 
             public Enumerator(ref ParallelList<T> list) 
             {
-                _list = list;
-                _value = default;
-                _index = 0;
-                _thread = 0;
-                _threadList = _list.GetUnsafeList(_thread);
+                _enumerator = list._unsafeParallelList->GetEnumerator();
             }
             
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
-                if (_index < _threadList.Length)
-                {
-                    _value = _threadList[_index];
-                    _index++;
-                    return true;
-                }
-
-                _thread++;
-                _index = 0;
-                
-                while (_thread < JobsUtility.ThreadIndexCount)
-                {
-                    _threadList = _list.GetUnsafeList(_thread);
-                    
-                    if (_index < _threadList.Length)
-                    {
-                        _value = _threadList[_index];
-                        _index++;
-                        return true;
-                    }
-                    
-                    _thread++;
-                }
-                
-                _value = default;
-                return false;
+                return _enumerator.MoveNext();
             }
 
             public void Reset()
             {
-                _thread = 0;
-                _index = 0;
-                _threadList = _list.GetUnsafeList(_thread);
+                _enumerator.Reset();
             }
 
             public T Current
             {
-                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => _value;
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => _enumerator.Current;
             }
 
             object IEnumerator.Current

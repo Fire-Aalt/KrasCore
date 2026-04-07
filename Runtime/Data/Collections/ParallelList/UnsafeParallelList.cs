@@ -2,6 +2,7 @@
 // Copyright © 2024 Thomas Enzenebner. All rights reserved.
 // </copyright>
 
+using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -29,38 +30,50 @@ namespace KrasCore
         public bool IsCreated;
 
         public int Length => Count();
+
+        public UnsafeParallelList(AllocatorManager.AllocatorHandle allocator)
+            : this(1, allocator)
+        {
+        }
+
+        public UnsafeParallelList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        {
+            this = default;
+            Initialize(initialCapacity, allocator);
+        }
+
+        private void Initialize(int initialCapacity, AllocatorManager.AllocatorHandle allocatorHandle)
+        {
+            allocator = allocatorHandle;
+
+            int align = 8;
+            int maxThreadCount = JobsUtility.ThreadIndexCount;
+
+            var perThreadListSize = PER_THREAD_LIST_SIZE * maxThreadCount;
+            perThreadLists = (byte*)UnsafeUtility.Malloc(perThreadListSize, align, allocatorHandle.ToAllocator);
+
+            for (int i = 0; i < maxThreadCount; i++)
+            {
+                GetPerThreadList(i).List = new UnsafeList<T>(initialCapacity, allocatorHandle.ToAllocator, NativeArrayOptions.UninitializedMemory);
+            }
+
+            int allocationSize = sizeof(UnsafeParallelListHeader);
+            byte* buffer = (byte*)Memory.Unmanaged.Allocate(allocationSize, UnsafeUtility.AlignOf<UnsafeParallelListHeader>(), allocatorHandle.ToAllocator);
+            UnsafeUtility.MemClear(buffer, allocationSize);
+
+            header = (UnsafeParallelListHeader*)buffer;
+            header->ChunkCount = 0;
+            ranges = null;
+
+            IsCreated = true;
+        }
         
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
         internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
             UnsafeParallelList<T>* unsafeParallelList = allocator.Allocate(default(UnsafeParallelList<T>), 1);
-
-            unsafeParallelList->allocator = allocator.Handle;
-
-            //Debug.Log($"parallelList alignOf: {UnsafeUtility.AlignOf<PerThreadList>()}");
-            int align = 8;
-            int maxThreadCount = JobsUtility.ThreadIndexCount;
-
-            //var perThreadListSize = JobsUtility.CacheLineSize * maxThreadCount;
-            var perThreadListSize = PER_THREAD_LIST_SIZE * maxThreadCount;
-            unsafeParallelList->perThreadLists = (byte*)UnsafeUtility.Malloc(perThreadListSize, align, allocator.ToAllocator);
-
-            for (int i = 0; i < maxThreadCount; i++)
-            {
-                unsafeParallelList->GetPerThreadList(i).List = new UnsafeList<T>(initialCapacity, allocator.ToAllocator, NativeArrayOptions.UninitializedMemory);
-            }
-
-            int allocationSize = sizeof(UnsafeParallelListHeader);
-            byte* buffer = (byte*)Memory.Unmanaged.Allocate(allocationSize, UnsafeUtility.AlignOf<UnsafeParallelListHeader>(), allocator.ToAllocator); // could be just temp memory
-            UnsafeUtility.MemClear(buffer, allocationSize);
-
-            unsafeParallelList->header = (UnsafeParallelListHeader*)buffer;
-
-            unsafeParallelList->header->ChunkCount = 0;
-            unsafeParallelList->ranges = null;
-
-            unsafeParallelList->IsCreated = true;
+            *unsafeParallelList = new UnsafeParallelList<T>(initialCapacity, allocator.Handle);
 
             return unsafeParallelList;
         }
@@ -106,7 +119,11 @@ namespace KrasCore
 
         private void DeallocateRanges()
         {
-            Memory.Unmanaged.Free(ranges, allocator);
+            if (ranges != null)
+            {
+                Memory.Unmanaged.Free(ranges, allocator);
+                ranges = null;
+            }
         }
 
         public void Clear()
@@ -235,12 +252,14 @@ namespace KrasCore
             }
 
             UnsafeUtility.Free(perThreadLists, allocator.ToAllocator);
+            perThreadLists = null;
 
             DeallocateRanges();
             Memory.Unmanaged.Free(header, allocator);
             header = null;
 
             allocator = Allocator.None;
+            IsCreated = false;
         }
 
         public bool CheckRangesForNull()
@@ -291,6 +310,81 @@ namespace KrasCore
             public int ElementCount;
         }
 
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(ref this);
+        }
+        
+        public struct Enumerator : IEnumerator
+        {
+            private UnsafeList<T> _threadList;
+            private UnsafeParallelList<T> _list;
+            private int _index;
+            private int _thread;
+            private T _value;
+
+            public void Dispose()
+            {
+            }
+
+            public Enumerator(ref UnsafeParallelList<T> list) 
+            {
+                _list = list;
+                _value = default;
+                _index = 0;
+                _thread = 0;
+                _threadList = _list.GetUnsafeList(_thread);
+            }
+            
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                if (_index < _threadList.Length)
+                {
+                    _value = _threadList[_index];
+                    _index++;
+                    return true;
+                }
+
+                _thread++;
+                _index = 0;
+                
+                while (_thread < JobsUtility.ThreadIndexCount)
+                {
+                    _threadList = _list.GetUnsafeList(_thread);
+                    
+                    if (_index < _threadList.Length)
+                    {
+                        _value = _threadList[_index];
+                        _index++;
+                        return true;
+                    }
+                    
+                    _thread++;
+                }
+                
+                _value = default;
+                return false;
+            }
+
+            public void Reset()
+            {
+                _thread = 0;
+                _index = 0;
+                _threadList = _list.GetUnsafeList(_thread);
+            }
+
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => _value;
+            }
+
+            object IEnumerator.Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => Current;
+            }
+        }
+        
         public struct ChunkWriter
         {
             [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadListsPtr;
