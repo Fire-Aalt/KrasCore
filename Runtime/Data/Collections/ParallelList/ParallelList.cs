@@ -4,14 +4,12 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Debug = UnityEngine.Debug;
@@ -101,12 +99,6 @@ namespace KrasCore
         public int GetBlockCountToIndex(int threadIndex)
         {
             return _unsafeParallelList->BlockCountToIndex(threadIndex);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeArray<int> GetStartIndexArray(ref SystemState state)
-        {
-            return _unsafeParallelList->GetStartIndexArray(ref state);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

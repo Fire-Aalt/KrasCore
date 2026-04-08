@@ -8,7 +8,6 @@ using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
-using Unity.Entities;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
@@ -79,7 +78,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ref PerThreadList GetPerThreadList(int index)
+        internal ref PerThreadList GetPerThreadList(int index)
         {
             return ref UnsafeUtility.AsRef<PerThreadList>(perThreadLists + index * PER_THREAD_LIST_SIZE);
         }
@@ -199,20 +198,7 @@ namespace KrasCore
             return count;
         }
 
-        public NativeArray<int> GetStartIndexArray(ref SystemState state)
-        {
-            NativeArray<int> lengths = new NativeArray<int>();
-            lengths.Initialize(JobsUtility.ThreadIndexCount, state.WorldUpdateAllocator, NativeArrayOptions.UninitializedMemory);
 
-            int count = 0;
-            for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
-            {
-                lengths[i] = count;
-                count += GetPerThreadList(i).List.m_length;
-            }
-
-            return lengths;
-        }
 
         public ChunkReader AsChunkReader()
         {
