@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace KrasCore.Tests.Editor
+namespace KrasCore.Tests
 {
     public class ParallelListTests
     {

@@ -1,13 +1,14 @@
 {
-    "name": "KrasCore.Tests.Editor",
-    "rootNamespace": "KrasCore.Tests.Editor",
+    "name": "KrasCore.Tests",
+    "rootNamespace": "KrasCore.Tests",
     "references": [
         "KrasCore",
         "Unity.Entities",
         "Unity.PerformanceTesting",
         "Unity.Collections",
         "Unity.Jobs",
-        "Unity.Burst"
+        "Unity.Burst",
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

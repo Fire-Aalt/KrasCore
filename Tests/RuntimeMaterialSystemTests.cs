@@ -2,7 +2,7 @@ using NUnit.Framework;
 using Unity.Entities;
 using UnityEngine;
 
-namespace KrasCore.Tests.Editor
+namespace KrasCore.Tests
 {
     public class RuntimeMaterialTests
     {
