@@ -28,6 +28,12 @@ namespace KrasCore
             return ParallelList.CopyToListSingle(list, dependency, jobStud);
         }
 
+        public unsafe void CopyParallelToList()
+        {
+            var list = (UnsafeList<T>*)UnsafeUtility.AddressOf(ref List);
+            ParallelList.CopyToList(list);
+        }
+        
         public UnsafeParallelList<T>.ThreadWriter AsThreadWriter() => ParallelList.AsThreadWriter();
         public UnsafeParallelList<T>.ThreadReader AsThreadReader() => ParallelList.AsThreadReader();
         

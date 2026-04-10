@@ -26,6 +26,11 @@ namespace KrasCore
             return ParallelList.CopyToListSingle(ref List, dependency, jobStud);
         }
 
+        public void CopyParallelToList()
+        {
+            ParallelList.CopyToList(ref List);
+        }
+        
         public ParallelList<T>.ThreadWriter AsThreadWriter() => ParallelList.AsThreadWriter();
         public ParallelList<T>.ThreadReader AsThreadReader() => ParallelList.AsThreadReader();
         

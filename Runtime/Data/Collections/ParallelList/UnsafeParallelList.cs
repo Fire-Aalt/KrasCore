@@ -371,9 +371,7 @@ namespace KrasCore
             }
         }
         
-        public JobHandle CopyToListSingle(
-            UnsafeList<T>* nativeList,
-            JobHandle dependency, UnsafeParallelListToArraySingleThreaded jobStud = default)
+        public JobHandle CopyToListSingle(UnsafeList<T>* nativeList, JobHandle dependency, UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
             return new UnsafeParallelListToArraySingleThreaded
             {
@@ -392,23 +390,28 @@ namespace KrasCore
 
             public void Execute()
             {
-                var parallelListLength = ParallelList.Length;
-                var oldListLength = List->Length;
+                ParallelList.CopyToList(List);
+            }
+        }
 
-                List->Resize(oldListLength + parallelListLength);
-                var listPtr = (byte*)List->Ptr;
+        public void CopyToList(UnsafeList<T>* list)
+        {
+            var parallelListLength = Length;
+            var oldListLength = list->Length;
 
-                var sizeOf = sizeof(T);
-                var perThreadListPtr = (UnsafeParallelList<T>.PerThreadList*)ParallelList.GetPerThreadListPtr();
+            list->Resize(oldListLength + parallelListLength);
+            var listPtr = (byte*)list->Ptr;
 
-                for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
-                {
-                    var threadList = perThreadListPtr[i].List;
+            var sizeOf = sizeof(T);
+            var perThreadListPtr = (PerThreadList*)GetPerThreadListPtr();
 
-                    void* dst = listPtr + oldListLength * sizeOf;
-                    UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
-                    oldListLength += threadList.m_length;
-                }
+            for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
+            {
+                var threadList = perThreadListPtr[i].List;
+
+                void* dst = listPtr + oldListLength * sizeOf;
+                UnsafeUtility.MemCpy(dst, threadList.Ptr, threadList.m_length * sizeOf);
+                oldListLength += threadList.m_length;
             }
         }
         

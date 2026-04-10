@@ -398,15 +398,18 @@ namespace KrasCore
 
         // helper jobs
 
-        public JobHandle CopyToListSingle(
-            ref NativeList<T> nativeList,
-            JobHandle dependency, UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
+        public JobHandle CopyToListSingle(ref NativeList<T> nativeList, JobHandle dependency, UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
             return new UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded
             {
                 ParallelList = *_unsafeParallelList,
                 List = nativeList.m_ListData
             }.Schedule(dependency);
+        }
+        
+        public void CopyToList(ref NativeList<T> nativeList)
+        {
+            _unsafeParallelList->CopyToList(nativeList.GetUnsafeList());
         }
         
         public Enumerator GetEnumerator()
