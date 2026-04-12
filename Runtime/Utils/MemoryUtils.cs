@@ -44,5 +44,13 @@ namespace KrasCore
             Marshal.StructureToPtr(obj, (IntPtr)dest.GetUnsafePtr(), false);
             return dest;
         }
+        
+        public static unsafe NativeArray<byte> AsBytes<T>(this NativeArray<T> array)
+            where T : unmanaged
+        {
+            var ptr = (byte*)array.GetUnsafeReadOnlyPtr();
+            var byteView = NativeArrayUnsafeUtility.ConvertExistingDataToNativeArray<byte>(ptr, array.Length * UnsafeUtility.SizeOf<T>(), Allocator.None);
+            return byteView;
+        }
     }
 }
