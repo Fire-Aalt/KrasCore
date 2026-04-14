@@ -226,7 +226,7 @@ namespace KrasCore
             CheckMemoryPtrForFree(ptr, out _);
 
             var arrayPtr = _data.Ptr + GetByteOffset(ptr.StartIndex);
-            return UnsafeArrayUnsafeUtility.ConvertExistingDataToUnsafeArray<T>(arrayPtr, ptr.Count, allocatorLabel);
+            return UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<T>(arrayPtr, ptr.Count, allocatorLabel);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -235,7 +235,7 @@ namespace KrasCore
             CheckMemoryPtrForFree(ptr, out _);
 
             var arrayPtr = _data.Ptr + GetByteOffset(ptr.StartIndex);
-            return UnsafeArrayUnsafeUtility.ConvertExistingDataToUnsafeArray<byte>(arrayPtr, ptr.Count * _stride, allocatorLabel);
+            return UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<byte>(arrayPtr, ptr.Count * _stride, allocatorLabel);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

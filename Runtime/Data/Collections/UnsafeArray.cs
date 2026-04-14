@@ -1,20 +1,16 @@
-// <copyright file="UnsafeArray.cs" company="BovineLabs">
-//     Copyright (c) BovineLabs. All rights reserved.
-// </copyright>
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs;
+using UnityEngine.Internal;
 
 namespace KrasCore
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Runtime.InteropServices;
-    using Unity.Burst;
-    using Unity.Collections;
-    using Unity.Collections.LowLevel.Unsafe;
-    using Unity.Jobs;
-    using UnityEngine.Internal;
-
     /// <summary> An unsafe version of <see cref="NativeArray{T}" />. </summary>
     /// <typeparam name="T"> The type that array holds. </typeparam>
     [DebuggerTypeProxy(typeof(UnsafeArray<>.UnsafeArrayDebugView))]
@@ -36,17 +32,17 @@ namespace KrasCore
                 return;
             }
 
-            UnsafeUtility.MemClear(this.buffer, this.Length * (long)UnsafeUtility.SizeOf<T>());
+            UnsafeUtility.MemClear(buffer, Length * (long)UnsafeUtility.SizeOf<T>());
         }
 
         public int Length => length;
-        public unsafe bool IsCreated => (IntPtr)this.buffer != IntPtr.Zero;
+        public unsafe bool IsCreated => (IntPtr)buffer != IntPtr.Zero;
 
         public unsafe T this[int index]
         {
-            get => UnsafeUtility.ReadArrayElement<T>(this.buffer, index);
+            get => UnsafeUtility.ReadArrayElement<T>(buffer, index);
             [WriteAccessRequired]
-            set => UnsafeUtility.WriteArrayElement(this.buffer, index, value);
+            set => UnsafeUtility.WriteArrayElement(buffer, index, value);
         }
 
         public static bool operator ==(UnsafeArray<T> left, UnsafeArray<T> right)
@@ -62,60 +58,60 @@ namespace KrasCore
         [WriteAccessRequired]
         public unsafe void Dispose()
         {
-            if ((IntPtr)this.buffer == IntPtr.Zero)
+            if ((IntPtr)buffer == IntPtr.Zero)
             {
                 throw new ObjectDisposedException("The UnsafeArray is already disposed.");
             }
 
-            if (this.allocatorLabel == Allocator.Invalid)
+            if (allocatorLabel == Allocator.Invalid)
             {
                 throw new InvalidOperationException("The UnsafeArray can not be Disposed because it was not allocated with a valid allocator.");
             }
 
-            if (this.allocatorLabel > Allocator.None)
+            if (allocatorLabel > Allocator.None)
             {
-                UnsafeUtility.FreeTracked(this.buffer, this.allocatorLabel);
-                this.allocatorLabel = Allocator.Invalid;
+                UnsafeUtility.FreeTracked(buffer, allocatorLabel);
+                allocatorLabel = Allocator.Invalid;
             }
 
-            this.buffer = null;
+            buffer = null;
         }
 
         public unsafe JobHandle Dispose(JobHandle inputDeps)
         {
-            if (this.allocatorLabel == Allocator.Invalid)
+            if (allocatorLabel == Allocator.Invalid)
             {
                 throw new InvalidOperationException("The UnsafeArray can not be Disposed because it was not allocated with a valid allocator.");
             }
 
-            if ((IntPtr)this.buffer == IntPtr.Zero)
+            if ((IntPtr)buffer == IntPtr.Zero)
             {
                 throw new InvalidOperationException("The UnsafeArray is already disposed.");
             }
 
-            if (this.allocatorLabel > Allocator.None)
+            if (allocatorLabel > Allocator.None)
             {
                 var jobHandle = new UnsafeArrayDisposeJob
                 {
                     Data = new UnsafeArrayDispose
                     {
-                        Buffer = this.buffer,
-                        AllocatorLabel = this.allocatorLabel,
+                        Buffer = buffer,
+                        AllocatorLabel = allocatorLabel,
                     },
                 }.Schedule(inputDeps);
 
-                this.buffer = null;
-                this.allocatorLabel = Allocator.Invalid;
+                buffer = null;
+                allocatorLabel = Allocator.Invalid;
                 return jobHandle;
             }
 
-            this.buffer = null;
+            buffer = null;
             return inputDeps;
         }
 
         public unsafe void* GetUnsafePtr()
         {
-            return this.buffer;
+            return buffer;
         }
 
         [WriteAccessRequired]
@@ -142,8 +138,8 @@ namespace KrasCore
 
         public T[] ToArray()
         {
-            var dst = new T[this.Length];
-            Copy(this, dst, this.Length);
+            var dst = new T[Length];
+            Copy(this, dst, Length);
             return dst;
         }
 
@@ -159,25 +155,31 @@ namespace KrasCore
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return GetEnumerator();
         }
 
         public unsafe bool Equals(UnsafeArray<T> other)
         {
-            return this.buffer == other.buffer && this.Length == other.Length;
+            return buffer == other.buffer && Length == other.Length;
         }
 
         public override bool Equals(object obj)
         {
-            return obj != null && obj is UnsafeArray<T> other && this.Equals(other);
+            return obj != null && obj is UnsafeArray<T> other && Equals(other);
         }
 
         public override unsafe int GetHashCode()
         {
-            return ((int)this.buffer * 397) ^ this.Length;
+            return ((int)buffer * 397) ^ Length;
         }
 
         public static void Copy(UnsafeArray<T> src, UnsafeArray<T> dst)
+        {
+            CheckCopyLengths(src.Length, dst.Length);
+            CopySafe(src, 0, dst, 0, src.Length);
+        }
+        
+        public static void Copy(NativeArray<T> src, UnsafeArray<T> dst)
         {
             CheckCopyLengths(src.Length, dst.Length);
             CopySafe(src, 0, dst, 0, src.Length);
@@ -224,7 +226,96 @@ namespace KrasCore
         {
             CopySafe(src, srcIndex, dst, dstIndex, length);
         }
+        
+        public void CopyFrom(NativeArray<T> src)
+        {
+            Copy(src, this);
+        }
 
+        public unsafe U ReinterpretLoad<U>(int sourceIndex) where U : struct
+        {
+            CheckReinterpretLoadRange<U>(sourceIndex);
+            return UnsafeUtility.ReadArrayElement<U>((byte*)buffer + UnsafeUtility.SizeOf<T>() * sourceIndex, 0);
+        }
+
+        public unsafe void ReinterpretStore<U>(int destIndex, U data) where U : struct
+        {
+            CheckReinterpretStoreRange<U>(destIndex);
+            UnsafeUtility.WriteArrayElement((byte*)buffer + UnsafeUtility.SizeOf<T>() * destIndex, 0, data);
+        }
+        
+        public UnsafeArray<U> Reinterpret<U>() where U : unmanaged
+        {
+            CheckReinterpretSize<U>();
+            return InternalReinterpret<U>(Length);
+        }
+        
+        public UnsafeArray<U> Reinterpret<U>(int expectedTypeSize)
+            where U : unmanaged
+        {
+            long tSize = UnsafeUtility.SizeOf<T>();
+            long uSize = UnsafeUtility.SizeOf<U>();
+            var byteLen = Length * tSize;
+            var num = byteLen / uSize;
+            CheckReinterpretSize<U>(tSize, uSize, expectedTypeSize, byteLen, num);
+            return InternalReinterpret<U>((int) num);
+        }
+
+        private unsafe UnsafeArray<U> InternalReinterpret<U>(int reinterpretLength)
+            where U : unmanaged
+        {
+            var nativeArray = UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<U>(buffer, reinterpretLength, allocatorLabel);
+            return nativeArray;
+        }
+        
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckReinterpretLoadRange<U>(int sourceIndex) where U : struct
+        {
+            long num1 = UnsafeUtility.SizeOf<T>();
+            long num2 = UnsafeUtility.SizeOf<U>();
+            var num3 = Length * num1;
+            var num4 = sourceIndex * num1;
+            var num5 = num4 + num2;
+            if (num4 < 0L || num5 > num3)
+                throw new ArgumentOutOfRangeException(nameof (sourceIndex), "loaded byte range must fall inside container bounds");
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckReinterpretStoreRange<U>(int destIndex) where U : struct
+        {
+            long num1 = UnsafeUtility.SizeOf<T>();
+            long num2 = UnsafeUtility.SizeOf<U>();
+            var num3 = Length * num1;
+            var num4 = destIndex * num1;
+            var num5 = num4 + num2;
+            if (num4 < 0L || num5 > num3)
+                throw new ArgumentOutOfRangeException(nameof (destIndex), "stored byte range must fall inside container bounds");
+        }
+        
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private static void CheckReinterpretSize<U>()
+            where U : unmanaged
+        {
+            if (UnsafeUtility.SizeOf<T>() != UnsafeUtility.SizeOf<U>())
+                throw new InvalidOperationException($"Types {typeof (T)} and {typeof (U)} are different sizes - direct reinterpretation is not possible. If this is what you intended, use Reinterpret(<type size>)");
+        }
+
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        private void CheckReinterpretSize<U>(
+            long tSize,
+            long uSize,
+            int expectedTypeSize,
+            long byteLen,
+            long uLen)
+            where U : unmanaged
+        {
+            if (tSize != expectedTypeSize)
+                throw new InvalidOperationException($"Type {typeof (T)} was expected to be {expectedTypeSize} but is {tSize} bytes");
+            if (uLen * uSize != byteLen)
+                throw new InvalidOperationException($"Types {typeof (T)} (array length {Length}) and {typeof (U)} cannot be aliased due to size constraints. The size of the types and lengths involved must line up.");
+        }
+        
+        
         [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
         private static void CheckAllocateArguments(int length, Allocator allocator)
         {
@@ -270,6 +361,13 @@ namespace KrasCore
             CheckCopyArguments(src.Length, srcIndex, dst.Length, dstIndex, length);
             UnsafeUtility.MemCpy((void*)((IntPtr)dst.buffer + (dstIndex * UnsafeUtility.SizeOf<T>())),
                 (void*)((IntPtr)src.buffer + (srcIndex * UnsafeUtility.SizeOf<T>())), length * UnsafeUtility.SizeOf<T>());
+        }
+        
+        private static unsafe void CopySafe(NativeArray<T> src, int srcIndex, UnsafeArray<T> dst, int dstIndex, int length)
+        {
+            CheckCopyArguments(src.Length, srcIndex, dst.Length, dstIndex, length);
+            UnsafeUtility.MemCpy((void*)((IntPtr)dst.buffer + (dstIndex * UnsafeUtility.SizeOf<T>())),
+                (void*)((IntPtr)src.GetUnsafeReadOnlyPtr() + (srcIndex * UnsafeUtility.SizeOf<T>())), length * UnsafeUtility.SizeOf<T>());
         }
 
         private static unsafe void CopySafe(T[] src, int srcIndex, UnsafeArray<T> dst, int dstIndex, int length)
@@ -357,18 +455,18 @@ namespace KrasCore
         [ExcludeFromDocs]
         public struct Enumerator : IEnumerator<T>
         {
-            private UnsafeArray<T> array;
-            private int index;
+            private UnsafeArray<T> _array;
+            private int _index;
 
             public Enumerator(ref UnsafeArray<T> array)
             {
-                this.array = array;
-                this.index = -1;
+                _array = array;
+                _index = -1;
             }
 
-            public T Current => this.array[this.index];
+            public T Current => _array[_index];
 
-            object IEnumerator.Current => this.Current;
+            object IEnumerator.Current => Current;
 
             public void Dispose()
             {
@@ -376,13 +474,13 @@ namespace KrasCore
 
             public bool MoveNext()
             {
-                ++this.index;
-                return this.index < this.array.Length;
+                ++_index;
+                return _index < _array.Length;
             }
 
             public void Reset()
             {
-                this.index = -1;
+                _index = -1;
             }
         }
 
@@ -392,7 +490,7 @@ namespace KrasCore
 
             public void Execute()
             {
-                this.Data.Dispose();
+                Data.Dispose();
             }
         }
 
@@ -406,20 +504,20 @@ namespace KrasCore
 
             public unsafe void Dispose()
             {
-                UnsafeUtility.FreeTracked(this.Buffer, this.AllocatorLabel);
+                UnsafeUtility.FreeTracked(Buffer, AllocatorLabel);
             }
         }
 
         private sealed class UnsafeArrayDebugView
         {
-            private UnsafeArray<T> array;
+            private UnsafeArray<T> _array;
 
             public UnsafeArrayDebugView(UnsafeArray<T> array)
             {
-                this.array = array;
+                _array = array;
             }
 
-            public T[] Items => this.array.ToArray();
+            public T[] Items => _array.ToArray();
         }
     }
 }
