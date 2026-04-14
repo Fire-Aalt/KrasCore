@@ -74,14 +74,17 @@ namespace KrasCore
         public int UsedLengthBytes => _usedLength * _stride;
         public int AllocationCount => _allocationCount;
         public UnsafeList<byte> DataList => _data;
+        
+        internal Allocator allocatorLabel;
 
-        public UnsafeHeapMemory(int stride, AllocatorManager.AllocatorHandle allocator)
+        public UnsafeHeapMemory(int stride, Allocator allocator)
             : this(stride, 0, allocator)
         {
         }
 
-        public UnsafeHeapMemory(int stride, int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        public UnsafeHeapMemory(int stride, int initialCapacity, Allocator allocator)
         {
+            allocatorLabel = allocator;
             CheckStride(stride);
             CheckInitialCapacity(initialCapacity);
 
@@ -213,6 +216,26 @@ namespace KrasCore
             CheckTypeStride<T>();
             CheckElementIndex(ptr, index, out var absoluteIndex);
             return ref UnsafeUtility.AsRef<T>(_data.Ptr + GetByteOffset(absoluteIndex));
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeArray<T> ArrayAt<T>(MemoryPtr ptr)
+            where T : unmanaged
+        {
+            CheckTypeStride<T>();
+            CheckMemoryPtrForFree(ptr, out _);
+
+            var arrayPtr = _data.Ptr + GetByteOffset(ptr.StartIndex);
+            return UnsafeArrayUnsafeUtility.ConvertExistingDataToUnsafeArray<T>(arrayPtr, ptr.Count, allocatorLabel);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeArray<byte> ArrayAtUnsafe(MemoryPtr ptr)
+        {
+            CheckMemoryPtrForFree(ptr, out _);
+
+            var arrayPtr = _data.Ptr + GetByteOffset(ptr.StartIndex);
+            return UnsafeArrayUnsafeUtility.ConvertExistingDataToUnsafeArray<byte>(arrayPtr, ptr.Count * _stride, allocatorLabel);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
