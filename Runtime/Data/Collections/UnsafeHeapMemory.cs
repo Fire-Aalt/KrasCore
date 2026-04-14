@@ -73,7 +73,7 @@ namespace KrasCore
         public int UsedLength => _usedLength;
         public int UsedLengthBytes => _usedLength * _stride;
         public int AllocationCount => _allocationCount;
-        public byte* DataPtr => _data.Ptr;
+        public UnsafeList<byte> DataList => _data;
 
         public UnsafeHeapMemory(int stride, AllocatorManager.AllocatorHandle allocator)
             : this(stride, 0, allocator)
@@ -144,6 +144,21 @@ namespace KrasCore
             return ptr;
         }
 
+        public MemoryPtr Allocate(UnsafeArray<byte> source)
+        {
+            if (!source.IsCreated)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+            CheckLengthStride(source.Length);
+            var typeLength = source.Length / _stride;
+
+            var ptr = Allocate(typeLength);
+            var byteCount = GetRequiredBytes(typeLength, _stride);
+            UnsafeUtility.MemCpy(_data.Ptr + GetByteOffset(ptr.StartIndex), source.GetUnsafePtr(), byteCount);
+            return ptr;
+        }
+        
         public void Free(MemoryPtr ptr)
         {
             CheckMemoryPtrForFree(ptr, out var blockIndex);
@@ -179,7 +194,7 @@ namespace KrasCore
             return TryGetAllocatedBlockIndex(ptr, out _);
         }
 
-        public bool GetValidRange(out int2 range)
+        public bool TryGetValidRange(out int2 range)
         {
             if (_allocationCount == 0)
             {
@@ -820,6 +835,15 @@ namespace KrasCore
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CheckLengthStride(int byteLength)
+        {
+            if (byteLength % _stride != 0)
+            {
+                throw new ArgumentException($"Type stride mismatch. Heap stride is {_stride} bytes but passed byte length of {byteLength} is impossible with that stride");
+            }
+        }
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetBinIndex(int size)
         {

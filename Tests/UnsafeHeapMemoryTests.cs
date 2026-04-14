@@ -20,14 +20,14 @@ namespace KrasCore.Tests
 
                 Assert.That(a, Is.EqualTo(new MemoryPtr(0, 4)));
                 Assert.That(b, Is.EqualTo(new MemoryPtr(4, 3)));
-                Assert.That(heap.GetValidRange(out var initialRange), Is.True);
+                Assert.That(heap.TryGetValidRange(out var initialRange), Is.True);
                 Assert.That(initialRange, Is.EqualTo(new int2(0, 6)));
 
                 heap.Free(a);
                 var c = heap.Allocate(2);
 
                 Assert.That(c, Is.EqualTo(new MemoryPtr(0, 2)));
-                Assert.That(heap.GetValidRange(out var range), Is.True);
+                Assert.That(heap.TryGetValidRange(out var range), Is.True);
                 Assert.That(range, Is.EqualTo(new int2(0, 6)));
             }
             finally
@@ -75,21 +75,21 @@ namespace KrasCore.Tests
                 var c = heap.Allocate(4);
 
                 Assert.That(heap.UsedLength, Is.EqualTo(9));
-                Assert.That(heap.GetValidRange(out var fullRange), Is.True);
+                Assert.That(heap.TryGetValidRange(out var fullRange), Is.True);
                 Assert.That(fullRange, Is.EqualTo(new int2(0, 8)));
 
                 heap.Free(c);
                 Assert.That(heap.UsedLength, Is.EqualTo(5));
-                Assert.That(heap.GetValidRange(out var afterTailFree), Is.True);
+                Assert.That(heap.TryGetValidRange(out var afterTailFree), Is.True);
                 Assert.That(afterTailFree, Is.EqualTo(new int2(0, 4)));
 
                 heap.Free(a);
-                Assert.That(heap.GetValidRange(out var onlyMiddleLive), Is.True);
+                Assert.That(heap.TryGetValidRange(out var onlyMiddleLive), Is.True);
                 Assert.That(onlyMiddleLive, Is.EqualTo(new int2(2, 4)));
 
                 heap.Free(b);
                 Assert.That(heap.UsedLength, Is.EqualTo(0));
-                Assert.That(heap.GetValidRange(out _), Is.False);
+                Assert.That(heap.TryGetValidRange(out _), Is.False);
             }
             finally
             {
@@ -110,11 +110,11 @@ namespace KrasCore.Tests
 
                 heap.Free(b);
 
-                Assert.That(heap.GetValidRange(out var sparseRange), Is.True);
+                Assert.That(heap.TryGetValidRange(out var sparseRange), Is.True);
                 Assert.That(sparseRange, Is.EqualTo(new int2(a.StartIndex, c.EndIndex)));
 
                 heap.Free(a);
-                Assert.That(heap.GetValidRange(out var tailOnlyRange), Is.True);
+                Assert.That(heap.TryGetValidRange(out var tailOnlyRange), Is.True);
                 Assert.That(tailOnlyRange, Is.EqualTo(new int2(c.StartIndex, c.EndIndex)));
             }
             finally
