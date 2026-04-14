@@ -45,20 +45,20 @@ namespace KrasCore
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    [DebuggerDisplay("Allocations = {AllocationCount}, UsedLength = {UsedLength}, Capacity = {Capacity}, IsCreated = {IsCreated}")]
-    public unsafe struct UnsafeHeapMemory<T> : IDisposable
-        where T : unmanaged
+    [DebuggerDisplay("Stride = {Stride}, Allocations = {AllocationCount}, UsedLength = {UsedLength}, Capacity = {Capacity}, IsCreated = {IsCreated}")]
+    public unsafe struct UnsafeHeapMemory : IDisposable
     {
         private const int INVALID_INDEX = -1;
         private const int INITIAL_METADATA_CAPACITY = 16;
         private const int BIN_COUNT = 31;
 
-        private UnsafeList<T> _data;
+        private UnsafeList<byte> _data;
         private UnsafeList<Block> _blocks;
         private UnsafeList<int> _recycledBlockIndices;
         private UnsafeList<int> _freeBinHeads;
         private UnsafeHashMap<int, int> _allocatedByStart;
 
+        private int _stride;
         private int _addressHead;
         private int _addressTail;
         private int _usedLength;
@@ -67,21 +67,26 @@ namespace KrasCore
         private int _maxAllocatedEnd;
 
         public bool IsCreated => _data.IsCreated;
-        public int Capacity => _data.IsCreated ? _data.Capacity : 0;
+        public int Stride => _stride;
+        public int Capacity => _data.IsCreated ? _data.Capacity / _stride : 0;
+        public int CapacityBytes => _data.IsCreated ? _data.Capacity : 0;
         public int UsedLength => _usedLength;
+        public int UsedLengthBytes => _usedLength * _stride;
         public int AllocationCount => _allocationCount;
-        public T* DataPtr => _data.Ptr;
+        public byte* DataPtr => _data.Ptr;
 
-        public UnsafeHeapMemory(AllocatorManager.AllocatorHandle allocator)
-            : this(0, allocator)
+        public UnsafeHeapMemory(int stride, AllocatorManager.AllocatorHandle allocator)
+            : this(stride, 0, allocator)
         {
         }
 
-        public UnsafeHeapMemory(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        public UnsafeHeapMemory(int stride, int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
+            CheckStride(stride);
             CheckInitialCapacity(initialCapacity);
 
-            _data = new UnsafeList<T>(initialCapacity, allocator);
+            _stride = stride;
+            _data = new UnsafeList<byte>(GetRequiredBytes(initialCapacity, stride), allocator);
             _data.Resize(0);
 
             _blocks = new UnsafeList<Block>(INITIAL_METADATA_CAPACITY, allocator);
@@ -112,24 +117,30 @@ namespace KrasCore
             return freeBlockIndex != INVALID_INDEX ? AllocateFromFreeBlock(freeBlockIndex, count) : AllocateAtEnd(count);
         }
 
-        public MemoryPtr Allocate(UnsafeArray<T> source)
+        public MemoryPtr Allocate<T>(UnsafeArray<T> source)
+            where T : unmanaged
         {
+            CheckTypeStride<T>();
+
             var ptr = Allocate(source.Length);
-            var byteCount = source.Length * UnsafeUtility.SizeOf<T>();
-            UnsafeUtility.MemCpy(_data.Ptr + ptr.StartIndex, source.GetUnsafePtr(), byteCount);
+            var byteCount = GetRequiredBytes(source.Length, _stride);
+            UnsafeUtility.MemCpy(_data.Ptr + GetByteOffset(ptr.StartIndex), source.GetUnsafePtr(), byteCount);
             return ptr;
         }
 
-        public MemoryPtr Allocate(NativeArray<T> source)
+        public MemoryPtr Allocate<T>(NativeArray<T> source)
+            where T : unmanaged
         {
+            CheckTypeStride<T>();
+
             if (!source.IsCreated)
             {
                 throw new ArgumentNullException(nameof(source));
             }
 
             var ptr = Allocate(source.Length);
-            var byteCount = source.Length * UnsafeUtility.SizeOf<T>();
-            UnsafeUtility.MemCpy(_data.Ptr + ptr.StartIndex, source.GetUnsafeReadOnlyPtr(), byteCount);
+            var byteCount = GetRequiredBytes(source.Length, _stride);
+            UnsafeUtility.MemCpy(_data.Ptr + GetByteOffset(ptr.StartIndex), source.GetUnsafeReadOnlyPtr(), byteCount);
             return ptr;
         }
 
@@ -181,28 +192,38 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T ElementAt(MemoryPtr ptr, int index)
+        public ref T ElementAt<T>(MemoryPtr ptr, int index)
+            where T : unmanaged
         {
+            CheckTypeStride<T>();
             CheckElementIndex(ptr, index, out var absoluteIndex);
-            return ref UnsafeUtility.ArrayElementAsRef<T>(_data.Ptr, absoluteIndex);
+            return ref UnsafeUtility.AsRef<T>(_data.Ptr + GetByteOffset(absoluteIndex));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T* GetUnsafePtr(MemoryPtr ptr)
+        public byte* GetUnsafePtr(MemoryPtr ptr)
         {
             if (!TryGetAllocatedBlockIndex(ptr, out _))
             {
                 throw new ArgumentException("MemoryPtr is not currently allocated.", nameof(ptr));
             }
 
-            return _data.Ptr + ptr.StartIndex;
+            return _data.Ptr + GetByteOffset(ptr.StartIndex);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T* GetUnsafePtr<T>(MemoryPtr ptr)
+            where T : unmanaged
+        {
+            CheckTypeStride<T>();
+            return (T*)GetUnsafePtr(ptr);
         }
 
         public int EnsureCapacity(int capacity)
         {
             CheckInitialCapacity(capacity);
             EnsureDataCapacity(capacity);
-            return _data.Capacity;
+            return Capacity;
         }
 
         public void Clear()
@@ -253,6 +274,7 @@ namespace KrasCore
                 _allocatedByStart.Dispose();
             }
 
+            _stride = 0;
             _addressHead = INVALID_INDEX;
             _addressTail = INVALID_INDEX;
             _usedLength = 0;
@@ -321,6 +343,7 @@ namespace KrasCore
             {
                 throw new InvalidOperationException("Allocator tracking state is inconsistent.");
             }
+
             _allocationCount++;
             UpdateRangeOnAllocate(start, count);
 
@@ -399,7 +422,7 @@ namespace KrasCore
 
                 RemoveFreeBlockFromBins(tailIndex);
                 _usedLength = tailBlock.Start;
-                _data.Resize(_usedLength);
+                _data.Resize(GetByteOffset(_usedLength));
 
                 UnlinkByAddress(tailIndex);
                 RecycleBlock(tailIndex);
@@ -497,26 +520,29 @@ namespace KrasCore
         private void EnsureLength(int requiredLength)
         {
             EnsureDataCapacity(requiredLength);
-            if (_data.Length < requiredLength)
+            var requiredBytes = GetByteOffset(requiredLength);
+            if (_data.Length < requiredBytes)
             {
-                _data.Resize(requiredLength);
+                _data.Resize(requiredBytes);
             }
         }
 
         private void EnsureDataCapacity(int requiredCapacity)
         {
-            if (_data.Capacity >= requiredCapacity)
+            var requiredBytes = GetByteOffset(requiredCapacity);
+            if (_data.Capacity >= requiredBytes)
             {
                 return;
             }
 
-            long newCapacity = math.max(4, _data.Capacity);
-            while (newCapacity < requiredCapacity)
+            var minGrowthBytes = GetRequiredBytes(4, _stride);
+            long newCapacity = math.max(minGrowthBytes, _data.Capacity);
+            while (newCapacity < requiredBytes)
             {
                 newCapacity <<= 1;
                 if (newCapacity > int.MaxValue)
                 {
-                    newCapacity = requiredCapacity;
+                    newCapacity = requiredBytes;
                     break;
                 }
             }
@@ -772,6 +798,29 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int GetByteOffset(int elementIndex)
+        {
+            var bytes = (long)elementIndex * _stride;
+            if (bytes > int.MaxValue)
+            {
+                throw new InvalidOperationException("Required byte offset exceeds supported size.");
+            }
+
+            return (int)bytes;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CheckTypeStride<T>()
+            where T : unmanaged
+        {
+            var size = UnsafeUtility.SizeOf<T>();
+            if (size != _stride)
+            {
+                throw new ArgumentException($"Type stride mismatch. Heap stride is {_stride} bytes but type '{typeof(T).Name}' is {size} bytes.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetBinIndex(int size)
         {
             var index = 0;
@@ -789,6 +838,30 @@ namespace KrasCore
         private static int GetBinLowerBound(int bin)
         {
             return 1 << bin;
+        }
+
+        private static int GetRequiredBytes(int elementCount, int stride)
+        {
+            if (elementCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(elementCount), "Element count must be >= 0.");
+            }
+
+            var bytes = (long)elementCount * stride;
+            if (bytes > int.MaxValue)
+            {
+                throw new InvalidOperationException("Requested size exceeds supported byte range.");
+            }
+
+            return (int)bytes;
+        }
+
+        private static void CheckStride(int stride)
+        {
+            if (stride <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(stride), "Stride must be > 0.");
+            }
         }
 
         private static void CheckInitialCapacity(int initialCapacity)
