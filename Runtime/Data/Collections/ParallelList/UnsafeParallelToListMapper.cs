@@ -10,6 +10,8 @@ namespace KrasCore
         public UnsafeParallelList<T> ParallelList;
         public UnsafeList<T> List;
 
+        public bool IsCreated => ParallelList.IsCreated && List.IsCreated;
+        
         public UnsafeParallelToListMapper(int capacity, Allocator allocator)
         {
             ParallelList = new UnsafeParallelList<T>(capacity, allocator);
