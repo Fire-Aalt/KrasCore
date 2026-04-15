@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BovineLabs.Core.Collections;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -29,12 +28,7 @@ namespace KrasCore
         {
             return StartIndex == other.StartIndex && Count == other.Count;
         }
-
-        public override bool Equals(object obj)
-        {
-            return obj is MemoryPtr other && Equals(other);
-        }
-
+        
         public override int GetHashCode()
         {
             unchecked
@@ -225,7 +219,7 @@ namespace KrasCore
             CheckTypeStride<T>();
             CheckMemoryPtrForFree(ptr, out _);
 
-            var arrayPtr = _data.Ptr + GetByteOffset(ptr.StartIndex);
+            var arrayPtr = GetUnsafePtr(ptr);
             return UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<T>(arrayPtr, ptr.Count, allocatorLabel);
         }
         
@@ -234,7 +228,7 @@ namespace KrasCore
         {
             CheckMemoryPtrForFree(ptr, out _);
 
-            var arrayPtr = _data.Ptr + GetByteOffset(ptr.StartIndex);
+            var arrayPtr = GetUnsafePtr(ptr);
             return UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<byte>(arrayPtr, ptr.Count * _stride, allocatorLabel);
         }
 
