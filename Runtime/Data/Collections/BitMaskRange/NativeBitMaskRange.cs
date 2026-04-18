@@ -9,6 +9,18 @@ using Unity.Mathematics;
 
 namespace KrasCore
 {
+    /// <summary>
+    /// A job-safe bit-mask container for tracking active indices and querying the active span quickly.
+    /// </summary>
+    /// <remarks>
+    /// Use this when you need compact on/off state for integer indices and frequent boundary queries without scanning every slot.
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Mark and unmark states with <see cref="Set"/> and <see cref="Unset"/> as work becomes active/inactive.</description></item>
+    /// <item><description>Check membership with <see cref="IsSet"/> during validation or filtering.</description></item>
+    /// <item><description>Process only active bounds by calling <see cref="TryGetFirstSet"/>, <see cref="TryGetLastSet"/>, or <c>TryGetRange</c> before iterating.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Length = {Length}, Levels = {LevelCount}, IsCreated = {IsCreated}")]

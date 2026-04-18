@@ -9,6 +9,18 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
+    /// <summary>
+    /// A job-safe priority queue that stores payload values and explicit integer priorities.
+    /// </summary>
+    /// <remarks>
+    /// Use this when payload data should be ordered by a separate priority value rather than by <typeparamref name="T"/> itself.
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Insert work items with <see cref="Enqueue"/> using computed score or urgency as the priority.</description></item>
+    /// <item><description>Inspect the next item with <see cref="TryPeek"/> or <see cref="Peek"/> for look-ahead decisions.</description></item>
+    /// <item><description>Drain items in priority order with repeated <see cref="TryDequeue"/> calls, typically in a processing loop.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsCreated = {IsCreated}")]
@@ -168,6 +180,18 @@ namespace KrasCore
         }
     }
 
+    /// <summary>
+    /// A job-safe priority queue that stores payload values and explicit integer priorities using a custom comparer.
+    /// </summary>
+    /// <remarks>
+    /// Use this variant when default priority ordering is not enough and priority comparison must be customized (for example reversed order or tie-specific behavior).
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Construct with <typeparamref name="TComparer"/> to define domain-specific priority semantics.</description></item>
+    /// <item><description>Schedule work by calling <see cref="Enqueue"/> with payload and priority pairs.</description></item>
+    /// <item><description>Process or inspect ordered items through <see cref="TryDequeue"/> and <see cref="TryPeek"/> in systems and jobs.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsCreated = {IsCreated}")]

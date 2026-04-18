@@ -9,6 +9,18 @@ using Unity.Mathematics;
 
 namespace KrasCore
 {
+    /// <summary>
+    /// A job-safe heap-style allocator backed by contiguous native memory that returns <see cref="MemoryPtr"/> handles.
+    /// </summary>
+    /// <remarks>
+    /// Use this when you need variable-length allocations from one native backing store, with explicit free/reuse behavior and direct pointer/array access.
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Allocate blocks with <c>Allocate</c> overloads for element counts or source arrays.</description></item>
+    /// <item><description>Read or mutate allocated regions through <see cref="ElementAt{T}"/>, <see cref="ArrayAt{T}"/>, or <see cref="GetUnsafePtr"/>.</description></item>
+    /// <item><description>Recycle storage with <see cref="Free"/>, validate handles with <see cref="Contains"/>, and pre-grow with <see cref="EnsureCapacity"/> to reduce reallocations.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Stride = {Stride}, Allocations = {AllocationCount}, UsedLength = {UsedLength}, Capacity = {Capacity}, IsCreated = {IsCreated}")]

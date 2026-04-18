@@ -16,6 +16,18 @@ using Debug = UnityEngine.Debug;
 
 namespace KrasCore
 {
+    /// <summary>
+    /// A job-safe per-thread append container that stores values in thread-local lists and supports later merged or segmented reads.
+    /// </summary>
+    /// <remarks>
+    /// Use this when many threads produce variable amounts of data in parallel, and you want no contention during writes before a controlled readback phase.
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Write per-thread outputs via <see cref="AsThreadWriter"/> for general producer jobs.</description></item>
+    /// <item><description>Use <see cref="AsChunkWriter"/> and <see cref="SetChunkCount"/> for chunk-indexed producer/consumer pipelines.</description></item>
+    /// <item><description>Consume results with <see cref="AsThreadReader"/>, <see cref="AsChunkReader"/>, or flatten to a contiguous <see cref="NativeList{T}"/> using <see cref="CopyToList"/>.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]

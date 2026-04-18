@@ -8,6 +8,18 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
+    /// <summary>
+    /// A job-safe per-thread storage container that keeps one <typeparamref name="T"/> value per worker thread.
+    /// </summary>
+    /// <remarks>
+    /// Use this when parallel jobs need thread-local mutable state without contention, followed by an optional combine/reduction phase.
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Write thread-local accumulators with <see cref="AsThreadWriter"/> and <see cref="ThreadWriter.GetRef"/> or <see cref="ThreadWriter.Set"/>.</description></item>
+    /// <item><description>Initialize per-thread defaults using <see cref="Clear"/> overloads before scheduling producer jobs.</description></item>
+    /// <item><description>Read combined thread slots through <see cref="AsThreadReader"/> or <see cref="GetEnumerator"/> in a follow-up aggregation step.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]

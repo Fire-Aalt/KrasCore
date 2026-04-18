@@ -8,6 +8,18 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
+    /// <summary>
+    /// A job-safe binary heap where item ordering is defined by <see cref="IComparable{T}"/> on <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    /// Use this when the value itself determines ordering, and you need repeated "next best item" retrieval in native memory.
+    /// Common patterns include:
+    /// <list type="bullet">
+    /// <item><description>Push candidates with <see cref="Enqueue"/> during simulation or search expansion.</description></item>
+    /// <item><description>Inspect the current best element with <see cref="TryPeek"/> or <see cref="Peek"/> without removal.</description></item>
+    /// <item><description>Consume in priority order with repeated <see cref="TryDequeue"/> calls until the heap is empty.</description></item>
+    /// </list>
+    /// </remarks>
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsCreated = {IsCreated}")]
