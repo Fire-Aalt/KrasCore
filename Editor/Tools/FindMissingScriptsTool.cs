@@ -8,7 +8,7 @@ namespace Game
         [MenuItem("Tools/Find Missing Scripts")]
         private static void FindMissingScriptsMenuItem()
         {
-            foreach (var gameObject in Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var gameObject in Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include))
             {
                 foreach (var component in gameObject.GetComponents<Component>())
                 {
