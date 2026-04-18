@@ -1,8 +1,4 @@
-﻿// <copyright project="NZCore" file="UnsafeParallelList.cs" version="1.0.0">
-// Copyright © 2024 Thomas Enzenebner. All rights reserved.
-// </copyright>
-
-using System.Collections;
+﻿using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
