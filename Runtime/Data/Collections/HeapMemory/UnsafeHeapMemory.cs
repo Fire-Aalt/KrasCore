@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using JetBrains.Annotations;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
@@ -158,7 +159,8 @@ namespace KrasCore
         
         public void Free(MemoryPtr ptr)
         {
-            CheckMemoryPtrForFree(ptr, out var blockIndex);
+            CheckMemoryPtrForFree(ptr);
+            var blockIndex = GetBlockIndex(ptr);
 
             var freedBlock = _blocks[blockIndex];
             _allocatedByStart.Remove(ptr.StartIndex);
@@ -188,7 +190,7 @@ namespace KrasCore
 
         public bool Contains(MemoryPtr ptr)
         {
-            return TryGetAllocatedBlockIndex(ptr, out _);
+            return IsAllocated(ptr);
         }
 
         public bool TryGetValidRange(out int2 range)
@@ -208,7 +210,9 @@ namespace KrasCore
             where T : unmanaged
         {
             CheckTypeStride<T>();
-            CheckElementIndex(ptr, index, out var absoluteIndex);
+            CheckElementIndex(ptr, index);
+            var absoluteIndex = ptr.StartIndex + index;
+            
             return ref UnsafeUtility.AsRef<T>(_data.Ptr + GetByteOffset(absoluteIndex));
         }
         
@@ -217,7 +221,7 @@ namespace KrasCore
             where T : unmanaged
         {
             CheckTypeStride<T>();
-            CheckMemoryPtrForFree(ptr, out _);
+            CheckMemoryPtrForFree(ptr);
 
             var arrayPtr = GetUnsafePtr(ptr);
             return UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<T>(arrayPtr, ptr.Count, allocatorLabel);
@@ -226,7 +230,7 @@ namespace KrasCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray<byte> ArrayAtUnsafe(MemoryPtr ptr)
         {
-            CheckMemoryPtrForFree(ptr, out _);
+            CheckMemoryPtrForFree(ptr);
 
             var arrayPtr = GetUnsafePtr(ptr);
             return UnsafeArrayUtility.ConvertExistingDataToUnsafeArray<byte>(arrayPtr, ptr.Count * _stride, allocatorLabel);
@@ -235,11 +239,7 @@ namespace KrasCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public byte* GetUnsafePtr(MemoryPtr ptr)
         {
-            if (!TryGetAllocatedBlockIndex(ptr, out _))
-            {
-                throw new ArgumentException("MemoryPtr is not currently allocated.", nameof(ptr));
-            }
-
+            CheckIsAllocated(ptr);
             return _data.Ptr + GetByteOffset(ptr.StartIndex);
         }
 
@@ -764,16 +764,14 @@ namespace KrasCore
             _blocks[blockIndex] = block;
         }
 
-        private bool TryGetAllocatedBlockIndex(MemoryPtr ptr, out int blockIndex)
+        private bool IsAllocated(MemoryPtr ptr)
         {
-            blockIndex = INVALID_INDEX;
-
             if (!ptr.IsValid)
             {
                 return false;
             }
 
-            if (!_allocatedByStart.TryGetValue(ptr.StartIndex, out blockIndex))
+            if (!_allocatedByStart.TryGetValue(ptr.StartIndex, out var blockIndex))
             {
                 return false;
             }
@@ -781,44 +779,10 @@ namespace KrasCore
             var block = _blocks[blockIndex];
             return block.IsAlive != 0 && block.IsFree == 0 && block.Count == ptr.Count;
         }
-
-        private void CheckElementIndex(MemoryPtr ptr, int index, out int absoluteIndex)
+        
+        private int GetBlockIndex(MemoryPtr ptr)
         {
-            if (!TryGetAllocatedBlockIndex(ptr, out _))
-            {
-                throw new ArgumentException("MemoryPtr is not currently allocated.", nameof(ptr));
-            }
-
-            if ((uint)index >= (uint)ptr.Count)
-            {
-                throw new ArgumentOutOfRangeException(nameof(index), $"Index must be in [0, {ptr.Count - 1}].");
-            }
-
-            absoluteIndex = ptr.StartIndex + index;
-        }
-
-        private void CheckMemoryPtrForFree(MemoryPtr ptr, out int blockIndex)
-        {
-            if (!ptr.IsValid)
-            {
-                throw new ArgumentException("MemoryPtr is invalid.", nameof(ptr));
-            }
-
-            if (!_allocatedByStart.TryGetValue(ptr.StartIndex, out blockIndex))
-            {
-                throw new InvalidOperationException("MemoryPtr is not currently allocated.");
-            }
-
-            var block = _blocks[blockIndex];
-            if (block.IsAlive == 0 || block.IsFree != 0)
-            {
-                throw new InvalidOperationException("MemoryPtr is not currently allocated.");
-            }
-
-            if (block.Count != ptr.Count)
-            {
-                throw new ArgumentException("MemoryPtr count does not match the active allocation.", nameof(ptr));
-            }
+            return _allocatedByStart[ptr.StartIndex];
         }
 
         private void ResetFreeBinHeads()
@@ -839,26 +803,6 @@ namespace KrasCore
             }
 
             return (int)bytes;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CheckTypeStride<T>()
-            where T : unmanaged
-        {
-            var size = UnsafeUtility.SizeOf<T>();
-            if (size != _stride)
-            {
-                throw new ArgumentException($"Type stride mismatch. Heap stride is {_stride} bytes but type '{typeof(T).Name}' is {size} bytes.");
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void CheckLengthStride(int byteLength)
-        {
-            if (byteLength % _stride != 0)
-            {
-                throw new ArgumentException($"Type stride mismatch. Heap stride is {_stride} bytes but passed byte length of {byteLength} is impossible with that stride");
-            }
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -896,7 +840,85 @@ namespace KrasCore
 
             return (int)bytes;
         }
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private void CheckElementIndex(MemoryPtr ptr, int index)
+        {
+            CheckIsAllocated(ptr);
 
+            if ((uint)index >= (uint)ptr.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index), $"Index must be in [0, {ptr.Count - 1}].");
+            }
+        }
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private void CheckMemoryPtrForFree(MemoryPtr ptr)
+        {
+            if (!ptr.IsValid)
+            {
+                throw new ArgumentException("MemoryPtr is invalid.", nameof(ptr));
+            }
+
+            if (!_allocatedByStart.TryGetValue(ptr.StartIndex, out var blockIndex))
+            {
+                throw new InvalidOperationException("MemoryPtr is not currently allocated.");
+            }
+
+            var block = _blocks[blockIndex];
+            if (block.IsAlive == 0 || block.IsFree != 0)
+            {
+                throw new InvalidOperationException("MemoryPtr is not currently allocated.");
+            }
+
+            if (block.Count != ptr.Count)
+            {
+                throw new ArgumentException("MemoryPtr count does not match the active allocation.", nameof(ptr));
+            }
+        }
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private void CheckIsAllocated(MemoryPtr ptr)
+        {
+            if (!IsAllocated(ptr))
+            {
+                throw new ArgumentException("MemoryPtr is not currently allocated.", nameof(ptr));
+            }
+        }
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private void CheckTypeStride<T>()
+            where T : unmanaged
+        {
+            var size = UnsafeUtility.SizeOf<T>();
+            if (size != _stride)
+            {
+                throw new ArgumentException($"Type stride mismatch. Heap stride is {_stride} bytes but type '{typeof(T).Name}' is {size} bytes.");
+            }
+        }
+
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
+        private void CheckLengthStride(int byteLength)
+        {
+            if (byteLength % _stride != 0)
+            {
+                throw new ArgumentException($"Type stride mismatch. Heap stride is {_stride} bytes but passed byte length of {byteLength} is impossible with that stride");
+            }
+        }
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckStride(int stride)
         {
             if (stride <= 0)
@@ -905,6 +927,9 @@ namespace KrasCore
             }
         }
 
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckInitialCapacity(int initialCapacity)
         {
             if (initialCapacity < 0)
@@ -912,7 +937,10 @@ namespace KrasCore
                 throw new ArgumentOutOfRangeException(nameof(initialCapacity), "Capacity must be >= 0.");
             }
         }
-
+        
+        [AssertionMethod]
+        [Conditional("ENABLE_UNITY_COLLECTIONS_CHECKS")]
+        [Conditional("UNITY_DOTS_DEBUG")]
         private static void CheckAllocateCount(int count)
         {
             if (count <= 0)
