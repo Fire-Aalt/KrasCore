@@ -5,16 +5,16 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 namespace KrasCore
 {
-    public static class ParallelListExtensions
+    public static class NativeThreadListExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe NativeArray<int> GetStartIndexArray<T>(this ParallelList<T> parallelList, ref SystemState state)
+        public static unsafe NativeArray<int> GetStartIndexArray<T>(this NativeThreadList<T> nativeThreadList, ref SystemState state)
             where T : unmanaged
         {
-            return parallelList._unsafeParallelList->GetStartIndexArray(ref state);
+            return nativeThreadList._unsafeParallelList->GetStartIndexArray(ref state);
         }
         
-        public static NativeArray<int> GetStartIndexArray<T>(this UnsafeParallelList<T> unsafeParallelList, ref SystemState state)
+        public static NativeArray<int> GetStartIndexArray<T>(this UnsafeThreadList<T> unsafeThreadList, ref SystemState state)
             where T : unmanaged
         {
             NativeArray<int> lengths = new NativeArray<int>();
@@ -24,7 +24,7 @@ namespace KrasCore
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
             {
                 lengths[i] = count;
-                count += unsafeParallelList.GetPerThreadList(i).List.m_length;
+                count += unsafeThreadList.GetPerThreadList(i).List.m_length;
             }
 
             return lengths;

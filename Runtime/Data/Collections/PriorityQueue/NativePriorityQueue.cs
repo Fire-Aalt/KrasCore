@@ -12,14 +12,14 @@ namespace KrasCore
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsCreated = {IsCreated}")]
-    public struct NativePriorityList<T> : IDisposable
+    public struct NativePriorityQueue<T> : IDisposable
         where T : unmanaged
     {
         private UnsafePriorityQueue<T> _queue;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
-        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<NativePriorityList<T>>();
+        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<NativePriorityQueue<T>>();
 #endif
 
         public int Count
@@ -44,12 +44,12 @@ namespace KrasCore
 
         public bool IsCreated => _queue.IsCreated;
 
-        public NativePriorityList(AllocatorManager.AllocatorHandle allocator)
+        public NativePriorityQueue(AllocatorManager.AllocatorHandle allocator)
             : this(0, allocator)
         {
         }
 
-        public NativePriorityList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        public NativePriorityQueue(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             _queue = new UnsafePriorityQueue<T>(initialCapacity, allocator);
@@ -65,7 +65,7 @@ namespace KrasCore
             }
         }
 
-        public NativePriorityList(T[] items, int[] priorities, AllocatorManager.AllocatorHandle allocator)
+        public NativePriorityQueue(T[] items, int[] priorities, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             _queue = new UnsafePriorityQueue<T>(items, priorities, allocator);
@@ -146,7 +146,7 @@ namespace KrasCore
             CollectionHelper.CheckAllocator(allocator);
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator);
             CollectionHelper.InitNativeContainer<T>(m_Safety);
-            CollectionHelper.SetStaticSafetyId<NativePriorityList<T>>(ref m_Safety, ref s_staticSafetyId.Data);
+            CollectionHelper.SetStaticSafetyId<NativePriorityQueue<T>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
         }
@@ -171,7 +171,7 @@ namespace KrasCore
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsCreated = {IsCreated}")]
-    public struct NativePriorityList<T, TComparer> : IDisposable
+    public struct NativePriorityQueue<T, TComparer> : IDisposable
         where T : unmanaged
         where TComparer : unmanaged, IComparer<int>
     {
@@ -179,7 +179,7 @@ namespace KrasCore
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
-        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<NativePriorityList<T, TComparer>>();
+        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<NativePriorityQueue<T, TComparer>>();
 #endif
 
         public int Count
@@ -204,17 +204,17 @@ namespace KrasCore
 
         public bool IsCreated => _queue.IsCreated;
 
-        public NativePriorityList(AllocatorManager.AllocatorHandle allocator)
+        public NativePriorityQueue(AllocatorManager.AllocatorHandle allocator)
             : this(0, allocator, default)
         {
         }
 
-        public NativePriorityList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        public NativePriorityQueue(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
             : this(initialCapacity, allocator, default)
         {
         }
 
-        public NativePriorityList(int initialCapacity, AllocatorManager.AllocatorHandle allocator, TComparer comparer)
+        public NativePriorityQueue(int initialCapacity, AllocatorManager.AllocatorHandle allocator, TComparer comparer)
         {
             this = default;
             _queue = new UnsafePriorityQueue<T, TComparer>(initialCapacity, allocator, comparer);
@@ -230,12 +230,12 @@ namespace KrasCore
             }
         }
 
-        public NativePriorityList(T[] items, int[] priorities, AllocatorManager.AllocatorHandle allocator)
+        public NativePriorityQueue(T[] items, int[] priorities, AllocatorManager.AllocatorHandle allocator)
             : this(items, priorities, allocator, default)
         {
         }
 
-        public NativePriorityList(T[] items, int[] priorities, AllocatorManager.AllocatorHandle allocator, TComparer comparer)
+        public NativePriorityQueue(T[] items, int[] priorities, AllocatorManager.AllocatorHandle allocator, TComparer comparer)
         {
             this = default;
             _queue = new UnsafePriorityQueue<T, TComparer>(items, priorities, allocator, comparer);
@@ -316,7 +316,7 @@ namespace KrasCore
             CollectionHelper.CheckAllocator(allocator);
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator);
             CollectionHelper.InitNativeContainer<T>(m_Safety);
-            CollectionHelper.SetStaticSafetyId<NativePriorityList<T, TComparer>>(ref m_Safety, ref s_staticSafetyId.Data);
+            CollectionHelper.SetStaticSafetyId<NativePriorityQueue<T, TComparer>>(ref m_Safety, ref s_staticSafetyId.Data);
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
         }

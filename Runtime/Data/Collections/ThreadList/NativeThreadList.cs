@@ -19,25 +19,25 @@ namespace KrasCore
     [NativeContainer]
     [StructLayout(LayoutKind.Sequential)]
     [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(int) })]
-    public unsafe struct ParallelList<T> : IDisposable
+    public unsafe struct NativeThreadList<T> : IDisposable
         where T : unmanaged
     {
-        [NativeDisableUnsafePtrRestriction] internal UnsafeParallelList<T>* _unsafeParallelList;
+        [NativeDisableUnsafePtrRestriction] internal UnsafeThreadList<T>* _unsafeParallelList;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         private AtomicSafetyHandle m_Safety;
         private int m_SafetyIndexHint;
-        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<ParallelList<T>>();
+        private static readonly SharedStatic<int> s_staticSafetyId = SharedStatic<int>.GetOrCreate<NativeThreadList<T>>();
 #endif
 
         public int Length => _unsafeParallelList->Count();
 
-        public ParallelList(AllocatorManager.AllocatorHandle allocator)
+        public NativeThreadList(AllocatorManager.AllocatorHandle allocator)
             : this(1, allocator)
         {
         }
 
-        public ParallelList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        public NativeThreadList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             AllocatorManager.AllocatorHandle temp = allocator;
@@ -56,14 +56,14 @@ namespace KrasCore
             m_Safety = CollectionHelper.CreateSafetyHandle(allocator.Handle);
             CollectionHelper.InitNativeContainer<T>(m_Safety);
 
-            CollectionHelper.SetStaticSafetyId<ParallelList<T>>(ref m_Safety, ref s_staticSafetyId.Data);
+            CollectionHelper.SetStaticSafetyId<NativeThreadList<T>>(ref m_Safety, ref s_staticSafetyId.Data);
 
             m_SafetyIndexHint = (allocator.Handle).AddSafetyHandle(m_Safety);
 
             AtomicSafetyHandle.SetBumpSecondaryVersionOnScheduleWrite(m_Safety, true);
 #endif
 
-            _unsafeParallelList = UnsafeParallelList<T>.Create(initialCapacity, ref allocator);
+            _unsafeParallelList = UnsafeThreadList<T>.Create(initialCapacity, ref allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -137,7 +137,7 @@ namespace KrasCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             CollectionHelper.DisposeSafetyHandle(ref m_Safety);
 #endif
-            UnsafeParallelList<T>.Destroy(_unsafeParallelList);
+            UnsafeThreadList<T>.Destroy(_unsafeParallelList);
             _unsafeParallelList = null;
         }
 
@@ -176,22 +176,22 @@ namespace KrasCore
         [NativeContainerIsAtomicWriteOnly]
         public struct ChunkWriter
         {
-            private UnsafeParallelList<T>.ChunkWriter chunkWriter;
+            private UnsafeThreadList<T>.ChunkWriter chunkWriter;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private readonly AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ChunkWriter>();
 #endif
 
-            internal ChunkWriter(ref ParallelList<T> parallelList)
+            internal ChunkWriter(ref NativeThreadList<T> nativeThreadList)
             {
-                chunkWriter = parallelList._unsafeParallelList->AsChunkWriter();
+                chunkWriter = nativeThreadList._unsafeParallelList->AsChunkWriter();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                m_Safety = parallelList.m_Safety;
+                m_Safety = nativeThreadList.m_Safety;
                 CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ChunkWriter");
 
-                if (parallelList._unsafeParallelList->CheckRangesForNull())
+                if (nativeThreadList._unsafeParallelList->CheckRangesForNull())
                     Debug.LogError($"Ranges have not been allocated. SetChunkCount(int chunkCount) before writing something."); // {Environment.StackTrace}");
 #endif
             }
@@ -237,14 +237,14 @@ namespace KrasCore
         [GenerateTestsForBurstCompatibility]
         public struct ChunkReader
         {
-            private UnsafeParallelList<T>.ChunkReader chunkReader;
+            private UnsafeThreadList<T>.ChunkReader chunkReader;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ChunkReader>();
 #endif
 
-            internal ChunkReader(ref ParallelList<T> stream)
+            internal ChunkReader(ref NativeThreadList<T> stream)
             {
                 chunkReader = stream._unsafeParallelList->AsChunkReader();
 
@@ -290,19 +290,19 @@ namespace KrasCore
         [NativeContainerIsAtomicWriteOnly]
         public struct ThreadWriter
         {
-            private UnsafeParallelList<T>.ThreadWriter threadWriter;
+            private UnsafeThreadList<T>.ThreadWriter threadWriter;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ThreadWriter>();
 #endif
 
-            internal ThreadWriter(ref ParallelList<T> parallelList)
+            internal ThreadWriter(ref NativeThreadList<T> nativeThreadList)
             {
-                threadWriter = parallelList._unsafeParallelList->AsThreadWriter();
+                threadWriter = nativeThreadList._unsafeParallelList->AsThreadWriter();
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
-                m_Safety = parallelList.m_Safety;
+                m_Safety = nativeThreadList.m_Safety;
                 CollectionHelper.SetStaticSafetyId(ref m_Safety, ref staticSafetyId.Data, "NZCore.ThreadWriter");
 #endif
             }
@@ -354,14 +354,14 @@ namespace KrasCore
         [GenerateTestsForBurstCompatibility]
         public struct ThreadReader
         {
-            private UnsafeParallelList<T>.ThreadReader threadReader;
+            private UnsafeThreadList<T>.ThreadReader threadReader;
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             private AtomicSafetyHandle m_Safety;
             private static readonly SharedStatic<int> staticSafetyId = SharedStatic<int>.GetOrCreate<ThreadReader>();
 #endif
 
-            internal ThreadReader(ref ParallelList<T> stream)
+            internal ThreadReader(ref NativeThreadList<T> stream)
             {
                 threadReader = stream._unsafeParallelList->AsThreadReader();
 
@@ -398,11 +398,11 @@ namespace KrasCore
 
         // helper jobs
 
-        public JobHandle CopyToListSingle(ref NativeList<T> nativeList, JobHandle dependency, UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
+        public JobHandle CopyToListSingle(ref NativeList<T> nativeList, JobHandle dependency, UnsafeThreadList<T>.UnsafeParallelListToArraySingleThreaded jobStud = default)
         {
-            return new UnsafeParallelList<T>.UnsafeParallelListToArraySingleThreaded
+            return new UnsafeThreadList<T>.UnsafeParallelListToArraySingleThreaded
             {
-                ParallelList = *_unsafeParallelList,
+                ThreadList = *_unsafeParallelList,
                 List = nativeList.m_ListData
             }.Schedule(dependency);
         }
@@ -419,14 +419,14 @@ namespace KrasCore
         
         public struct Enumerator : IEnumerator
         {
-            private UnsafeParallelList<T>.Enumerator _enumerator;
+            private UnsafeThreadList<T>.Enumerator _enumerator;
 
             public void Dispose()
             {
                 _enumerator.Dispose();
             }
 
-            public Enumerator(ref ParallelList<T> list) 
+            public Enumerator(ref NativeThreadList<T> list) 
             {
                 _enumerator = list._unsafeParallelList->GetEnumerator();
             }

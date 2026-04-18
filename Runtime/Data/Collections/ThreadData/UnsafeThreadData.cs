@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Unity.Burst;
@@ -9,7 +10,7 @@ using Unity.Jobs.LowLevel.Unsafe;
 namespace KrasCore
 {
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct UnsafePerThreadData<T> : INativeDisposable
+    public unsafe struct UnsafeThreadData<T> : INativeDisposable
         where T : unmanaged
     {
         // Cache line aligned storage avoids false sharing between worker threads.
@@ -22,7 +23,7 @@ namespace KrasCore
 
         public bool IsCreated;
 
-        public UnsafePerThreadData(AllocatorManager.AllocatorHandle allocator)
+        public UnsafeThreadData(AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             Initialize(allocator);
@@ -44,11 +45,11 @@ namespace KrasCore
         }
 
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafePerThreadData<T>* Create<TAllocator>(ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeThreadData<T>* Create<TAllocator>(ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafePerThreadData<T>* unsafePerThreadData = allocator.Allocate(default(UnsafePerThreadData<T>), 1);
-            *unsafePerThreadData = new UnsafePerThreadData<T>(allocator.Handle);
+            UnsafeThreadData<T>* unsafePerThreadData = allocator.Allocate(default(UnsafeThreadData<T>), 1);
+            *unsafePerThreadData = new UnsafeThreadData<T>(allocator.Handle);
 
             return unsafePerThreadData;
         }
@@ -65,9 +66,9 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T* GetUnsafeThreadData(int threadIndex)
+        public ref T GetUnsafeThreadData(int threadIndex)
         {
-            return (T*)(perThreadData + threadIndex * perThreadDataStride);
+            return ref UnsafeUtility.AsRef<T>((T*)(perThreadData + threadIndex * perThreadDataStride));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,7 +97,9 @@ namespace KrasCore
                 return;
 
             for (int i = 0; i < JobsUtility.ThreadIndexCount; i++)
-                *GetUnsafeThreadData(i) = value;
+            {
+                GetUnsafeThreadData(i) = value;
+            }
         }
 
         public ThreadReader AsThreadReader()
@@ -108,8 +111,13 @@ namespace KrasCore
         {
             return new ThreadWriter(ref this);
         }
+        
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(ref this);
+        }
 
-        public static void Destroy(UnsafePerThreadData<T>* unsafePerThreadData)
+        public static void Destroy(UnsafeThreadData<T>* unsafePerThreadData)
         {
             var allocator = unsafePerThreadData->allocator;
             unsafePerThreadData->Dispose();
@@ -131,7 +139,7 @@ namespace KrasCore
         [BurstCompile]
         private struct DisposeJob : IJob
         {
-            public UnsafePerThreadData<T> Data;
+            public UnsafeThreadData<T> Data;
 
             public void Execute()
             {
@@ -154,7 +162,7 @@ namespace KrasCore
 
             private readonly int threadDataStride;
 
-            internal ThreadWriter(ref UnsafePerThreadData<T> data)
+            internal ThreadWriter(ref UnsafeThreadData<T> data)
             {
                 perThreadDataPtr = data.perThreadData;
                 threadDataStride = data.perThreadDataStride;
@@ -165,7 +173,7 @@ namespace KrasCore
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Set(in T data)
             {
-                *GetThreadDataPtr(threadIndex) = data;
+                GetRef() = data;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,7 +196,7 @@ namespace KrasCore
 
             private readonly int threadDataStride;
 
-            internal ThreadReader(ref UnsafePerThreadData<T> data)
+            internal ThreadReader(ref UnsafeThreadData<T> data)
             {
                 perThreadDataPtr = data.perThreadData;
                 threadDataStride = data.perThreadDataStride;
@@ -206,6 +214,61 @@ namespace KrasCore
             private T* GetThreadDataPtr(int index)
             {
                 return (T*)(perThreadDataPtr + index * threadDataStride);
+            }
+        }
+
+        public struct Enumerator : IEnumerator
+        {
+            [NativeDisableUnsafePtrRestriction] private readonly byte* perThreadDataPtr;
+            private readonly int threadDataStride;
+            private readonly int threadCount;
+
+            private int index;
+            private T value;
+
+            internal Enumerator(ref UnsafeThreadData<T> data)
+            {
+                perThreadDataPtr = data.perThreadData;
+                threadDataStride = data.perThreadDataStride;
+                threadCount = JobsUtility.ThreadIndexCount;
+
+                index = -1;
+                value = default;
+            }
+
+            public void Dispose()
+            {
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                int nextIndex = index + 1;
+                if (nextIndex >= threadCount)
+                {
+                    value = default;
+                    return false;
+                }
+
+                index = nextIndex;
+                value = *(T*)(perThreadDataPtr + index * threadDataStride);
+                return true;
+            }
+
+            public void Reset()
+            {
+                index = -1;
+                value = default;
+            }
+
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => value;
+            }
+
+            object IEnumerator.Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)] get => Current;
             }
         }
     }

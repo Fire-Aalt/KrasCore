@@ -8,7 +8,7 @@ using Unity.PerformanceTesting;
 
 namespace KrasCore.Tests
 {
-    public class ParallelListBenchmarkTests
+    public class NativeThreadListBenchmarkTests
     {
         private const int WorkerCap = 32;
         private const int WarmupRuns = 2;
@@ -36,7 +36,7 @@ namespace KrasCore.Tests
             var perWorkerCapacity = (totalWrites + workerCount - 1) / workerCount;
             var sampleGroup = new SampleGroup($"ParallelList.ThreadWriter/{totalWrites}", SampleUnit.Millisecond);
 
-            var list = default(ParallelList<int>);
+            var list = default(NativeThreadList<int>);
             var partialSums = default(NativeArray<long>);
 
             Measure.Method(() =>
@@ -51,7 +51,7 @@ namespace KrasCore.Tests
                 })
                 .SetUp(() =>
                 {
-                    list = new ParallelList<int>(perWorkerCapacity, Allocator.TempJob);
+                    list = new NativeThreadList<int>(perWorkerCapacity, Allocator.TempJob);
                     partialSums = new NativeArray<long>(workerCount, Allocator.TempJob, NativeArrayOptions.ClearMemory);
                 })
                 .CleanUp(() =>
@@ -154,7 +154,7 @@ namespace KrasCore.Tests
         [BurstCompile(CompileSynchronously = true)]
         private struct ParallelListWriterJob : IJobFor
         {
-            public ParallelList<int>.ThreadWriter Writer;
+            public NativeThreadList<int>.ThreadWriter Writer;
             public NativeArray<long> PartialSums;
             public int TotalWrites;
             public int WorkerCount;

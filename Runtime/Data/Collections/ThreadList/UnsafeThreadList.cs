@@ -14,7 +14,7 @@ using Unity.Jobs.LowLevel.Unsafe;
 namespace KrasCore
 {
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct UnsafeParallelList<T> : INativeDisposable
+    public unsafe struct UnsafeThreadList<T> : INativeDisposable
         where T : unmanaged
     {
         // this is set to 64 bytes so any write to length doesn't invalidate cache lines from other threads
@@ -30,12 +30,12 @@ namespace KrasCore
 
         public int Length => Count();
 
-        public UnsafeParallelList(AllocatorManager.AllocatorHandle allocator)
+        public UnsafeThreadList(AllocatorManager.AllocatorHandle allocator)
             : this(1, allocator)
         {
         }
 
-        public UnsafeParallelList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
+        public UnsafeThreadList(int initialCapacity, AllocatorManager.AllocatorHandle allocator)
         {
             this = default;
             Initialize(initialCapacity, allocator);
@@ -68,11 +68,11 @@ namespace KrasCore
         }
         
         [GenerateTestsForBurstCompatibility(GenericTypeArguments = new[] { typeof(AllocatorManager.AllocatorHandle) })]
-        internal static UnsafeParallelList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
+        internal static UnsafeThreadList<T>* Create<TAllocator>(int initialCapacity, ref TAllocator allocator, NativeArrayOptions options = NativeArrayOptions.UninitializedMemory)
             where TAllocator : unmanaged, AllocatorManager.IAllocator
         {
-            UnsafeParallelList<T>* unsafeParallelList = allocator.Allocate(default(UnsafeParallelList<T>), 1);
-            *unsafeParallelList = new UnsafeParallelList<T>(initialCapacity, allocator.Handle);
+            UnsafeThreadList<T>* unsafeParallelList = allocator.Allocate(default(UnsafeThreadList<T>), 1);
+            *unsafeParallelList = new UnsafeThreadList<T>(initialCapacity, allocator.Handle);
 
             return unsafeParallelList;
         }
@@ -220,7 +220,7 @@ namespace KrasCore
             return new ThreadWriter(ref this);
         }
 
-        public static void Destroy(UnsafeParallelList<T>* unsafeParallelList)
+        public static void Destroy(UnsafeThreadList<T>* unsafeParallelList)
         {
             var allocator = unsafeParallelList->allocator;
             unsafeParallelList->Dispose();
@@ -256,7 +256,7 @@ namespace KrasCore
         [BurstCompile]
         private struct DisposeJob : IJob
         {
-            public UnsafeParallelList<T> List;
+            public UnsafeThreadList<T> List;
 
             public void Execute()
             {
@@ -304,7 +304,7 @@ namespace KrasCore
         public struct Enumerator : IEnumerator
         {
             private UnsafeList<T> _threadList;
-            private UnsafeParallelList<T> _list;
+            private UnsafeThreadList<T> _list;
             private int _index;
             private int _thread;
             private T _value;
@@ -313,7 +313,7 @@ namespace KrasCore
             {
             }
 
-            public Enumerator(ref UnsafeParallelList<T> list) 
+            public Enumerator(ref UnsafeThreadList<T> list) 
             {
                 _list = list;
                 _value = default;
@@ -375,7 +375,7 @@ namespace KrasCore
         {
             return new UnsafeParallelListToArraySingleThreaded
             {
-                ParallelList = this,
+                ThreadList = this,
                 List = nativeList,
             }.Schedule(dependency);
         }
@@ -384,13 +384,13 @@ namespace KrasCore
         public struct UnsafeParallelListToArraySingleThreaded : IJob
         {
             [ReadOnly]
-            public UnsafeParallelList<T> ParallelList;
+            public UnsafeThreadList<T> ThreadList;
 
             [NativeDisableUnsafePtrRestriction] public UnsafeList<T>* List;
 
             public void Execute()
             {
-                ParallelList.CopyToList(List);
+                ThreadList.CopyToList(List);
             }
         }
 
@@ -426,7 +426,7 @@ namespace KrasCore
             private int chunkIndex;
             private int startIndex;
 
-            internal ChunkWriter(ref UnsafeParallelList<T> stream)
+            internal ChunkWriter(ref UnsafeThreadList<T> stream)
             {
                 perThreadListsPtr = stream.perThreadLists;
                 ranges = stream.ranges;
@@ -493,7 +493,7 @@ namespace KrasCore
             private readonly int size;
             private int currentIndex;
 
-            internal ChunkReader(ref UnsafeParallelList<T> stream)
+            internal ChunkReader(ref UnsafeThreadList<T> stream)
             {
                 perThreadListsPtr = stream.perThreadLists;
                 ranges = stream.ranges;
@@ -557,7 +557,7 @@ namespace KrasCore
 
             [NativeSetThreadIndex] private int _threadIndex;
             
-            internal ThreadWriter(ref UnsafeParallelList<T> stream)
+            internal ThreadWriter(ref UnsafeThreadList<T> stream)
             {
                 _perThreadListsPtr = stream.perThreadLists;
 
@@ -634,7 +634,7 @@ namespace KrasCore
 
             private int currentIndex;
 
-            internal ThreadReader(ref UnsafeParallelList<T> stream)
+            internal ThreadReader(ref UnsafeThreadList<T> stream)
             {
                 perThreadListsPtr = stream.perThreadLists;
 

@@ -6,7 +6,7 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 namespace KrasCore.Tests
 {
-    public class ParallelListTests
+    public class NativeThreadListTests
     {
         private const int ManagedParallelSlotCap = 16;
         private const int JobParallelSlotCap = 32;
@@ -18,7 +18,7 @@ namespace KrasCore.Tests
             var itemsPerSlot = 256;
             var expectedCount = slotCount * itemsPerSlot;
 
-            var list = new ParallelList<int>(1, Allocator.Persistent);
+            var list = new NativeThreadList<int>(1, Allocator.Persistent);
             var copied = new NativeList<int>(expectedCount, Allocator.TempJob);
 
             try
@@ -52,7 +52,7 @@ namespace KrasCore.Tests
             var rounds = 12;
             var valuesPerRound = slotCount * itemsPerSlot;
 
-            var list = new ParallelList<int>(1, Allocator.Persistent);
+            var list = new NativeThreadList<int>(1, Allocator.Persistent);
             var copied = new NativeList<int>(valuesPerRound, Allocator.TempJob);
 
             try
@@ -95,7 +95,7 @@ namespace KrasCore.Tests
             var itemsPerChunk = 64;
             var expectedCount = chunkCount * itemsPerChunk;
 
-            var list = new ParallelList<int>(1, Allocator.Persistent);
+            var list = new NativeThreadList<int>(1, Allocator.Persistent);
 
             try
             {
@@ -143,7 +143,7 @@ namespace KrasCore.Tests
             var expectedCount = slotCount * itemsPerSlot;
             var valueStride = 10_000;
 
-            var list = new ParallelList<int>(1, Allocator.Persistent);
+            var list = new NativeThreadList<int>(1, Allocator.Persistent);
 
             try
             {
@@ -183,7 +183,7 @@ namespace KrasCore.Tests
             }
         }
 
-        private static void AssertUniformThreadCounts(ParallelList<int> list, int slotCount, int expectedPerSlot)
+        private static void AssertUniformThreadCounts(NativeThreadList<int> list, int slotCount, int expectedPerSlot)
         {
             for (var i = 0; i < slotCount; i++)
             {
@@ -232,7 +232,7 @@ namespace KrasCore.Tests
 
         private struct WriteThreadSlotsJob : IJobFor
         {
-            public ParallelList<int>.ThreadWriter Writer;
+            public NativeThreadList<int>.ThreadWriter Writer;
             public int ItemsPerSlot;
             public int ValueOffset;
 
@@ -249,7 +249,7 @@ namespace KrasCore.Tests
 
         private struct WriteChunksJob : IJobFor
         {
-            public ParallelList<int>.ChunkWriter Writer;
+            public NativeThreadList<int>.ChunkWriter Writer;
             public int ItemsPerChunk;
             public int ValueOffset;
 

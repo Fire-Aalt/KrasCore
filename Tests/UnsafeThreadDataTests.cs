@@ -4,18 +4,18 @@ using Unity.Jobs.LowLevel.Unsafe;
 
 namespace KrasCore.Tests
 {
-    public unsafe class UnsafePerThreadDataTests
+    public class UnsafeThreadDataTests
     {
         [Test]
         public void Clear_Default_ResetsAllThreadSlots()
         {
-            var data = new UnsafePerThreadData<TestData>(Allocator.Persistent);
+            var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
 
             try
             {
                 for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
-                    *data.GetUnsafeThreadData(i) = new TestData
+                    data.GetUnsafeThreadData(i) = new TestData
                     {
                         A = i + 1,
                         B = (i + 1) * 10
@@ -26,7 +26,7 @@ namespace KrasCore.Tests
 
                 for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
-                    var value = *data.GetUnsafeThreadData(i);
+                    ref var value = ref data.GetUnsafeThreadData(i);
                     Assert.That(value.A, Is.Zero);
                     Assert.That(value.B, Is.Zero);
                 }
@@ -40,7 +40,7 @@ namespace KrasCore.Tests
         [Test]
         public void Clear_CustomValue_SetsAllThreadSlots()
         {
-            var data = new UnsafePerThreadData<TestData>(Allocator.Persistent);
+            var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
             var fill = new TestData { A = 123, B = 456 };
 
             try
@@ -49,7 +49,7 @@ namespace KrasCore.Tests
 
                 for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
                 {
-                    var value = *data.GetUnsafeThreadData(i);
+                    ref var value = ref data.GetUnsafeThreadData(i);
                     Assert.That(value.A, Is.EqualTo(fill.A));
                     Assert.That(value.B, Is.EqualTo(fill.B));
                 }
@@ -63,7 +63,7 @@ namespace KrasCore.Tests
         [Test]
         public void ThreadWriter_SetAndGetRef_WritesCurrentThreadSlot()
         {
-            var data = new UnsafePerThreadData<TestData>(Allocator.Persistent);
+            var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
 
             try
             {
@@ -71,7 +71,7 @@ namespace KrasCore.Tests
                 var first = new TestData { A = 5, B = 10 };
 
                 writer.Set(in first);
-                var fromPointer = *data.GetUnsafeThreadData(0);
+                ref var fromPointer = ref data.GetUnsafeThreadData(0);
                 Assert.That(fromPointer.A, Is.EqualTo(5));
                 Assert.That(fromPointer.B, Is.EqualTo(10));
 
@@ -79,7 +79,7 @@ namespace KrasCore.Tests
                 valueRef.A = 999;
                 valueRef.B = 321;
 
-                fromPointer = *data.GetUnsafeThreadData(0);
+                fromPointer = ref data.GetUnsafeThreadData(0);
                 Assert.That(fromPointer.A, Is.EqualTo(999));
                 Assert.That(fromPointer.B, Is.EqualTo(321));
             }
@@ -92,17 +92,49 @@ namespace KrasCore.Tests
         [Test]
         public void ThreadReader_Get_ReadsCurrentThreadSlot()
         {
-            var data = new UnsafePerThreadData<TestData>(Allocator.Persistent);
+            var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
 
             try
             {
-                *data.GetUnsafeThreadData(0) = new TestData { A = 42, B = 73 };
+                data.GetUnsafeThreadData(0) = new TestData { A = 42, B = 73 };
 
                 var reader = data.AsThreadReader();
                 var value = reader.Get();
 
                 Assert.That(value.A, Is.EqualTo(42));
                 Assert.That(value.B, Is.EqualTo(73));
+            }
+            finally
+            {
+                data.Dispose();
+            }
+        }
+        
+        [Test]
+        public void Enumerator_Foreach_IteratesAllThreadSlotsInOrder()
+        {
+            var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
+
+            try
+            {
+                for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                {
+                    data.GetUnsafeThreadData(i) = new TestData
+                    {
+                        A = i + 1000,
+                        B = i * 7
+                    };
+                }
+
+                var visited = 0;
+                foreach (var value in data)
+                {
+                    Assert.That(value.A, Is.EqualTo(visited + 1000));
+                    Assert.That(value.B, Is.EqualTo(visited * 7));
+                    visited++;
+                }
+
+                Assert.That(visited, Is.EqualTo(JobsUtility.ThreadIndexCount));
             }
             finally
             {

@@ -4,12 +4,12 @@ using Unity.Collections;
 
 namespace KrasCore.Tests
 {
-    public class NativePriorityListTests
+    public class NativePriorityQueueTests
     {
         [Test]
         public void EnqueueAndTryDequeue_ReturnsAscendingPriorities()
         {
-            var list = new NativePriorityList<int>(Allocator.Persistent);
+            var list = new NativePriorityQueue<int>(Allocator.Persistent);
 
             try
             {
@@ -48,7 +48,7 @@ namespace KrasCore.Tests
         [Test]
         public void Dispose_AccessAfterDispose_ThrowsWithCollectionChecks()
         {
-            var list = new NativePriorityList<int>(Allocator.Persistent);
+            var list = new NativePriorityQueue<int>(Allocator.Persistent);
             list.Enqueue(1, 1);
             list.Dispose();
 
@@ -63,7 +63,7 @@ namespace KrasCore.Tests
         [Test]
         public void CustomComparer_CanInvertPriorityOrdering()
         {
-            var list = new NativePriorityList<int, DescendingComparer>(Allocator.Persistent);
+            var list = new NativePriorityQueue<int, DescendingComparer>(Allocator.Persistent);
 
             try
             {
