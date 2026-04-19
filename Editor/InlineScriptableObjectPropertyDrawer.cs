@@ -78,7 +78,6 @@ namespace KrasCore.Editor
 
             if (property.objectReferenceValue == null)
             {
-                AddSubtleInfoLabel(bodyContainer, "Value is not set.");
                 return;
             }
 
