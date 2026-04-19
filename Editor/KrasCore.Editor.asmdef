@@ -19,7 +19,8 @@
         "Unity.AppUI",
         "Unity.AppUI.MVVM",
         "KrasCore.Essentials",
-        "Eflatun.SceneReference"
+        "Eflatun.SceneReference",
+        "Unity.Transforms"
     ],
     "includePlatforms": [
         "Editor"

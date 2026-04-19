@@ -48,5 +48,18 @@ namespace KrasCore
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3 xyo(this float2 a) => new(a.x, a.y, 0);
+
+        /// <summary>
+        /// Obtain 3-dimensional scale vector of the provided 4x4 transformation matrix, the components
+        /// of which represent the lengths of the three orthonormal basis vectors forming the 3x3 rotational sub-matrix,
+        /// respectively.
+        /// </summary>
+        /// <param name="matrix">The 4x4 transformation matrix.</param>
+        /// <returns>The three scale components of the provided transformation matrix.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float3 DecomposeScale(this float4x4 matrix)
+        {
+            return new float3(math.length(matrix.c0.xyz), math.length(matrix.c1.xyz), math.length(matrix.c2.xyz));
+        }
     }
 }
