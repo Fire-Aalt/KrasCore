@@ -12,7 +12,7 @@ namespace KrasCore.Editor
         {
             ShowRuntime = EditorPrefs.GetBool("Unity.Entities.Streaming.SubScene.LiveConversionSceneViewShowRuntime", false);
         }
-//TODO:remove
+        
         public static bool IsEntityEnabled(MonoBehaviour mb)
         {
             if (InSubScene(mb))

@@ -1,0 +1,19 @@
+.kras-inline-so-root {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.kras-inline-so-object-field {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.kras-inline-so-object-field-label {
+    color: #f0b36e;
+    -unity-font-style: bold;
+}
+
+.kras-inline-so-info-label {
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 2px;
+}

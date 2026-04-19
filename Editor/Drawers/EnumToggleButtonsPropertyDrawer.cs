@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor
@@ -10,22 +9,6 @@ namespace KrasCore.Editor
     [CustomPropertyDrawer(typeof(EnumToggleButtonsAttribute))]
     public class EnumToggleButtonsPropertyDrawer : PropertyDrawer
     {
-        private const float BUTTON_MIN_WIDTH = 50f;
-        private const float BUTTON_HEIGHT = 28f;
-        private const float BUTTON_BORDER_WIDTH = 1f;
-
-        private static readonly Color DARK_BUTTON_BG = new(0.345f, 0.345f, 0.345f, 1f); // #585858
-        private static readonly Color DARK_BUTTON_TEXT = new(0.92f, 0.92f, 0.92f, 1f);
-        private static readonly Color DARK_BUTTON_BG_PRESSED = new(0.702f, 0.420f, 0.129f, 1f); // #b36b21
-        private static readonly Color DARK_BUTTON_TEXT_PRESSED = new(1f, 0.96f, 0.88f, 1f);
-        private static readonly Color DARK_BUTTON_BORDER = new(0.137f, 0.137f, 0.137f, 1f); // #232323
-
-        private static readonly Color LIGHT_BUTTON_BG = new(0.812f, 0.812f, 0.812f, 1f); // #cfcfcf
-        private static readonly Color LIGHT_BUTTON_TEXT = new(0.14f, 0.14f, 0.14f, 1f);
-        private static readonly Color LIGHT_BUTTON_BG_PRESSED = new(0.847f, 0.518f, 0.184f, 1f); // #d8842f
-        private static readonly Color LIGHT_BUTTON_TEXT_PRESSED = Color.white;
-        private static readonly Color LIGHT_BUTTON_BORDER = new(0.6f, 0.6f, 0.6f, 1f); // #999999
-
         private struct ButtonState
         {
             public Button Button;
@@ -44,24 +27,20 @@ namespace KrasCore.Editor
                 : base(label, inputElement)
             {
                 this.InputElement = inputElement;
+                this.AddToClassList("kras-enum-toggle-root");
                 this.AddToClassList(alignedFieldUssClassName);
-                this.style.width = Length.Percent(100);
-                this.style.flexGrow = 1f;
 
                 this.InputElement.AddToClassList("unity-property-field__input");
-                this.InputElement.style.width = Length.Percent(100);
-                this.InputElement.style.flexGrow = 1f;
-                this.InputElement.style.minWidth = 0f;
+                this.InputElement.AddToClassList("kras-enum-toggle-input");
 
                 if (hideLabel)
                 {
-                    this.labelElement.style.display = DisplayStyle.None;
                     this.AddToClassList(noLabelVariantUssClassName);
                 }
                 else
                 {
                     this.labelElement.AddToClassList("unity-property-field__label");
-                    this.labelElement.style.unityTextAlign = TextAnchor.MiddleLeft;
+                    this.labelElement.AddToClassList("kras-enum-toggle-label");
                 }
             }
 
@@ -88,10 +67,9 @@ namespace KrasCore.Editor
             var allFlags = CalculateAllFlags(enumValues);
 
             var root = new EnumToggleButtonsField(property.displayName, attribute.HideLabel);
+            root.styleSheets.Add(DrawerStyleResources.EnumToggleButtonsStyleSheet);
             var buttonsContainer = root.InputElement;
-            buttonsContainer.style.flexDirection = FlexDirection.Row;
-            buttonsContainer.style.flexWrap = Wrap.Wrap;
-            buttonsContainer.style.justifyContent = Justify.FlexStart;
+            buttonsContainer.AddToClassList("kras-enum-toggle-container");
 
             var states = new List<ButtonState>();
 
@@ -103,7 +81,7 @@ namespace KrasCore.Editor
                     property.serializedObject.Update();
                     property.enumValueFlag = property.enumValueFlag == allFlags ? 0 : allFlags;
                     property.serializedObject.ApplyModifiedProperties();
-                    UpdateButtonVisuals(property, states, useFlags, isDarkTheme);
+                    UpdateButtonVisuals(property, states, useFlags);
                 };
 
                 buttonsContainer.Add(allButton);
@@ -120,7 +98,7 @@ namespace KrasCore.Editor
                     property.serializedObject.Update();
                     property.enumValueFlag = useFlags ? property.enumValueFlag ^ valueInt : valueInt;
                     property.serializedObject.ApplyModifiedProperties();
-                    UpdateButtonVisuals(property, states, useFlags, isDarkTheme);
+                    UpdateButtonVisuals(property, states, useFlags);
                 };
 
                 buttonsContainer.Add(button);
@@ -134,7 +112,7 @@ namespace KrasCore.Editor
 
             void UpdateVisuals()
             {
-                UpdateButtonVisuals(property, states, useFlags, isDarkTheme);
+                UpdateButtonVisuals(property, states, useFlags);
             }
 
             root.TrackPropertyValue(property, _ => UpdateVisuals());
@@ -159,27 +137,15 @@ namespace KrasCore.Editor
         private static Button BuildButton(string label, bool isDarkTheme)
         {
             var button = new Button { text = label };
-            button.style.minWidth = BUTTON_MIN_WIDTH;
-            button.style.height = BUTTON_HEIGHT;
-            button.style.flexGrow = 1f;
-            button.style.marginRight = 1f;
-            button.style.marginBottom = 1f;
-            button.style.borderTopWidth = BUTTON_BORDER_WIDTH;
-            button.style.borderRightWidth = BUTTON_BORDER_WIDTH;
-            button.style.borderBottomWidth = BUTTON_BORDER_WIDTH;
-            button.style.borderLeftWidth = BUTTON_BORDER_WIDTH;
-            button.style.unityFontStyleAndWeight = FontStyle.Bold;
-            button.style.unityTextAlign = TextAnchor.MiddleCenter;
-
-            ApplyButtonStyle(button, false, isDarkTheme);
+            button.AddToClassList("kras-enum-toggle-button");
+            button.AddToClassList(isDarkTheme ? "kras-enum-toggle-button--dark" : "kras-enum-toggle-button--light");
             return button;
         }
 
         private static void UpdateButtonVisuals(
             SerializedProperty property,
             IReadOnlyList<ButtonState> states,
-            bool useFlags,
-            bool isDarkTheme)
+            bool useFlags)
         {
             property.serializedObject.Update();
             var currentValue = property.enumValueFlag;
@@ -188,7 +154,7 @@ namespace KrasCore.Editor
             {
                 var state = states[i];
                 var isPressed = IsPressed(currentValue, state.Value, state.ExactMatch, useFlags);
-                ApplyButtonStyle(state.Button, isPressed, isDarkTheme);
+                ApplyButtonStyle(state.Button, isPressed);
             }
         }
 
@@ -202,24 +168,9 @@ namespace KrasCore.Editor
             return (currentValue & buttonValue) == buttonValue;
         }
 
-        private static void ApplyButtonStyle(Button button, bool isPressed, bool isDarkTheme)
+        private static void ApplyButtonStyle(Button button, bool isPressed)
         {
-            if (isPressed)
-            {
-                button.style.backgroundColor = isDarkTheme ? DARK_BUTTON_BG_PRESSED : LIGHT_BUTTON_BG_PRESSED;
-                button.style.color = isDarkTheme ? DARK_BUTTON_TEXT_PRESSED : LIGHT_BUTTON_TEXT_PRESSED;
-            }
-            else
-            {
-                button.style.backgroundColor = isDarkTheme ? DARK_BUTTON_BG : LIGHT_BUTTON_BG;
-                button.style.color = isDarkTheme ? DARK_BUTTON_TEXT : LIGHT_BUTTON_TEXT;
-            }
-
-            var borderColor = isDarkTheme ? DARK_BUTTON_BORDER : LIGHT_BUTTON_BORDER;
-            button.style.borderTopColor = borderColor;
-            button.style.borderRightColor = borderColor;
-            button.style.borderBottomColor = borderColor;
-            button.style.borderLeftColor = borderColor;
+            button.EnableInClassList("kras-enum-toggle-button--pressed", isPressed);
         }
     }
 }

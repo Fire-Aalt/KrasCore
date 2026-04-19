@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: bc989550f8354a00af6d4f68a86c16b2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - CommonStyleSheet: {fileID: 7433441132597879392, guid: 56356ef1ee7f4f7d8ce24f0b02bbf34b,
+      type: 3}
+  - HybridVisualEffectEditorStyleSheet: {fileID: 7433441132597879392, guid: 39c16adf4d804f2ea1b51ce8c95b829b,
+      type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

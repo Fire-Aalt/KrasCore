@@ -1,0 +1,62 @@
+.kras-enum-toggle-root {
+    width: 100%;
+    flex-grow: 1;
+}
+
+.kras-enum-toggle-input {
+    width: 100%;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.kras-enum-toggle-label {
+    -unity-text-align: middle-left;
+}
+
+.kras-enum-toggle-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.kras-enum-toggle-button {
+    min-width: 50px;
+    height: 28px;
+    flex-grow: 1;
+    margin-right: 1px;
+    margin-bottom: 1px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.kras-enum-toggle-button--dark {
+    background-color: #585858;
+    color: #ebebeb;
+    border-top-color: #232323;
+    border-right-color: #232323;
+    border-bottom-color: #232323;
+    border-left-color: #232323;
+}
+
+.kras-enum-toggle-button--dark.kras-enum-toggle-button--pressed {
+    background-color: #b36b21;
+    color: #fff5e0;
+}
+
+.kras-enum-toggle-button--light {
+    background-color: #cfcfcf;
+    color: #242424;
+    border-top-color: #999999;
+    border-right-color: #999999;
+    border-bottom-color: #999999;
+    border-left-color: #999999;
+}
+
+.kras-enum-toggle-button--light.kras-enum-toggle-button--pressed {
+    background-color: #d8842f;
+    color: #ffffff;
+}
