@@ -12,13 +12,13 @@ namespace KrasCore.Editor.UI
         private static readonly Color DARK_BASE = new(0.251f, 0.251f, 0.251f, 1f); // #404040
         private static readonly Color DARK_HOVER = new(0.271f, 0.271f, 0.271f, 1f); // #454545
         private static readonly Color DARK_BORDER = new(0.137f, 0.137f, 0.137f, 1f); // #232323
-        private static readonly Color DARK_ACCENT = new(0.239f, 0.376f, 0.569f, 1f); // #3d6091
+        private static readonly Color DARK_ACCENT = new(0.702f, 0.420f, 0.129f, 1f); // #b36b21
         private static readonly Color DARK_TEXT = new(0.92f, 0.92f, 0.92f, 1f);
 
         private static readonly Color LIGHT_BASE = new(0.812f, 0.812f, 0.812f, 1f); // #cfcfcf
         private static readonly Color LIGHT_HOVER = new(0.871f, 0.871f, 0.871f, 1f); // #dedede
         private static readonly Color LIGHT_BORDER = new(0.6f, 0.6f, 0.6f, 1f); // #999999
-        private static readonly Color LIGHT_ACCENT = new(0.239f, 0.502f, 0.875f, 1f); // #3d80df
+        private static readonly Color LIGHT_ACCENT = new(0.847f, 0.518f, 0.184f, 1f); // #d8842f
         private static readonly Color LIGHT_TEXT = new(0.14f, 0.14f, 0.14f, 1f);
 
         private readonly List<SearchView.Item> items;

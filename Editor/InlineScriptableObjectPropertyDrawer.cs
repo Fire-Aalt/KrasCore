@@ -12,6 +12,8 @@ namespace KrasCore.Editor
         private const float ROOT_VERTICAL_MARGIN = 5f;
         private const float BOX_BORDER_WIDTH = 1f;
         private const float ACCENT_BORDER_WIDTH = 3f;
+        private static readonly Color ACCENT_ORANGE = new(0.702f, 0.420f, 0.129f, 1f); // #b36b21
+        private static readonly Color ACCENT_ORANGE_TEXT = new(0.941f, 0.702f, 0.431f, 1f); // #f0b36e
 
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
@@ -128,7 +130,7 @@ namespace KrasCore.Editor
             header.style.borderRightWidth = BOX_BORDER_WIDTH;
             header.style.borderTopColor = Color.black;
             header.style.borderBottomColor = Color.black;
-            header.style.borderLeftColor = new Color(0.30f, 0.68f, 0.98f, 1f);
+            header.style.borderLeftColor = ACCENT_ORANGE;
             header.style.borderRightColor = Color.black;
             header.style.paddingTop = 4f;
             header.style.paddingBottom = 4f;
@@ -158,7 +160,7 @@ namespace KrasCore.Editor
 
             if (objectField.labelElement != null)
             {
-                objectField.labelElement.style.color = new Color(0.60f, 0.84f, 1f, 1f);
+                objectField.labelElement.style.color = ACCENT_ORANGE_TEXT;
                 objectField.labelElement.style.unityFontStyleAndWeight = FontStyle.Bold;
             }
         }
