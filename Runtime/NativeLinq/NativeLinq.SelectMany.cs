@@ -1,0 +1,165 @@
+﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+namespace KrasCore
+{
+    public partial struct NativeEnumerable<T, TEnumerator>
+        where T : unmanaged
+        where TEnumerator : unmanaged, IEnumerator<T>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeSelectManyEnumerable<T, TResult, Enumerator, TInnerEnumerator, TSelector> SelectMany<TResult, TInnerEnumerator, TSelector>(
+            TSelector selector)
+            where TResult : unmanaged
+            where TInnerEnumerator : unmanaged, IEnumerator<TResult>
+            where TSelector : unmanaged, ISelector<T, TInnerEnumerator>
+        {
+            return new NativeSelectManyEnumerable<T, TResult, Enumerator, TInnerEnumerator, TSelector>(GetEnumerator(), selector);
+        }
+    }
+
+    public partial struct NativeWhereEnumerable<T, TEnumerator, TPredicate>
+        where T : unmanaged
+        where TEnumerator : unmanaged, IEnumerator<T>
+        where TPredicate : unmanaged, IPredicate<T>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeSelectManyEnumerable<T, TResult, Enumerator, TInnerEnumerator, TSelector> SelectMany<TResult, TInnerEnumerator, TSelector>(
+            TSelector selector)
+            where TResult : unmanaged
+            where TInnerEnumerator : unmanaged, IEnumerator<TResult>
+            where TSelector : unmanaged, ISelector<T, TInnerEnumerator>
+        {
+            return new NativeSelectManyEnumerable<T, TResult, Enumerator, TInnerEnumerator, TSelector>(GetEnumerator(), selector);
+        }
+    }
+
+    public partial struct NativeSelectEnumerable<TSource, TResult, TEnumerator, TSelector>
+        where TSource : unmanaged
+        where TResult : unmanaged
+        where TEnumerator : unmanaged, IEnumerator<TSource>
+        where TSelector : unmanaged, ISelector<TSource, TResult>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeSelectManyEnumerable<TResult, TNextResult, Enumerator, TInnerEnumerator, TNextSelector> SelectMany<TNextResult, TInnerEnumerator, TNextSelector>(
+            TNextSelector selector)
+            where TNextResult : unmanaged
+            where TInnerEnumerator : unmanaged, IEnumerator<TNextResult>
+            where TNextSelector : unmanaged, ISelector<TResult, TInnerEnumerator>
+        {
+            return new NativeSelectManyEnumerable<TResult, TNextResult, Enumerator, TInnerEnumerator, TNextSelector>(GetEnumerator(), selector);
+        }
+    }
+
+    public partial struct NativeSelectManyEnumerable<TSource, TResult, TSourceEnumerator, TInnerEnumerator, TSelector>
+        where TSource : unmanaged
+        where TResult : unmanaged
+        where TSourceEnumerator : unmanaged, IEnumerator<TSource>
+        where TInnerEnumerator : unmanaged, IEnumerator<TResult>
+        where TSelector : unmanaged, ISelector<TSource, TInnerEnumerator>
+    {
+        private TSourceEnumerator _sourceEnumerator;
+        private TSelector _selector;
+
+        public NativeSelectManyEnumerable(TSourceEnumerator sourceEnumerator, TSelector selector)
+        {
+            _sourceEnumerator = sourceEnumerator;
+            _selector = selector;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(_sourceEnumerator, _selector);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeSelectManyEnumerable<TResult, TNextResult, Enumerator, TNextInnerEnumerator, TNextSelector> SelectMany<TNextResult, TNextInnerEnumerator, TNextSelector>(
+            TNextSelector selector)
+            where TNextResult : unmanaged
+            where TNextInnerEnumerator : unmanaged, IEnumerator<TNextResult>
+            where TNextSelector : unmanaged, ISelector<TResult, TNextInnerEnumerator>
+        {
+            return new NativeSelectManyEnumerable<TResult, TNextResult, Enumerator, TNextInnerEnumerator, TNextSelector>(GetEnumerator(), selector);
+        }
+
+        public struct Enumerator : IEnumerator<TResult>
+        {
+            private TSourceEnumerator _source;
+            private TInnerEnumerator _inner;
+            private TSelector _selector;
+            private TResult _current;
+            private bool _hasInner;
+
+            public Enumerator(TSourceEnumerator source, TSelector selector)
+            {
+                _source = source;
+                _inner = default;
+                _selector = selector;
+                _current = default;
+                _hasInner = false;
+            }
+
+            public TResult Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _current;
+            }
+
+            object System.Collections.IEnumerator.Current => Current;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                while (true)
+                {
+                    if (_hasInner && _inner.MoveNext())
+                    {
+                        _current = _inner.Current;
+                        return true;
+                    }
+
+                    if (_hasInner)
+                    {
+                        _inner.Dispose();
+                    }
+
+                    if (!_source.MoveNext())
+                    {
+                        _hasInner = false;
+                        return false;
+                    }
+
+                    var value = _source.Current;
+                    _inner = _selector.Select(in value);
+                    _hasInner = true;
+                }
+            }
+
+            public void Reset()
+            {
+                if (_hasInner)
+                {
+                    _inner.Dispose();
+                }
+
+                _source.Reset();
+                _inner = default;
+                _current = default;
+                _hasInner = false;
+            }
+
+            public void Dispose()
+            {
+                if (_hasInner)
+                {
+                    _inner.Dispose();
+                }
+
+                _source.Dispose();
+            }
+        }
+    }
+}
+
+
