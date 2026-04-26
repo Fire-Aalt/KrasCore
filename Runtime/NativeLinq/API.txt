@@ -54,11 +54,45 @@ var firstMatch = list
 
 var sum = list
     .AsNativeEnumerable()
-    .Sum(new NativeIntAccumulator());
+    .Sum();
 
 var average = floatList
     .AsNativeEnumerable()
-    .Average(new NativeFloatAccumulator());
+    .Average();
+
+// User-defined accumulation support.
+public struct CustomValue
+{
+    public int Value;
+}
+
+public struct CustomValueAccumulator : INativeAccumulator<CustomValue>
+{
+    public CustomValue Add(in CustomValue total, in CustomValue value)
+    {
+        return new CustomValue { Value = total.Value + value.Value };
+    }
+
+    public CustomValue Divide(in CustomValue total, int count)
+    {
+        return new CustomValue { Value = total.Value / count };
+    }
+}
+
+public static class CustomValueNativeLinqExtensions
+{
+    public static CustomValue Sum<TEnumerator>(this NativeQuery<CustomValue, TEnumerator> source)
+        where TEnumerator : unmanaged, IEnumerator<CustomValue>
+    {
+        return source.Sum<CustomValue, TEnumerator, CustomValueAccumulator>();
+    }
+
+    public static CustomValue Average<TEnumerator>(this NativeQuery<CustomValue, TEnumerator> source)
+        where TEnumerator : unmanaged, IEnumerator<CustomValue>
+    {
+        return source.Average<CustomValue, TEnumerator, CustomValueAccumulator>();
+    }
+}
 
 var min = list
     .AsNativeEnumerable()
@@ -83,4 +117,4 @@ var query = NativeLinq.From<int, MyCollection.Enumerator>(myCollection.GetEnumer
 
     
 // Supported: Where, Select, SelectMany, OrderBy, OrderByDescending, First, FirstOrDefault,
-// FirstOrDefault(predicate), Sum(accumulator), Average(accumulator), Min, Max, Contains, SequenceEquals.
+// FirstOrDefault(predicate), Sum, Average, Min, Max, Contains, SequenceEquals.

@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 
 namespace KrasCore.Tests
 {
@@ -200,13 +202,13 @@ namespace KrasCore.Tests
         }
 
         [Test]
-        public void Sum_UsesNativeAccumulator()
+        public void Sum_UsesBuiltInAccumulator()
         {
             var input = new NativeArray<int>(new[] { 1, 2, 3 }, Allocator.Persistent);
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Sum(new NativeIntAccumulator()), Is.EqualTo(6));
+                Assert.That(input.AsNativeEnumerable().Sum(), Is.EqualTo(6));
             }
             finally
             {
@@ -215,13 +217,54 @@ namespace KrasCore.Tests
         }
 
         [Test]
-        public void Average_UsesNativeAccumulator()
+        public void Average_UsesBuiltInAccumulator()
         {
             var input = new NativeArray<float>(new[] { 1f, 2f, 3f }, Allocator.Persistent);
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Average(new NativeFloatAccumulator()), Is.EqualTo(2f));
+                Assert.That(input.AsNativeEnumerable().Average(), Is.EqualTo(2f));
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void SumAndAverage_UseBuiltInVectorAccumulator()
+        {
+            var input = new NativeArray<float3>(
+                new[] { new float3(1f, 2f, 3f), new float3(3f, 4f, 5f) },
+                Allocator.Persistent);
+
+            try
+            {
+                Assert.That(input.AsNativeEnumerable().Sum(), Is.EqualTo(new float3(4f, 6f, 8f)));
+                Assert.That(input.AsNativeEnumerable().Average(), Is.EqualTo(new float3(2f, 3f, 4f)));
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void SumAndAverage_CanBeExtendedForCustomStructs()
+        {
+            var input = new NativeArray<CustomAccumulatedValue>(
+                new[]
+                {
+                    new CustomAccumulatedValue { Value = 1 },
+                    new CustomAccumulatedValue { Value = 2 },
+                    new CustomAccumulatedValue { Value = 3 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                Assert.That(input.AsNativeEnumerable().Sum().Value, Is.EqualTo(6));
+                Assert.That(input.AsNativeEnumerable().Average().Value, Is.EqualTo(2));
             }
             finally
             {
@@ -466,12 +509,49 @@ namespace KrasCore.Tests
                 Output[1] = Input.AsNativeEnumerable().First();
                 Output[2] = Input.AsNativeEnumerable().Where(new GreaterThan { Threshold = 100 }).FirstOrDefault();
                 Output[3] = Input.AsNativeEnumerable().FirstOrDefault(new GreaterThan { Threshold = 1 });
-                Output[4] = Input.AsNativeEnumerable().Sum(new NativeIntAccumulator());
-                Output[5] = Input.AsNativeEnumerable().Average(new NativeIntAccumulator());
+                Output[4] = Input.AsNativeEnumerable().Sum();
+                Output[5] = Input.AsNativeEnumerable().Average();
                 Output[6] = Input.AsNativeEnumerable().Contains(2) ? 1 : 0;
                 Output[7] = Input.AsNativeEnumerable().Min() + Input.AsNativeEnumerable().Max();
                 Output[8] = Input.AsNativeEnumerable().SequenceEquals(Input.AsNativeEnumerable()) ? 1 : 0;
             }
+        }
+    }
+
+    internal struct CustomAccumulatedValue
+    {
+        public int Value;
+    }
+
+    internal struct CustomAccumulatedValueAccumulator : INativeAccumulator<CustomAccumulatedValue>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public CustomAccumulatedValue Add(in CustomAccumulatedValue total, in CustomAccumulatedValue value)
+        {
+            return new CustomAccumulatedValue { Value = total.Value + value.Value };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public CustomAccumulatedValue Divide(in CustomAccumulatedValue total, int count)
+        {
+            return new CustomAccumulatedValue { Value = total.Value / count };
+        }
+    }
+
+    internal static class CustomAccumulatedValueNativeLinqExtensions
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static CustomAccumulatedValue Sum<TEnumerator>(this NativeQuery<CustomAccumulatedValue, TEnumerator> source)
+            where TEnumerator : unmanaged, IEnumerator<CustomAccumulatedValue>
+        {
+            return source.Sum<CustomAccumulatedValue, TEnumerator, CustomAccumulatedValueAccumulator>();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static CustomAccumulatedValue Average<TEnumerator>(this NativeQuery<CustomAccumulatedValue, TEnumerator> source)
+            where TEnumerator : unmanaged, IEnumerator<CustomAccumulatedValue>
+        {
+            return source.Average<CustomAccumulatedValue, TEnumerator, CustomAccumulatedValueAccumulator>();
         }
     }
 }
