@@ -1,0 +1,85 @@
+// Used interface
+public interface IPredicate<T> where T : unmanaged
+{
+    bool Match(in T value);
+}
+
+public interface ISelector<TSource, TResult>
+    where TSource : unmanaged
+    where TResult : unmanaged
+{
+    TResult Select(in TSource value);
+}
+
+// User defined predicates
+public struct GreaterThan : IPredicate<int>
+{
+    public int Threshold;
+
+    public bool Match(in int value)
+    {
+        return value > Threshold;
+    }
+}
+
+// usage example (the query is lazily initialized)
+var filtered = list
+    .AsNativeEnumerable()
+    .Where(new GreaterThan { Threshold = 1 })
+    .ToNativeList(Allocator.Temp);
+    
+foreach (var element in list.AsNativeEnumerable().Where(new GreaterThan { Threshold = 1 })) 
+{
+
+}
+
+var mapped = list
+    .AsNativeEnumerable()
+    .Where(new GreaterThan { Threshold = 1 })
+    .Select<int, MultiplyByTwo>(new MultiplyByTwo())
+    .ToNativeList(Allocator.Temp);
+
+var ordered = list
+    .AsNativeEnumerable()
+    .OrderBy(Allocator.Temp);
+
+var first = list
+    .AsNativeEnumerable()
+    .Where(new GreaterThan { Threshold = 1 })
+    .FirstOrDefault();
+
+var firstMatch = list
+    .AsNativeEnumerable()
+    .FirstOrDefault(new GreaterThan { Threshold = 1 });
+
+var sum = list
+    .AsNativeEnumerable()
+    .Sum(new NativeIntAccumulator());
+
+var average = floatList
+    .AsNativeEnumerable()
+    .Average(new NativeFloatAccumulator());
+
+var min = list
+    .AsNativeEnumerable()
+    .Min();
+
+var max = list
+    .AsNativeEnumerable()
+    .Max();
+
+var contains = list
+    .AsNativeEnumerable()
+    .Contains(5);
+
+var equal = list
+    .AsNativeEnumerable()
+    .SequenceEquals(otherList.AsNativeEnumerable());
+
+// Custom unmanaged collection path. Burst requires the concrete enumerator type; do not use boxed IEnumerable<T>.
+var query = NativeLinq.From<int, MyCollection.Enumerator>(myCollection.GetEnumerator());
+
+
+    
+// Supported: Where, Select, SelectMany, OrderBy, OrderByDescending, First, FirstOrDefault,
+// FirstOrDefault(predicate), Sum(accumulator), Average(accumulator), Min, Max, Contains, SequenceEquals.

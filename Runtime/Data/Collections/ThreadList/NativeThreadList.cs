@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -429,7 +430,7 @@ namespace KrasCore
             return new Enumerator(ref this);
         }
         
-        public struct Enumerator : IEnumerator
+        public struct Enumerator : IEnumerator<T>
         {
             private UnsafeThreadList<T>.Enumerator _enumerator;
 
