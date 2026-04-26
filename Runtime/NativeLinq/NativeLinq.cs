@@ -21,8 +21,6 @@ namespace KrasCore
     public interface INativeAccumulator<T>
         where T : unmanaged
     {
-        T Zero();
-
         T Add(in T total, in T value);
 
         T Divide(in T total, int count);
@@ -34,14 +32,14 @@ namespace KrasCore
         bool Equals(in T left, in T right);
     }
 
-    public static partial class NativeLinq
+    public static class NativeLinq
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeEnumerable<T, TEnumerator> From<T, TEnumerator>(TEnumerator enumerator)
+        public static NativeQuery<T, TEnumerator> From<T, TEnumerator>(TEnumerator enumerator)
             where T : unmanaged
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return new NativeEnumerable<T, TEnumerator>(enumerator);
+            return new NativeQuery<T, TEnumerator>(enumerator);
         }
     }
 
@@ -78,12 +76,6 @@ namespace KrasCore
     public struct NativeIntAccumulator : INativeAccumulator<int>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int Zero()
-        {
-            return 0;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Add(in int total, in int value)
         {
             return total + value;
@@ -98,12 +90,6 @@ namespace KrasCore
 
     public struct NativeFloatAccumulator : INativeAccumulator<float>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float Zero()
-        {
-            return 0f;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float Add(in float total, in float value)
         {
@@ -120,12 +106,6 @@ namespace KrasCore
     public struct NativeFloat2Accumulator : INativeAccumulator<float2>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float2 Zero()
-        {
-            return default;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float2 Add(in float2 total, in float2 value)
         {
             return total + value;
@@ -140,12 +120,6 @@ namespace KrasCore
 
     public struct NativeFloat3Accumulator : INativeAccumulator<float3>
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float3 Zero()
-        {
-            return default;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float3 Add(in float3 total, in float3 value)
         {
@@ -162,12 +136,6 @@ namespace KrasCore
     public struct NativeFloat4Accumulator : INativeAccumulator<float4>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float4 Zero()
-        {
-            return default;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float4 Add(in float4 total, in float4 value)
         {
             return total + value;
@@ -179,7 +147,4 @@ namespace KrasCore
             return total / count;
         }
     }
-
 }
-
-

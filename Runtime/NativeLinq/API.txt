@@ -76,7 +76,8 @@ var equal = list
     .AsNativeEnumerable()
     .SequenceEquals(otherList.AsNativeEnumerable());
 
-// Custom unmanaged collection path. Burst requires the concrete enumerator type; do not use boxed IEnumerable<T>.
+// Custom unmanaged collection path. NativeQuery carries the concrete enumerator type;
+// Burst requires that concrete type and cannot use boxed IEnumerable<T>.
 var query = NativeLinq.From<int, MyCollection.Enumerator>(myCollection.GetEnumerator());
 
 
