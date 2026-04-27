@@ -22,7 +22,7 @@ namespace KrasCore
     {
         T Add(in T total, in T value);
 
-        T Divide(in T total, int count);
+        T Divide(in T total, uint count);
     }
 
     public interface INativeEqualityComparer<T>

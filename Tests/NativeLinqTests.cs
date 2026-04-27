@@ -532,9 +532,9 @@ namespace KrasCore.Tests
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public CustomAccumulatedValue Divide(in CustomAccumulatedValue total, int count)
+        public CustomAccumulatedValue Divide(in CustomAccumulatedValue total, uint count)
         {
-            return new CustomAccumulatedValue { Value = total.Value / count };
+            return new CustomAccumulatedValue { Value = (int)(total.Value / count) };
         }
     }
 
