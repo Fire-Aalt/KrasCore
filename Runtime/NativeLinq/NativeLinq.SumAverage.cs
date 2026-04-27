@@ -101,21 +101,21 @@ namespace KrasCore
         public static uint2 Sum<TEnumerator>(this Query<uint2, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<uint2>
         {
-            return source.Sum<uint2, TEnumerator, NativeUInt2Accumulator>();
+            return source.Sum<uint2, TEnumerator, NativeUint2Accumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint3 Sum<TEnumerator>(this Query<uint3, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<uint3>
         {
-            return source.Sum<uint3, TEnumerator, NativeUInt3Accumulator>();
+            return source.Sum<uint3, TEnumerator, NativeUint3Accumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 Sum<TEnumerator>(this Query<uint4, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<uint4>
         {
-            return source.Sum<uint4, TEnumerator, NativeUInt4Accumulator>();
+            return source.Sum<uint4, TEnumerator, NativeUint4Accumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -255,21 +255,21 @@ namespace KrasCore
         public static uint2 Average<TEnumerator>(this Query<uint2, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<uint2>
         {
-            return source.Average<uint2, TEnumerator, NativeUInt2Accumulator>();
+            return source.Average<uint2, TEnumerator, NativeUint2Accumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint3 Average<TEnumerator>(this Query<uint3, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<uint3>
         {
-            return source.Average<uint3, TEnumerator, NativeUInt3Accumulator>();
+            return source.Average<uint3, TEnumerator, NativeUint3Accumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint4 Average<TEnumerator>(this Query<uint4, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<uint4>
         {
-            return source.Average<uint4, TEnumerator, NativeUInt4Accumulator>();
+            return source.Average<uint4, TEnumerator, NativeUint4Accumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
