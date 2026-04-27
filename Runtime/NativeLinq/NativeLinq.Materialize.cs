@@ -4,7 +4,7 @@ using Unity.Collections;
 
 namespace KrasCore
 {
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {

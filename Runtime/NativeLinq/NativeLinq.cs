@@ -35,15 +35,15 @@ namespace KrasCore
     public static class NativeLinq
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, TEnumerator> From<T, TEnumerator>(TEnumerator enumerator)
+        public static Query<T, TEnumerator> From<T, TEnumerator>(TEnumerator enumerator)
             where T : unmanaged
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return new NativeQuery<T, TEnumerator>(enumerator);
+            return new Query<T, TEnumerator>(enumerator);
         }
     }
 
-    public struct NativeAscendingComparer<T> : IComparer<T>
+    public struct AscendingComparer<T> : IComparer<T>
         where T : unmanaged, IComparable<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -53,7 +53,7 @@ namespace KrasCore
         }
     }
 
-    public struct NativeDescendingComparer<T> : IComparer<T>
+    public struct DescendingComparer<T> : IComparer<T>
         where T : unmanaged, IComparable<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

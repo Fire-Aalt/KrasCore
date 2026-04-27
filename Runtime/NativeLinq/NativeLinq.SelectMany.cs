@@ -3,23 +3,23 @@ using System.Runtime.CompilerServices;
 
 namespace KrasCore
 {
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeQuery<TResult, NativeSelectManyEnumerator<T, TResult, TEnumerator, TInnerEnumerator, TSelector>> SelectMany<TResult, TInnerEnumerator, TSelector>(
+        public Query<TResult, SelectManyQuery<T, TResult, TEnumerator, TInnerEnumerator, TSelector>> SelectMany<TResult, TInnerEnumerator, TSelector>(
             TSelector selector)
             where TResult : unmanaged
             where TInnerEnumerator : unmanaged, IEnumerator<TResult>
             where TSelector : unmanaged, ISelector<T, TInnerEnumerator>
         {
-            return new NativeQuery<TResult, NativeSelectManyEnumerator<T, TResult, TEnumerator, TInnerEnumerator, TSelector>>(
-                new NativeSelectManyEnumerator<T, TResult, TEnumerator, TInnerEnumerator, TSelector>(GetEnumerator(), selector));
+            return new Query<TResult, SelectManyQuery<T, TResult, TEnumerator, TInnerEnumerator, TSelector>>(
+                new SelectManyQuery<T, TResult, TEnumerator, TInnerEnumerator, TSelector>(GetEnumerator(), selector));
         }
     }
 
-    public struct NativeSelectManyEnumerator<TSource, TResult, TSourceEnumerator, TInnerEnumerator, TSelector> : IEnumerator<TResult>
+    public struct SelectManyQuery<TSource, TResult, TSourceEnumerator, TInnerEnumerator, TSelector> : IEnumerator<TResult>
         where TSource : unmanaged
         where TResult : unmanaged
         where TSourceEnumerator : unmanaged, IEnumerator<TSource>
@@ -32,7 +32,7 @@ namespace KrasCore
         private TResult _current;
         private bool _hasInner;
 
-        public NativeSelectManyEnumerator(TSourceEnumerator source, TSelector selector)
+        public SelectManyQuery(TSourceEnumerator source, TSelector selector)
         {
             _source = source;
             _inner = default;

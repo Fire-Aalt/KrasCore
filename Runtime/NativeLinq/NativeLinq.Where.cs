@@ -3,20 +3,20 @@ using System.Runtime.CompilerServices;
 
 namespace KrasCore
 {
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeQuery<T, NativeWhereEnumerator<T, TEnumerator, TPredicate>> Where<TPredicate>(TPredicate predicate)
+        public Query<T, WhereQuery<T, TEnumerator, TPredicate>> Where<TPredicate>(TPredicate predicate)
             where TPredicate : unmanaged, IPredicate<T>
         {
-            return new NativeQuery<T, NativeWhereEnumerator<T, TEnumerator, TPredicate>>(
-                new NativeWhereEnumerator<T, TEnumerator, TPredicate>(GetEnumerator(), predicate));
+            return new Query<T, WhereQuery<T, TEnumerator, TPredicate>>(
+                new WhereQuery<T, TEnumerator, TPredicate>(GetEnumerator(), predicate));
         }
     }
 
-    public struct NativeWhereEnumerator<T, TEnumerator, TPredicate> : IEnumerator<T>
+    public struct WhereQuery<T, TEnumerator, TPredicate> : IEnumerator<T>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
         where TPredicate : unmanaged, IPredicate<T>
@@ -25,7 +25,7 @@ namespace KrasCore
         private TPredicate _predicate;
         private T _current;
 
-        public NativeWhereEnumerator(TEnumerator source, TPredicate predicate)
+        public WhereQuery(TEnumerator source, TPredicate predicate)
         {
             _source = source;
             _predicate = predicate;

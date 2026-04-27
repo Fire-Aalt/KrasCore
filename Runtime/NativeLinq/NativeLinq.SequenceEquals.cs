@@ -8,8 +8,8 @@ namespace KrasCore
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool SequenceEquals<T, TEnumerator, TOtherEnumerator>(
-            this NativeQuery<T, TEnumerator> source,
-            NativeQuery<T, TOtherEnumerator> other)
+            this Query<T, TEnumerator> source,
+            Query<T, TOtherEnumerator> other)
             where T : unmanaged, IEquatable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
             where TOtherEnumerator : unmanaged, IEnumerator<T>
@@ -18,7 +18,7 @@ namespace KrasCore
         }
     }
 
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {

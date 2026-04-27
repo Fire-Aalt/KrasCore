@@ -183,9 +183,9 @@ namespace KrasCore.Tests
         private static int QueryNativeLinqSimple(NativeArray<int> values)
         {
             return values
-                .AsNativeEnumerable()
+                .AsQuery()
                 .Where(new SimpleWherePredicate())
-                .Select<int, SimpleSelectSelector>(new SimpleSelectSelector())
+                .Select(new SimpleSelectSelector())
                 .Sum();
         }
 
@@ -216,19 +216,19 @@ namespace KrasCore.Tests
         private static int QueryNativeLinqComplex(NativeArray<int> values)
         {
             return values
-                .AsNativeEnumerable()
+                .AsQuery()
                 .Where(new ComplexWhere0Predicate())
-                .Select<int, ComplexSelect0Selector>(new ComplexSelect0Selector())
+                .Select(new ComplexSelect0Selector())
                 .Where(new ComplexWhere1Predicate())
-                .Select<int, ComplexSelect1Selector>(new ComplexSelect1Selector())
+                .Select(new ComplexSelect1Selector())
                 .Where(new ComplexWhere2Predicate())
-                .Select<int, ComplexSelect2Selector>(new ComplexSelect2Selector())
+                .Select(new ComplexSelect2Selector())
                 .Where(new ComplexWhere3Predicate())
-                .Select<int, ComplexSelect3Selector>(new ComplexSelect3Selector())
+                .Select(new ComplexSelect3Selector())
                 .Where(new ComplexWhere4Predicate())
-                .Select<int, ComplexSelect4Selector>(new ComplexSelect4Selector())
+                .Select(new ComplexSelect4Selector())
                 .Where(new ComplexWhere5Predicate())
-                .Select<int, ComplexSelect5Selector>(new ComplexSelect5Selector())
+                .Select(new ComplexSelect5Selector())
                 .Sum();
         }
 

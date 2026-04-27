@@ -7,23 +7,23 @@ namespace KrasCore
     public static partial class NativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Min<T, TEnumerator>(this NativeQuery<T, TEnumerator> source)
+        public static T Min<T, TEnumerator>(this Query<T, TEnumerator> source)
             where T : unmanaged, IComparable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.Min(new NativeAscendingComparer<T>());
+            return source.Min(new AscendingComparer<T>());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Max<T, TEnumerator>(this NativeQuery<T, TEnumerator> source)
+        public static T Max<T, TEnumerator>(this Query<T, TEnumerator> source)
             where T : unmanaged, IComparable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.Max(new NativeAscendingComparer<T>());
+            return source.Max(new AscendingComparer<T>());
         }
     }
 
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {

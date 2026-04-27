@@ -36,7 +36,7 @@ foreach (var element in list.AsNativeEnumerable().Where(new GreaterThan { Thresh
 var mapped = list
     .AsNativeEnumerable()
     .Where(new GreaterThan { Threshold = 1 })
-    .Select<int, MultiplyByTwo>(new MultiplyByTwo())
+    .Select(new MultiplyByTwo())
     .ToNativeList(Allocator.Temp);
 
 var ordered = list

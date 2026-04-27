@@ -19,7 +19,7 @@ namespace KrasCore.Tests
             try
             {
                 var filtered = input
-                    .AsNativeEnumerable()
+                    .AsQuery()
                     .Where(new GreaterThan { Threshold = 1 })
                     .ToNativeList(Allocator.Temp);
 
@@ -48,8 +48,8 @@ namespace KrasCore.Tests
             try
             {
                 var mapped = input
-                    .AsNativeEnumerable()
-                    .Select<int, MultiplyByTwo>(new MultiplyByTwo())
+                    .AsQuery()
+                    .Select(new MultiplyByTwo())
                     .ToNativeList(Allocator.Temp);
 
                 try
@@ -78,7 +78,7 @@ namespace KrasCore.Tests
             try
             {
                 var flattened = input
-                    .AsNativeEnumerable()
+                    .AsQuery()
                     .SelectMany<int, FixedList32Bytes<int>.Enumerator, DuplicateWithOffset>(new DuplicateWithOffset())
                     .ToNativeList(Allocator.Temp);
 
@@ -108,7 +108,7 @@ namespace KrasCore.Tests
 
             try
             {
-                var ordered = input.AsNativeEnumerable().OrderBy(Allocator.Temp);
+                var ordered = input.AsQuery().OrderBy(Allocator.Temp);
 
                 try
                 {
@@ -135,7 +135,7 @@ namespace KrasCore.Tests
 
             try
             {
-                var ordered = input.AsNativeEnumerable().OrderByDescending(Allocator.Temp);
+                var ordered = input.AsQuery().OrderByDescending(Allocator.Temp);
 
                 try
                 {
@@ -162,7 +162,7 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().First(), Is.EqualTo(9));
+                Assert.That(input.AsQuery().First(), Is.EqualTo(9));
             }
             finally
             {
@@ -177,7 +177,7 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().FirstOrDefault(), Is.EqualTo(0));
+                Assert.That(input.AsQuery().FirstOrDefault(), Is.EqualTo(0));
             }
             finally
             {
@@ -192,8 +192,8 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().FirstOrDefault(new GreaterThan { Threshold = 1 }), Is.EqualTo(2));
-                Assert.That(input.AsNativeEnumerable().FirstOrDefault(new GreaterThan { Threshold = 10 }), Is.EqualTo(0));
+                Assert.That(input.AsQuery().FirstOrDefault(new GreaterThan { Threshold = 1 }), Is.EqualTo(2));
+                Assert.That(input.AsQuery().FirstOrDefault(new GreaterThan { Threshold = 10 }), Is.EqualTo(0));
             }
             finally
             {
@@ -208,7 +208,7 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Sum(), Is.EqualTo(6));
+                Assert.That(input.AsQuery().Sum(), Is.EqualTo(6));
             }
             finally
             {
@@ -223,7 +223,7 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Average(), Is.EqualTo(2f));
+                Assert.That(input.AsQuery().Average(), Is.EqualTo(2f));
             }
             finally
             {
@@ -240,8 +240,8 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Sum(), Is.EqualTo(new float3(4f, 6f, 8f)));
-                Assert.That(input.AsNativeEnumerable().Average(), Is.EqualTo(new float3(2f, 3f, 4f)));
+                Assert.That(input.AsQuery().Sum(), Is.EqualTo(new float3(4f, 6f, 8f)));
+                Assert.That(input.AsQuery().Average(), Is.EqualTo(new float3(2f, 3f, 4f)));
             }
             finally
             {
@@ -263,8 +263,8 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Sum().Value, Is.EqualTo(6));
-                Assert.That(input.AsNativeEnumerable().Average().Value, Is.EqualTo(2));
+                Assert.That(input.AsQuery().Sum().Value, Is.EqualTo(6));
+                Assert.That(input.AsQuery().Average().Value, Is.EqualTo(2));
             }
             finally
             {
@@ -279,8 +279,8 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Min(), Is.EqualTo(1));
-                Assert.That(input.AsNativeEnumerable().Max(), Is.EqualTo(3));
+                Assert.That(input.AsQuery().Min(), Is.EqualTo(1));
+                Assert.That(input.AsQuery().Max(), Is.EqualTo(3));
             }
             finally
             {
@@ -295,8 +295,8 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(input.AsNativeEnumerable().Contains(2), Is.True);
-                Assert.That(input.AsNativeEnumerable().Contains(4), Is.False);
+                Assert.That(input.AsQuery().Contains(2), Is.True);
+                Assert.That(input.AsQuery().Contains(4), Is.False);
             }
             finally
             {
@@ -313,8 +313,8 @@ namespace KrasCore.Tests
 
             try
             {
-                Assert.That(left.AsNativeEnumerable().SequenceEquals(right.AsNativeEnumerable()), Is.True);
-                Assert.That(left.AsNativeEnumerable().SequenceEquals(different.AsNativeEnumerable()), Is.False);
+                Assert.That(left.AsQuery().SequenceEquals(right.AsQuery()), Is.True);
+                Assert.That(left.AsQuery().SequenceEquals(different.AsQuery()), Is.False);
             }
             finally
             {
@@ -353,7 +353,7 @@ namespace KrasCore.Tests
             try
             {
                 var sum = 0;
-                foreach (var value in input.AsNativeEnumerable().Where(new GreaterThan { Threshold = 1 }))
+                foreach (var value in input.AsQuery().Where(new GreaterThan { Threshold = 1 }))
                 {
                     sum += value;
                 }
@@ -498,22 +498,22 @@ namespace KrasCore.Tests
             {
                 var sum = 0;
                 foreach (var value in Input
-                    .AsNativeEnumerable()
+                    .AsQuery()
                     .Where(new GreaterThan { Threshold = 1 })
-                    .Select<int, MultiplyByTwo>(new MultiplyByTwo()))
+                    .Select(new MultiplyByTwo()))
                 {
                     sum += value;
                 }
 
                 Output[0] = sum;
-                Output[1] = Input.AsNativeEnumerable().First();
-                Output[2] = Input.AsNativeEnumerable().Where(new GreaterThan { Threshold = 100 }).FirstOrDefault();
-                Output[3] = Input.AsNativeEnumerable().FirstOrDefault(new GreaterThan { Threshold = 1 });
-                Output[4] = Input.AsNativeEnumerable().Sum();
-                Output[5] = Input.AsNativeEnumerable().Average();
-                Output[6] = Input.AsNativeEnumerable().Contains(2) ? 1 : 0;
-                Output[7] = Input.AsNativeEnumerable().Min() + Input.AsNativeEnumerable().Max();
-                Output[8] = Input.AsNativeEnumerable().SequenceEquals(Input.AsNativeEnumerable()) ? 1 : 0;
+                Output[1] = Input.AsQuery().First();
+                Output[2] = Input.AsQuery().Where(new GreaterThan { Threshold = 100 }).FirstOrDefault();
+                Output[3] = Input.AsQuery().FirstOrDefault(new GreaterThan { Threshold = 1 });
+                Output[4] = Input.AsQuery().Sum();
+                Output[5] = Input.AsQuery().Average();
+                Output[6] = Input.AsQuery().Contains(2) ? 1 : 0;
+                Output[7] = Input.AsQuery().Min() + Input.AsQuery().Max();
+                Output[8] = Input.AsQuery().SequenceEquals(Input.AsQuery()) ? 1 : 0;
             }
         }
     }
@@ -541,14 +541,14 @@ namespace KrasCore.Tests
     internal static class CustomAccumulatedValueNativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static CustomAccumulatedValue Sum<TEnumerator>(this NativeQuery<CustomAccumulatedValue, TEnumerator> source)
+        public static CustomAccumulatedValue Sum<TEnumerator>(this Query<CustomAccumulatedValue, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<CustomAccumulatedValue>
         {
             return source.Sum<CustomAccumulatedValue, TEnumerator, CustomAccumulatedValueAccumulator>();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static CustomAccumulatedValue Average<TEnumerator>(this NativeQuery<CustomAccumulatedValue, TEnumerator> source)
+        public static CustomAccumulatedValue Average<TEnumerator>(this Query<CustomAccumulatedValue, TEnumerator> source)
             where TEnumerator : unmanaged, IEnumerator<CustomAccumulatedValue>
         {
             return source.Average<CustomAccumulatedValue, TEnumerator, CustomAccumulatedValueAccumulator>();

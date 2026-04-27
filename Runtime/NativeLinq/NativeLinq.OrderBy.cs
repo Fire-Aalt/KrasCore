@@ -8,23 +8,23 @@ namespace KrasCore
     public static partial class NativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeList<T> OrderBy<T, TEnumerator>(this NativeQuery<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
+        public static NativeList<T> OrderBy<T, TEnumerator>(this Query<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
             where T : unmanaged, IComparable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.OrderBy(new NativeAscendingComparer<T>(), allocator);
+            return source.OrderBy(new AscendingComparer<T>(), allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeList<T> OrderByDescending<T, TEnumerator>(this NativeQuery<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
+        public static NativeList<T> OrderByDescending<T, TEnumerator>(this Query<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
             where T : unmanaged, IComparable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.OrderBy(new NativeDescendingComparer<T>(), allocator);
+            return source.OrderBy(new DescendingComparer<T>(), allocator);
         }
     }
 
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {

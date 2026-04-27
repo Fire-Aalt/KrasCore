@@ -8,45 +8,45 @@ namespace KrasCore
     public static partial class NativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, NativeArray<T>.Enumerator> AsNativeEnumerable<T>(this NativeArray<T> collection)
+        public static Query<T, NativeArray<T>.Enumerator> AsQuery<T>(this NativeArray<T> collection)
             where T : unmanaged
         {
-            return new NativeQuery<T, NativeArray<T>.Enumerator>(collection.GetEnumerator());
+            return new Query<T, NativeArray<T>.Enumerator>(collection.GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, NativeArray<T>.Enumerator> AsNativeEnumerable<T>(this NativeList<T> collection)
+        public static Query<T, NativeArray<T>.Enumerator> AsQuery<T>(this NativeList<T> collection)
             where T : unmanaged
         {
-            return new NativeQuery<T, NativeArray<T>.Enumerator>(collection.GetEnumerator());
+            return new Query<T, NativeArray<T>.Enumerator>(collection.GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, UnsafeList<T>.Enumerator> AsNativeEnumerable<T>(this UnsafeList<T> collection)
+        public static Query<T, UnsafeList<T>.Enumerator> AsQuery<T>(this UnsafeList<T> collection)
             where T : unmanaged
         {
-            return new NativeQuery<T, UnsafeList<T>.Enumerator>(collection.GetEnumerator());
+            return new Query<T, UnsafeList<T>.Enumerator>(collection.GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, NativeQueue<T>.Enumerator> AsNativeEnumerable<T>(this NativeQueue<T> collection)
+        public static Query<T, NativeQueue<T>.Enumerator> AsQuery<T>(this NativeQueue<T> collection)
             where T : unmanaged
         {
-            return new NativeQuery<T, NativeQueue<T>.Enumerator>(collection.AsReadOnly().GetEnumerator());
+            return new Query<T, NativeQueue<T>.Enumerator>(collection.AsReadOnly().GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, NativeHashSet<T>.Enumerator> AsNativeEnumerable<T>(this NativeHashSet<T> collection)
+        public static Query<T, NativeHashSet<T>.Enumerator> AsQuery<T>(this NativeHashSet<T> collection)
             where T : unmanaged, IEquatable<T>
         {
-            return new NativeQuery<T, NativeHashSet<T>.Enumerator>(collection.GetEnumerator());
+            return new Query<T, NativeHashSet<T>.Enumerator>(collection.GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeQuery<T, NativeParallelHashSet<T>.Enumerator> AsNativeEnumerable<T>(this NativeParallelHashSet<T> collection)
+        public static Query<T, NativeParallelHashSet<T>.Enumerator> AsQuery<T>(this NativeParallelHashSet<T> collection)
             where T : unmanaged, IEquatable<T>
         {
-            return new NativeQuery<T, NativeParallelHashSet<T>.Enumerator>(collection.GetEnumerator());
+            return new Query<T, NativeParallelHashSet<T>.Enumerator>(collection.GetEnumerator());
         }
     }
 }

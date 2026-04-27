@@ -7,7 +7,7 @@ namespace KrasCore
     public static partial class NativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains<T, TEnumerator>(this NativeQuery<T, TEnumerator> source, T value)
+        public static bool Contains<T, TEnumerator>(this Query<T, TEnumerator> source, T value)
             where T : unmanaged, IEquatable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
@@ -15,7 +15,7 @@ namespace KrasCore
         }
     }
 
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {

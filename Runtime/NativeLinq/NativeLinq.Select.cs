@@ -3,21 +3,29 @@ using System.Runtime.CompilerServices;
 
 namespace KrasCore
 {
-    public partial struct NativeQuery<T, TEnumerator>
+    public partial struct Query<T, TEnumerator>
         where T : unmanaged
         where TEnumerator : unmanaged, IEnumerator<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeQuery<TResult, NativeSelectEnumerator<T, TResult, TEnumerator, TSelector>> Select<TResult, TSelector>(TSelector selector)
+        public Query<T, SelectQuery<T, T, TEnumerator, TSelector>> Select<TSelector>(TSelector selector)
+            where TSelector : unmanaged, ISelector<T, T>
+        {
+            return new Query<T, SelectQuery<T, T, TEnumerator, TSelector>>(
+                new SelectQuery<T, T, TEnumerator, TSelector>(GetEnumerator(), selector));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Query<TResult, SelectQuery<T, TResult, TEnumerator, TSelector>> Select<TResult, TSelector>(TSelector selector)
             where TResult : unmanaged
             where TSelector : unmanaged, ISelector<T, TResult>
         {
-            return new NativeQuery<TResult, NativeSelectEnumerator<T, TResult, TEnumerator, TSelector>>(
-                new NativeSelectEnumerator<T, TResult, TEnumerator, TSelector>(GetEnumerator(), selector));
+            return new Query<TResult, SelectQuery<T, TResult, TEnumerator, TSelector>>(
+                new SelectQuery<T, TResult, TEnumerator, TSelector>(GetEnumerator(), selector));
         }
     }
 
-    public struct NativeSelectEnumerator<TSource, TResult, TEnumerator, TSelector> : IEnumerator<TResult>
+    public struct SelectQuery<TSource, TResult, TEnumerator, TSelector> : IEnumerator<TResult>
         where TSource : unmanaged
         where TResult : unmanaged
         where TEnumerator : unmanaged, IEnumerator<TSource>
@@ -26,7 +34,7 @@ namespace KrasCore
         private TEnumerator _source;
         private TSelector _selector;
 
-        public NativeSelectEnumerator(TEnumerator source, TSelector selector)
+        public SelectQuery(TEnumerator source, TSelector selector)
         {
             _source = source;
             _selector = selector;
