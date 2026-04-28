@@ -10,21 +10,19 @@ namespace KrasCore
         where TEnumerator : unmanaged, IEnumerator<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeArray<T> ToArray(AllocatorManager.AllocatorHandle allocator)
+        public NativeArray<T> ToNativeArray(AllocatorManager.AllocatorHandle allocator)
         {
-            var list = ToNativeList(allocator);
+            var list = ToNativeList(Allocator.Temp);
             var array = list.ToArray(allocator);
-            list.Dispose();
             return array;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public UnsafeArray<T> ToUnsafeArray(Allocator allocator)
         {
-            var list = ToNativeList(allocator);
+            var list = ToNativeList(Allocator.Temp);
             var array = new UnsafeArray<T>(list.Length, allocator, NativeArrayOptions.UninitializedMemory);
             UnsafeArray<T>.Copy(list.AsArray(), array);
-            list.Dispose();
             return array;
         }
 
@@ -59,8 +57,8 @@ namespace KrasCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T[] ToManagedArray()
         {
-            var list = ToManagedList();
-            return list.ToArray();
+            var list = ToNativeList(Allocator.Temp);
+            return list.ToManagedArray();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

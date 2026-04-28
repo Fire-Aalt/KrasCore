@@ -54,7 +54,7 @@ namespace KrasCore.Tests
                 array = input
                     .AsQuery()
                     .Where(new GreaterThan { Threshold = 1 })
-                    .ToArray(Allocator.Temp);
+                    .ToNativeArray(Allocator.Temp);
                 unsafeArray = input
                     .AsQuery()
                     .Where(new GreaterThan { Threshold = 1 })
