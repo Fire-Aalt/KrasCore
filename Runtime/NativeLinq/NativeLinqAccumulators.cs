@@ -1,5 +1,6 @@
 using KrasCore;
 using Unity.Mathematics;
+using UnityEngine;
 
 [assembly: GenerateAccumulatorFor(typeof(sbyte), DivisorType.Int)]
 [assembly: GenerateAccumulatorFor(typeof(byte), DivisorType.UInt)]
@@ -23,3 +24,6 @@ using Unity.Mathematics;
 [assembly: GenerateAccumulatorFor(typeof(double2), DivisorType.Int)]
 [assembly: GenerateAccumulatorFor(typeof(double3), DivisorType.Int)]
 [assembly: GenerateAccumulatorFor(typeof(double4), DivisorType.Int)]
+[assembly: GenerateAccumulatorFor(typeof(Vector2), DivisorType.Int)]
+[assembly: GenerateAccumulatorFor(typeof(Vector3), DivisorType.Int)]
+[assembly: GenerateAccumulatorFor(typeof(Vector4), DivisorType.Int)]

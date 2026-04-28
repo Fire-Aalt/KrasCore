@@ -11,36 +11,7 @@ namespace KrasCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryFirst(out T value)
         {
-            return NativeLinqUtilities.TryFirst<T, TEnumerator>(GetEnumerator(), out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T First()
-        {
-            return NativeLinqUtilities.First<T, TEnumerator>(GetEnumerator());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T FirstOrDefault()
-        {
-            return NativeLinqUtilities.FirstOrDefault<T, TEnumerator>(GetEnumerator());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T FirstOrDefault<TPredicate>(TPredicate predicate)
-            where TPredicate : unmanaged, IPredicate<T>
-        {
-            return NativeLinqUtilities.FirstOrDefault<T, TEnumerator, TPredicate>(GetEnumerator(), predicate);
-        }
-    }
-
-    internal static partial class NativeLinqUtilities
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryFirst<T, TEnumerator>(TEnumerator enumerator, out T value)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
-        {
+            var enumerator = GetEnumerator();
             if (enumerator.MoveNext())
             {
                 value = enumerator.Current;
@@ -54,11 +25,9 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T First<T, TEnumerator>(TEnumerator enumerator)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
+        public T First()
         {
-            if (TryFirst<T, TEnumerator>(enumerator, out var value))
+            if (TryFirst(out var value))
             {
                 return value;
             }
@@ -67,19 +36,16 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T FirstOrDefault<T, TEnumerator>(TEnumerator enumerator)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
+        public T FirstOrDefault()
         {
-            return TryFirst<T, TEnumerator>(enumerator, out var value) ? value : default;
+            return TryFirst(out var value) ? value : default;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T FirstOrDefault<T, TEnumerator, TPredicate>(TEnumerator enumerator, TPredicate predicate)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
+        public T FirstOrDefault<TPredicate>(TPredicate predicate)
             where TPredicate : unmanaged, IPredicate<T>
         {
+            var enumerator = GetEnumerator();
             while (enumerator.MoveNext())
             {
                 var value = enumerator.Current;

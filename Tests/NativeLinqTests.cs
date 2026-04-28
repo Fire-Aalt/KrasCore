@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 
@@ -36,6 +37,79 @@ namespace KrasCore.Tests
             }
             finally
             {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void Where_Materialize_ReturnsRequestedCollectionTypes()
+        {
+            var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.Persistent);
+            var array = default(NativeArray<int>);
+            var unsafeArray = default(UnsafeArray<int>);
+            var unsafeList = default(UnsafeList<int>);
+
+            try
+            {
+                array = input
+                    .AsQuery()
+                    .Where(new GreaterThan { Threshold = 1 })
+                    .ToArray(Allocator.Temp);
+                unsafeArray = input
+                    .AsQuery()
+                    .Where(new GreaterThan { Threshold = 1 })
+                    .ToUnsafeArray(Allocator.Temp);
+                unsafeList = input
+                    .AsQuery()
+                    .Where(new GreaterThan { Threshold = 1 })
+                    .ToUnsafeList(Allocator.Temp);
+
+                var managedArray = input
+                    .AsQuery()
+                    .Where(new GreaterThan { Threshold = 1 })
+                    .ToManagedArray();
+                var managedList = input
+                    .AsQuery()
+                    .Where(new GreaterThan { Threshold = 1 })
+                    .ToManagedList();
+
+                Assert.That(array.Length, Is.EqualTo(2));
+                Assert.That(array[0], Is.EqualTo(2));
+                Assert.That(array[1], Is.EqualTo(3));
+
+                Assert.That(unsafeArray.Length, Is.EqualTo(2));
+                Assert.That(unsafeArray[0], Is.EqualTo(2));
+                Assert.That(unsafeArray[1], Is.EqualTo(3));
+
+                Assert.That(unsafeList.Length, Is.EqualTo(2));
+                Assert.That(unsafeList[0], Is.EqualTo(2));
+                Assert.That(unsafeList[1], Is.EqualTo(3));
+
+                Assert.That(managedArray.Length, Is.EqualTo(2));
+                Assert.That(managedArray[0], Is.EqualTo(2));
+                Assert.That(managedArray[1], Is.EqualTo(3));
+
+                Assert.That(managedList.Count, Is.EqualTo(2));
+                Assert.That(managedList[0], Is.EqualTo(2));
+                Assert.That(managedList[1], Is.EqualTo(3));
+            }
+            finally
+            {
+                if (array.IsCreated)
+                {
+                    array.Dispose();
+                }
+
+                if (unsafeArray.IsCreated)
+                {
+                    unsafeArray.Dispose();
+                }
+
+                if (unsafeList.IsCreated)
+                {
+                    unsafeList.Dispose();
+                }
+
                 input.Dispose();
             }
         }

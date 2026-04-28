@@ -31,25 +31,7 @@ namespace KrasCore
         public T Min<TComparer>(TComparer comparer)
             where TComparer : unmanaged, IComparer<T>
         {
-            return NativeLinqUtilities.Min<T, TEnumerator, TComparer>(GetEnumerator(), comparer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T Max<TComparer>(TComparer comparer)
-            where TComparer : unmanaged, IComparer<T>
-        {
-            return NativeLinqUtilities.Max<T, TEnumerator, TComparer>(GetEnumerator(), comparer);
-        }
-    }
-
-    internal static partial class NativeLinqUtilities
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Min<T, TEnumerator, TComparer>(TEnumerator enumerator, TComparer comparer)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
-            where TComparer : unmanaged, IComparer<T>
-        {
+            var enumerator = GetEnumerator();
             if (!enumerator.MoveNext())
             {
                 enumerator.Dispose();
@@ -71,11 +53,10 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T Max<T, TEnumerator, TComparer>(TEnumerator enumerator, TComparer comparer)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
+        public T Max<TComparer>(TComparer comparer)
             where TComparer : unmanaged, IComparer<T>
         {
+            var enumerator = GetEnumerator();
             if (!enumerator.MoveNext())
             {
                 enumerator.Dispose();

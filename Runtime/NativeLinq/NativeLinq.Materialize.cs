@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
@@ -9,20 +10,64 @@ namespace KrasCore
         where TEnumerator : unmanaged, IEnumerator<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public NativeArray<T> ToArray(AllocatorManager.AllocatorHandle allocator)
+        {
+            var list = ToNativeList(allocator);
+            var array = list.ToArray(allocator);
+            list.Dispose();
+            return array;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeArray<T> ToUnsafeArray(Allocator allocator)
+        {
+            var list = ToNativeList(allocator);
+            var array = new UnsafeArray<T>(list.Length, allocator, NativeArrayOptions.UninitializedMemory);
+            UnsafeArray<T>.Copy(list.AsArray(), array);
+            list.Dispose();
+            return array;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public UnsafeList<T> ToUnsafeList(AllocatorManager.AllocatorHandle allocator)
+        {
+            var enumerator = GetEnumerator();
+            var list = new UnsafeList<T>(0, allocator);
+            while (enumerator.MoveNext())
+            {
+                list.Add(enumerator.Current);
+            }
+
+            enumerator.Dispose();
+            return list;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeList<T> ToNativeList(AllocatorManager.AllocatorHandle allocator)
         {
-            return NativeLinqUtilities.ToNativeList<T, TEnumerator>(GetEnumerator(), allocator);
-        }
-    }
-
-    internal static partial class NativeLinqUtilities
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeList<T> ToNativeList<T, TEnumerator>(TEnumerator enumerator, AllocatorManager.AllocatorHandle allocator)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
-        {
+            var enumerator = GetEnumerator();
             var list = new NativeList<T>(allocator);
+            while (enumerator.MoveNext())
+            {
+                list.Add(enumerator.Current);
+            }
+
+            enumerator.Dispose();
+            return list;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T[] ToManagedArray()
+        {
+            var list = ToManagedList();
+            return list.ToArray();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public List<T> ToManagedList()
+        {
+            var enumerator = GetEnumerator();
+            var list = new List<T>();
             while (enumerator.MoveNext())
             {
                 list.Add(enumerator.Current);

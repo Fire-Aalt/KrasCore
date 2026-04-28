@@ -27,25 +27,8 @@ namespace KrasCore
             where TOtherEnumerator : unmanaged, IEnumerator<T>
             where TEqualityComparer : unmanaged, INativeEqualityComparer<T>
         {
-            return NativeLinqUtilities.SequenceEquals<T, TEnumerator, TOtherEnumerator, TEqualityComparer>(
-                GetEnumerator(),
-                other,
-                comparer);
-        }
-    }
-
-    internal static partial class NativeLinqUtilities
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool SequenceEquals<T, TLeftEnumerator, TRightEnumerator, TEqualityComparer>(
-            TLeftEnumerator left,
-            TRightEnumerator right,
-            TEqualityComparer comparer)
-            where T : unmanaged
-            where TLeftEnumerator : unmanaged, IEnumerator<T>
-            where TRightEnumerator : unmanaged, IEnumerator<T>
-            where TEqualityComparer : unmanaged, INativeEqualityComparer<T>
-        {
+            var left = GetEnumerator();
+            var right = other;
             while (true)
             {
                 var leftHasValue = left.MoveNext();

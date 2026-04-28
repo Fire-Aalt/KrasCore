@@ -23,18 +23,7 @@ namespace KrasCore
         public bool Contains<TEqualityComparer>(T value, TEqualityComparer comparer)
             where TEqualityComparer : unmanaged, INativeEqualityComparer<T>
         {
-            return NativeLinqUtilities.Contains<T, TEnumerator, TEqualityComparer>(GetEnumerator(), value, comparer);
-        }
-    }
-
-    internal static partial class NativeLinqUtilities
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains<T, TEnumerator, TEqualityComparer>(TEnumerator enumerator, T value, TEqualityComparer comparer)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
-            where TEqualityComparer : unmanaged, INativeEqualityComparer<T>
-        {
+            var enumerator = GetEnumerator();
             while (enumerator.MoveNext())
             {
                 var current = enumerator.Current;

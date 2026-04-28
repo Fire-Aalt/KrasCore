@@ -32,22 +32,7 @@ namespace KrasCore
         public NativeList<T> OrderBy<TComparer>(TComparer comparer, AllocatorManager.AllocatorHandle allocator)
             where TComparer : unmanaged, IComparer<T>
         {
-            return NativeLinqUtilities.OrderBy<T, TEnumerator, TComparer>(GetEnumerator(), comparer, allocator);
-        }
-    }
-
-    internal static partial class NativeLinqUtilities
-    {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeList<T> OrderBy<T, TEnumerator, TComparer>(
-            TEnumerator enumerator,
-            TComparer comparer,
-            AllocatorManager.AllocatorHandle allocator)
-            where T : unmanaged
-            where TEnumerator : unmanaged, IEnumerator<T>
-            where TComparer : unmanaged, IComparer<T>
-        {
-            var list = ToNativeList<T, TEnumerator>(enumerator, allocator);
+            var list = ToNativeList(allocator);
             list.Sort(comparer);
             return list;
         }
