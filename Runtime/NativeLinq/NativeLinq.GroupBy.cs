@@ -55,7 +55,7 @@ namespace KrasCore
             var keyToGroupIndex = new NativeParallelHashMap<TKey, int>(16, Allocator.Temp);
             var sourceValues = new NativeList<T>(Allocator.Temp);
             var sourceGroupIndexes = new NativeList<int>(Allocator.Temp);
-            var groups = new NativeList<NativeLinqGroupRange<TKey>>(allocator);
+            var groups = new NativeList<GroupRange<TKey>>(allocator);
 
             while (source.MoveNext())
             {
@@ -71,7 +71,7 @@ namespace KrasCore
 
                     groupIndex = groups.Length;
                     keyToGroupIndex.Add(key, groupIndex);
-                    groups.Add(new NativeLinqGroupRange<TKey>
+                    groups.Add(new GroupRange<TKey>
                     {
                         Key = key,
                         StartIndex = 0,
@@ -112,11 +112,6 @@ namespace KrasCore
                 values[valueIndex] = sourceValues[i];
                 writeIndexes[groupIndex] = valueIndex + 1;
             }
-
-            keyToGroupIndex.Dispose();
-            sourceValues.Dispose();
-            sourceGroupIndexes.Dispose();
-            writeIndexes.Dispose();
 
             return new GroupedQuery<TKey, T>(groups, values);
         }

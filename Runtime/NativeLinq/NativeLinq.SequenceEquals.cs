@@ -14,7 +14,7 @@ namespace KrasCore
             where TEnumerator : unmanaged, IEnumerator<T>
             where TOtherEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.SequenceEquals(other.GetEnumerator(), new NativeEqualityComparer<T>());
+            return source.SequenceEquals(other.GetEnumerator(), new EqualityComparer<T>());
         }
     }
 
@@ -25,7 +25,7 @@ namespace KrasCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool SequenceEquals<TOtherEnumerator, TEqualityComparer>(TOtherEnumerator other, TEqualityComparer comparer)
             where TOtherEnumerator : unmanaged, IEnumerator<T>
-            where TEqualityComparer : unmanaged, INativeEqualityComparer<T>
+            where TEqualityComparer : unmanaged, IEqualityComparer<T>
         {
             var left = GetEnumerator();
             var right = other;

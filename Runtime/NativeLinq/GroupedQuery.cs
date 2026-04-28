@@ -5,7 +5,7 @@ using Unity.Collections;
 
 namespace KrasCore
 {
-    public struct NativeLinqGroupRange<TKey>
+    public struct GroupRange<TKey>
         where TKey : unmanaged
     {
         public TKey Key;
@@ -13,14 +13,14 @@ namespace KrasCore
         public int Length;
     }
 
-    public struct NativeLinqGroup<TKey, T>
+    public struct Group<TKey, T>
         where TKey : unmanaged
         where T : unmanaged
     {
-        private NativeLinqGroupRange<TKey> _range;
+        private GroupRange<TKey> _range;
         private NativeList<T> _values;
 
-        public NativeLinqGroup(NativeLinqGroupRange<TKey> range, NativeList<T> values)
+        public Group(GroupRange<TKey> range, NativeList<T> values)
         {
             _range = range;
             _values = values;
@@ -55,15 +55,15 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeLinqGroupEnumerator<T> GetEnumerator()
+        public GroupEnumerator<T> GetEnumerator()
         {
-            return new NativeLinqGroupEnumerator<T>(_values.AsArray(), _range.StartIndex, _range.Length);
+            return new GroupEnumerator<T>(_values.AsArray(), _range.StartIndex, _range.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Query<T, NativeLinqGroupEnumerator<T>> AsQuery()
+        public Query<T, GroupEnumerator<T>> AsQuery()
         {
-            return new Query<T, NativeLinqGroupEnumerator<T>>(GetEnumerator());
+            return new Query<T, GroupEnumerator<T>>(GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -121,50 +121,26 @@ namespace KrasCore
         where TKey : unmanaged
         where T : unmanaged
     {
-        private NativeList<NativeLinqGroupRange<TKey>> _groups;
+        private NativeList<GroupRange<TKey>> _groups;
         private NativeList<T> _values;
 
-        public GroupedQuery(NativeList<NativeLinqGroupRange<TKey>> groups, NativeList<T> values)
+        public GroupedQuery(NativeList<GroupRange<TKey>> groups, NativeList<T> values)
         {
             _groups = groups;
             _values = values;
         }
 
-        public bool IsCreated
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _groups.IsCreated && _values.IsCreated;
-        }
+        public bool IsCreated => _groups.IsCreated && _values.IsCreated;
 
-        public int GroupCount
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _groups.Length;
-        }
+        public int GroupCount => _groups.Length;
 
-        public int ValueCount
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values.Length;
-        }
+        public int ValueCount => _values.Length;
 
-        public NativeArray<NativeLinqGroupRange<TKey>> GroupRanges
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _groups.AsArray();
-        }
+        public NativeArray<GroupRange<TKey>> GroupRanges => _groups.AsArray();
 
-        public NativeArray<T> Values
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values.AsArray();
-        }
+        public NativeArray<T> Values => _values.AsArray();
 
-        public NativeLinqGroup<TKey, T> this[int index]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new NativeLinqGroup<TKey, T>(_groups[index], _values);
-        }
+        public Group<TKey, T> this[int index] => new(_groups[index], _values);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GroupedQueryEnumerator<TKey, T> GetEnumerator()
@@ -186,25 +162,25 @@ namespace KrasCore
         }
     }
 
-    public struct GroupedQueryEnumerator<TKey, T> : IEnumerator<NativeLinqGroup<TKey, T>>
+    public struct GroupedQueryEnumerator<TKey, T> : IEnumerator<Group<TKey, T>>
         where TKey : unmanaged
         where T : unmanaged
     {
-        private NativeList<NativeLinqGroupRange<TKey>> _groups;
+        private NativeList<GroupRange<TKey>> _groups;
         private NativeList<T> _values;
         private int _index;
 
-        public GroupedQueryEnumerator(NativeList<NativeLinqGroupRange<TKey>> groups, NativeList<T> values)
+        public GroupedQueryEnumerator(NativeList<GroupRange<TKey>> groups, NativeList<T> values)
         {
             _groups = groups;
             _values = values;
             _index = -1;
         }
 
-        public NativeLinqGroup<TKey, T> Current
+        public Group<TKey, T> Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new NativeLinqGroup<TKey, T>(_groups[_index], _values);
+            get => new Group<TKey, T>(_groups[_index], _values);
         }
 
         object System.Collections.IEnumerator.Current => Current;
@@ -226,7 +202,7 @@ namespace KrasCore
         }
     }
 
-    public struct NativeLinqGroupEnumerator<T> : IEnumerator<T>
+    public struct GroupEnumerator<T> : IEnumerator<T>
         where T : unmanaged
     {
         private NativeArray<T> _values;
@@ -234,7 +210,7 @@ namespace KrasCore
         private int _length;
         private int _index;
 
-        public NativeLinqGroupEnumerator(NativeArray<T> values, int startIndex, int length)
+        public GroupEnumerator(NativeArray<T> values, int startIndex, int length)
         {
             _values = values;
             _startIndex = startIndex;
