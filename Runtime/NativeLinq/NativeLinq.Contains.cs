@@ -11,7 +11,7 @@ namespace KrasCore
             where T : unmanaged, IEquatable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.Contains(value, new EqualityComparer<T>());
+            return source.Contains(value, new NativeEqualityComparer<T>());
         }
     }
 
@@ -21,7 +21,7 @@ namespace KrasCore
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains<TEqualityComparer>(T value, TEqualityComparer comparer)
-            where TEqualityComparer : unmanaged, IEqualityComparer<T>
+            where TEqualityComparer : unmanaged, INativeEqualityComparer<T>
         {
             var enumerator = GetEnumerator();
             while (enumerator.MoveNext())

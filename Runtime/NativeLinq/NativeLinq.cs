@@ -25,7 +25,7 @@ namespace KrasCore
         T Divide(in T total, uint count);
     }
 
-    public interface IEqualityComparer<T>
+    public interface INativeEqualityComparer<T>
         where T : unmanaged
     {
         bool Equals(in T left, in T right);
@@ -62,7 +62,7 @@ namespace KrasCore
         }
     }
 
-    public struct EqualityComparer<T> : IEqualityComparer<T>
+    public struct NativeEqualityComparer<T> : INativeEqualityComparer<T>
         where T : unmanaged, IEquatable<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

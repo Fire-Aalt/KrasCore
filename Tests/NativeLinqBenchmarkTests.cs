@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using NUnit.Framework;
@@ -72,6 +73,66 @@ namespace KrasCore.Tests
                 elementCount,
                 array => QueryNativeLinqComplexBurst(array),
                 QueryLinqComplex);
+        }
+
+        [Test]
+        [Performance]
+        [Explicit("Benchmark test. Run manually.")]
+        [Category("Benchmark")]
+        [TestCase(128)]
+        [TestCase(1_024)]
+        [TestCase(8_192)]
+        [TestCase(65_536)]
+        [TestCase(262_144)]
+        public void OrderByQuery_CompareLinqNativeLinq(int elementCount)
+        {
+            MeasureLinq(
+                $"LINQ.OrderBy/{elementCount}",
+                elementCount,
+                QueryLinqOrderBy,
+                QueryLinqOrderBy);
+
+            MeasureNativeLinq(
+                $"NativeLINQ.NoBurst.OrderBy/{elementCount}",
+                elementCount,
+                QueryNativeLinqOrderBy,
+                QueryLinqOrderBy);
+
+            MeasureBurstNativeLinq(
+                $"NativeLINQ.Burst.OrderBy/{elementCount}",
+                elementCount,
+                array => QueryNativeLinqOrderByBurst(array),
+                QueryLinqOrderBy);
+        }
+
+        [Test]
+        [Performance]
+        [Explicit("Benchmark test. Run manually.")]
+        [Category("Benchmark")]
+        [TestCase(128)]
+        [TestCase(1_024)]
+        [TestCase(8_192)]
+        [TestCase(65_536)]
+        [TestCase(262_144)]
+        public void GroupByQuery_CompareLinqNativeLinq(int elementCount)
+        {
+            MeasureLinq(
+                $"LINQ.GroupBy/{elementCount}",
+                elementCount,
+                QueryLinqGroupBy,
+                QueryLinqGroupBy);
+
+            MeasureNativeLinq(
+                $"NativeLINQ.NoBurst.GroupBy/{elementCount}",
+                elementCount,
+                QueryNativeLinqGroupBy,
+                QueryLinqGroupBy);
+
+            MeasureBurstNativeLinq(
+                $"NativeLINQ.Burst.GroupBy/{elementCount}",
+                elementCount,
+                array => QueryNativeLinqGroupByBurst(array),
+                QueryLinqGroupBy);
         }
 
         private static void MeasureLinq(
@@ -238,6 +299,66 @@ namespace KrasCore.Tests
             return QueryNativeLinqComplex(values);
         }
 
+        private static int QueryLinqOrderBy(int[] values)
+        {
+            return values
+                .Where(OrderByWhere)
+                .OrderBy(OrderByKey)
+                .Select(OrderBySelect)
+                .Sum();
+        }
+
+        private static int QueryNativeLinqOrderBy(NativeArray<int> values)
+        {
+            var ordered = values
+                .AsQuery()
+                .Where(new OrderByWherePredicate())
+                .OrderBy(new OrderByKeyComparer(), Allocator.Temp);
+
+            var result = ordered
+                .AsQuery()
+                .Select(new OrderBySelectSelector())
+                .Sum();
+
+            ordered.Dispose();
+            return result;
+        }
+
+        [BurstCompile]
+        private static int QueryNativeLinqOrderByBurst(in NativeArray<int> values)
+        {
+            return QueryNativeLinqOrderBy(values);
+        }
+
+        private static int QueryLinqGroupBy(int[] values)
+        {
+            return values
+                .GroupBy(GroupByKey)
+                .Sum(group => (group.Key + 1) * group.Sum(GroupBySelect));
+        }
+
+        private static int QueryNativeLinqGroupBy(NativeArray<int> values)
+        {
+            var grouped = values
+                .AsQuery()
+                .GroupBy(new GroupByKeySelector(), Allocator.Temp);
+
+            var result = 0;
+            foreach (var group in grouped)
+            {
+                result += (group.Key + 1) * group.AsQuery().Select(new GroupBySelectSelector()).Sum();
+            }
+
+            grouped.Dispose();
+            return result;
+        }
+
+        [BurstCompile]
+        private static int QueryNativeLinqGroupByBurst(in NativeArray<int> values)
+        {
+            return QueryNativeLinqGroupBy(values);
+        }
+
         private static bool SimpleWhere(int value)
         {
             return (value & 1) == 0;
@@ -304,6 +425,31 @@ namespace KrasCore.Tests
         }
 
         private static int ComplexSelect5(int value)
+        {
+            return (value & 255) + 1;
+        }
+
+        private static bool OrderByWhere(int value)
+        {
+            return value % 3 != 1;
+        }
+
+        private static int OrderByKey(int value)
+        {
+            return ((value * 73) ^ (value >> 3)) & 4095;
+        }
+
+        private static int OrderBySelect(int value)
+        {
+            return (value & 255) + 1;
+        }
+
+        private static int GroupByKey(int value)
+        {
+            return value & 15;
+        }
+
+        private static int GroupBySelect(int value)
         {
             return (value & 255) + 1;
         }
@@ -417,6 +563,46 @@ namespace KrasCore.Tests
             public int Select(in int value)
             {
                 return ComplexSelect5(value);
+            }
+        }
+
+        private struct OrderByWherePredicate : IPredicate<int>
+        {
+            public bool Match(in int value)
+            {
+                return OrderByWhere(value);
+            }
+        }
+
+        private struct OrderByKeyComparer : IComparer<int>
+        {
+            public int Compare(int x, int y)
+            {
+                return OrderByKey(x).CompareTo(OrderByKey(y));
+            }
+        }
+
+        private struct OrderBySelectSelector : ISelector<int, int>
+        {
+            public int Select(in int value)
+            {
+                return OrderBySelect(value);
+            }
+        }
+
+        private struct GroupByKeySelector : ISelector<int, int>
+        {
+            public int Select(in int value)
+            {
+                return GroupByKey(value);
+            }
+        }
+
+        private struct GroupBySelectSelector : ISelector<int, int>
+        {
+            public int Select(in int value)
+            {
+                return GroupBySelect(value);
             }
         }
     }
