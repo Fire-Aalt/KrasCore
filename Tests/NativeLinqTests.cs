@@ -176,6 +176,113 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void GroupBy_GroupsValuesPreservingGroupAndElementOrder()
+        {
+            var input = new NativeArray<GroupRecord>(
+                new[]
+                {
+                    new GroupRecord { Group = 2, Value = 10 },
+                    new GroupRecord { Group = 1, Value = 20 },
+                    new GroupRecord { Group = 2, Value = 30 },
+                    new GroupRecord { Group = 1, Value = 40 },
+                    new GroupRecord { Group = 3, Value = 50 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                var grouped = input
+                    .AsQuery()
+                    .GroupBy<int, GroupRecordKeySelector>(new GroupRecordKeySelector(), Allocator.Temp);
+
+                try
+                {
+                    Assert.That(grouped.GroupCount, Is.EqualTo(3));
+                    Assert.That(grouped.ValueCount, Is.EqualTo(5));
+
+                    Assert.That(grouped[0].Key, Is.EqualTo(2));
+                    Assert.That(grouped[0].Length, Is.EqualTo(2));
+                    Assert.That(grouped[0][0].Value, Is.EqualTo(10));
+                    Assert.That(grouped[0][1].Value, Is.EqualTo(30));
+
+                    Assert.That(grouped[1].Key, Is.EqualTo(1));
+                    Assert.That(grouped[1].Length, Is.EqualTo(2));
+                    Assert.That(grouped[1][0].Value, Is.EqualTo(20));
+                    Assert.That(grouped[1][1].Value, Is.EqualTo(40));
+
+                    Assert.That(grouped[2].Key, Is.EqualTo(3));
+                    Assert.That(grouped[2].Length, Is.EqualTo(1));
+                    Assert.That(grouped[2][0].Value, Is.EqualTo(50));
+                }
+                finally
+                {
+                    grouped.Dispose();
+                }
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void GroupBy_GroupsCanBeEnumeratedAndMaterialized()
+        {
+            var input = new NativeArray<int>(new[] { 1, 2, 3, 4, 5 }, Allocator.Persistent);
+
+            try
+            {
+                var grouped = input
+                    .AsQuery()
+                    .GroupBy(new ModuloTwoSelector(), Allocator.Temp);
+
+                try
+                {
+                    var oddSum = 0;
+                    var even = default(NativeList<int>);
+
+                    foreach (var group in grouped)
+                    {
+                        if (group.Key == 1)
+                        {
+                            foreach (var value in group)
+                            {
+                                oddSum += value;
+                            }
+                        }
+                        else
+                        {
+                            even = group.ToNativeList(Allocator.Temp);
+                        }
+                    }
+
+                    try
+                    {
+                        Assert.That(oddSum, Is.EqualTo(9));
+                        Assert.That(even.Length, Is.EqualTo(2));
+                        Assert.That(even[0], Is.EqualTo(2));
+                        Assert.That(even[1], Is.EqualTo(4));
+                    }
+                    finally
+                    {
+                        if (even.IsCreated)
+                        {
+                            even.Dispose();
+                        }
+                    }
+                }
+                finally
+                {
+                    grouped.Dispose();
+                }
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
         public void OrderBy_SortsAscending()
         {
             var input = new NativeArray<int>(new[] { 3, 1, 2 }, Allocator.Persistent);
@@ -183,7 +290,7 @@ namespace KrasCore.Tests
             try
             {
                 var ordered = input.AsQuery().OrderBy(Allocator.Temp);
-
+                
                 try
                 {
                     Assert.That(ordered.Length, Is.EqualTo(3));
@@ -521,6 +628,33 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void BurstJob_CanExecuteNativeLinqGroupBy()
+        {
+            var input = new NativeArray<int>(new[] { 1, 2, 3, 4, 5 }, Allocator.Persistent);
+            var output = new NativeArray<int>(5, Allocator.Persistent);
+
+            try
+            {
+                new BurstGroupByJob
+                {
+                    Input = input,
+                    Output = output,
+                }.Schedule().Complete();
+
+                Assert.That(output[0], Is.EqualTo(2));
+                Assert.That(output[1], Is.EqualTo(5));
+                Assert.That(output[2], Is.EqualTo(1));
+                Assert.That(output[3], Is.EqualTo(3));
+                Assert.That(output[4], Is.EqualTo(9));
+            }
+            finally
+            {
+                input.Dispose();
+                output.Dispose();
+            }
+        }
+
+        [Test]
         public void BurstJob_CanExecuteNativeLinqQuery()
         {
             var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.Persistent);
@@ -577,6 +711,28 @@ namespace KrasCore.Tests
                 list.Add(value);
                 list.Add(value + 10);
                 return list.GetEnumerator();
+            }
+        }
+
+        private struct ModuloTwoSelector : ISelector<int, int>
+        {
+            public int Select(in int value)
+            {
+                return value % 2;
+            }
+        }
+
+        private struct GroupRecord
+        {
+            public int Group;
+            public int Value;
+        }
+
+        private struct GroupRecordKeySelector : ISelector<GroupRecord, int>
+        {
+            public int Select(in GroupRecord value)
+            {
+                return value.Group;
             }
         }
 
@@ -690,6 +846,37 @@ namespace KrasCore.Tests
                 Output[6] = Input.AsQuery().Contains(2) ? 1 : 0;
                 Output[7] = Input.AsQuery().Min() + Input.AsQuery().Max();
                 Output[8] = Input.AsQuery().SequenceEquals(Input.AsQuery()) ? 1 : 0;
+            }
+        }
+
+        [BurstCompile(CompileSynchronously = true)]
+        private struct BurstGroupByJob : IJob
+        {
+            [ReadOnly]
+            public NativeArray<int> Input;
+
+            public NativeArray<int> Output;
+
+            public void Execute()
+            {
+                var grouped = Input
+                    .AsQuery()
+                    .GroupBy<int, ModuloTwoSelector>(new ModuloTwoSelector(), Allocator.Temp);
+
+                Output[0] = grouped.GroupCount;
+                Output[1] = grouped.ValueCount;
+                Output[2] = grouped[0].Key;
+
+                var oddSum = 0;
+                foreach (var value in grouped[0].AsQuery())
+                {
+                    oddSum += value;
+                }
+
+                Output[3] = grouped[0].Length;
+                Output[4] = oddSum;
+
+                grouped.Dispose();
             }
         }
     }
