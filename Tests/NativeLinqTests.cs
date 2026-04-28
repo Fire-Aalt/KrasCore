@@ -230,6 +230,86 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void ThenBy_ComposesPrimaryAndSecondaryComparers()
+        {
+            var input = new NativeArray<SortRecord>(
+                new[]
+                {
+                    new SortRecord { Primary = 1, Secondary = 2 },
+                    new SortRecord { Primary = 0, Secondary = 5 },
+                    new SortRecord { Primary = 1, Secondary = 1 },
+                    new SortRecord { Primary = 0, Secondary = 3 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                var ordered = input
+                    .AsQuery()
+                    .OrderBy(new PrimaryComparer())
+                    .ThenBy(new SecondaryComparer())
+                    .ToNativeList(Allocator.Temp);
+
+                try
+                {
+                    Assert.That(ordered.Length, Is.EqualTo(4));
+                    Assert.That(ordered[0], Is.EqualTo(new SortRecord { Primary = 0, Secondary = 3 }));
+                    Assert.That(ordered[1], Is.EqualTo(new SortRecord { Primary = 0, Secondary = 5 }));
+                    Assert.That(ordered[2], Is.EqualTo(new SortRecord { Primary = 1, Secondary = 1 }));
+                    Assert.That(ordered[3], Is.EqualTo(new SortRecord { Primary = 1, Secondary = 2 }));
+                }
+                finally
+                {
+                    ordered.Dispose();
+                }
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void ThenByDescending_ComposesPrimaryAndDescendingSecondaryComparers()
+        {
+            var input = new NativeArray<SortRecord>(
+                new[]
+                {
+                    new SortRecord { Primary = 1, Secondary = 2 },
+                    new SortRecord { Primary = 0, Secondary = 5 },
+                    new SortRecord { Primary = 1, Secondary = 1 },
+                    new SortRecord { Primary = 0, Secondary = 3 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                var ordered = input
+                    .AsQuery()
+                    .OrderBy(new PrimaryComparer())
+                    .ThenByDescending(new SecondaryComparer())
+                    .ToNativeList(Allocator.Temp);
+
+                try
+                {
+                    Assert.That(ordered.Length, Is.EqualTo(4));
+                    Assert.That(ordered[0], Is.EqualTo(new SortRecord { Primary = 0, Secondary = 5 }));
+                    Assert.That(ordered[1], Is.EqualTo(new SortRecord { Primary = 0, Secondary = 3 }));
+                    Assert.That(ordered[2], Is.EqualTo(new SortRecord { Primary = 1, Secondary = 2 }));
+                    Assert.That(ordered[3], Is.EqualTo(new SortRecord { Primary = 1, Secondary = 1 }));
+                }
+                finally
+                {
+                    ordered.Dispose();
+                }
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
         public void First_ReturnsFirstElement()
         {
             var input = new NativeArray<int>(new[] { 9, 10 }, Allocator.Persistent);
@@ -497,6 +577,28 @@ namespace KrasCore.Tests
                 list.Add(value);
                 list.Add(value + 10);
                 return list.GetEnumerator();
+            }
+        }
+
+        private struct SortRecord
+        {
+            public int Primary;
+            public int Secondary;
+        }
+
+        private struct PrimaryComparer : IComparer<SortRecord>
+        {
+            public int Compare(SortRecord x, SortRecord y)
+            {
+                return x.Primary.CompareTo(y.Primary);
+            }
+        }
+
+        private struct SecondaryComparer : IComparer<SortRecord>
+        {
+            public int Compare(SortRecord x, SortRecord y)
+            {
+                return x.Secondary.CompareTo(y.Secondary);
             }
         }
 
