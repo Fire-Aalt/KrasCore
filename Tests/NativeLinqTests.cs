@@ -523,7 +523,7 @@ namespace KrasCore.Tests
         public int Value;
     }
 
-    internal struct CustomAccumulatedValueAccumulator : INativeAccumulator<CustomAccumulatedValue>
+    internal struct CustomAccumulatedValueAccumulator : IAccumulator<CustomAccumulatedValue>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public CustomAccumulatedValue Add(in CustomAccumulatedValue total, in CustomAccumulatedValue value)

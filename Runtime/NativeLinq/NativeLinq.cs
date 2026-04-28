@@ -17,7 +17,7 @@ namespace KrasCore
         TResult Select(in TSource value);
     }
 
-    public interface INativeAccumulator<T>
+    public interface IAccumulator<T>
         where T : unmanaged
     {
         T Add(in T total, in T value);

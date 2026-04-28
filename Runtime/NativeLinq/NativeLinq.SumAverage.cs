@@ -1,324 +1,15 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Unity.Mathematics;
 
 namespace KrasCore
 {
     public static partial class NativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sbyte Sum<TEnumerator>(this Query<sbyte, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<sbyte>
-        {
-            return source.Sum<sbyte, TEnumerator, SByteAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte Sum<TEnumerator>(this Query<byte, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<byte>
-        {
-            return source.Sum<byte, TEnumerator, ByteAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static short Sum<TEnumerator>(this Query<short, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<short>
-        {
-            return source.Sum<short, TEnumerator, Int16Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ushort Sum<TEnumerator>(this Query<ushort, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<ushort>
-        {
-            return source.Sum<ushort, TEnumerator, UInt16Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Sum<TEnumerator>(this Query<int, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int>
-        {
-            return source.Sum<int, TEnumerator, Int32Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint Sum<TEnumerator>(this Query<uint, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint>
-        {
-            return source.Sum<uint, TEnumerator, UInt32Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static long Sum<TEnumerator>(this Query<long, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<long>
-        {
-            return source.Sum<long, TEnumerator, Int64Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ulong Sum<TEnumerator>(this Query<ulong, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<ulong>
-        {
-            return source.Sum<ulong, TEnumerator, UInt64Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Sum<TEnumerator>(this Query<float, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float>
-        {
-            return source.Sum<float, TEnumerator, SingleAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Sum<TEnumerator>(this Query<double, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double>
-        {
-            return source.Sum<double, TEnumerator, DoubleAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2 Sum<TEnumerator>(this Query<int2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int2>
-        {
-            return source.Sum<int2, TEnumerator, int2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 Sum<TEnumerator>(this Query<int3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int3>
-        {
-            return source.Sum<int3, TEnumerator, int3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int4 Sum<TEnumerator>(this Query<int4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int4>
-        {
-            return source.Sum<int4, TEnumerator, int4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint2 Sum<TEnumerator>(this Query<uint2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint2>
-        {
-            return source.Sum<uint2, TEnumerator, uint2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint3 Sum<TEnumerator>(this Query<uint3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint3>
-        {
-            return source.Sum<uint3, TEnumerator, uint3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint4 Sum<TEnumerator>(this Query<uint4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint4>
-        {
-            return source.Sum<uint4, TEnumerator, uint4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 Sum<TEnumerator>(this Query<float2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float2>
-        {
-            return source.Sum<float2, TEnumerator, float2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 Sum<TEnumerator>(this Query<float3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float3>
-        {
-            return source.Sum<float3, TEnumerator, float3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 Sum<TEnumerator>(this Query<float4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float4>
-        {
-            return source.Sum<float4, TEnumerator, float4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double2 Sum<TEnumerator>(this Query<double2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double2>
-        {
-            return source.Sum<double2, TEnumerator, double2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double3 Sum<TEnumerator>(this Query<double3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double3>
-        {
-            return source.Sum<double3, TEnumerator, double3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double4 Sum<TEnumerator>(this Query<double4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double4>
-        {
-            return source.Sum<double4, TEnumerator, double4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static sbyte Average<TEnumerator>(this Query<sbyte, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<sbyte>
-        {
-            return source.Average<sbyte, TEnumerator, SByteAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte Average<TEnumerator>(this Query<byte, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<byte>
-        {
-            return source.Average<byte, TEnumerator, ByteAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static short Average<TEnumerator>(this Query<short, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<short>
-        {
-            return source.Average<short, TEnumerator, Int16Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ushort Average<TEnumerator>(this Query<ushort, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<ushort>
-        {
-            return source.Average<ushort, TEnumerator, UInt16Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int Average<TEnumerator>(this Query<int, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int>
-        {
-            return source.Average<int, TEnumerator, Int32Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint Average<TEnumerator>(this Query<uint, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint>
-        {
-            return source.Average<uint, TEnumerator, UInt32Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static long Average<TEnumerator>(this Query<long, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<long>
-        {
-            return source.Average<long, TEnumerator, Int64Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ulong Average<TEnumerator>(this Query<ulong, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<ulong>
-        {
-            return source.Average<ulong, TEnumerator, UInt64Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Average<TEnumerator>(this Query<float, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float>
-        {
-            return source.Average<float, TEnumerator, SingleAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double Average<TEnumerator>(this Query<double, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double>
-        {
-            return source.Average<double, TEnumerator, DoubleAccumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int2 Average<TEnumerator>(this Query<int2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int2>
-        {
-            return source.Average<int2, TEnumerator, int2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int3 Average<TEnumerator>(this Query<int3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int3>
-        {
-            return source.Average<int3, TEnumerator, int3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int4 Average<TEnumerator>(this Query<int4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<int4>
-        {
-            return source.Average<int4, TEnumerator, int4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint2 Average<TEnumerator>(this Query<uint2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint2>
-        {
-            return source.Average<uint2, TEnumerator, uint2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint3 Average<TEnumerator>(this Query<uint3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint3>
-        {
-            return source.Average<uint3, TEnumerator, uint3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint4 Average<TEnumerator>(this Query<uint4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<uint4>
-        {
-            return source.Average<uint4, TEnumerator, uint4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float2 Average<TEnumerator>(this Query<float2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float2>
-        {
-            return source.Average<float2, TEnumerator, float2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float3 Average<TEnumerator>(this Query<float3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float3>
-        {
-            return source.Average<float3, TEnumerator, float3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4 Average<TEnumerator>(this Query<float4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<float4>
-        {
-            return source.Average<float4, TEnumerator, float4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double2 Average<TEnumerator>(this Query<double2, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double2>
-        {
-            return source.Average<double2, TEnumerator, double2Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double3 Average<TEnumerator>(this Query<double3, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double3>
-        {
-            return source.Average<double3, TEnumerator, double3Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double4 Average<TEnumerator>(this Query<double4, TEnumerator> source)
-            where TEnumerator : unmanaged, IEnumerator<double4>
-        {
-            return source.Average<double4, TEnumerator, double4Accumulator>();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Sum<T, TEnumerator, TAccumulator>(this Query<T, TEnumerator> source)
             where T : unmanaged
             where TEnumerator : unmanaged, IEnumerator<T>
-            where TAccumulator : unmanaged, INativeAccumulator<T>
+            where TAccumulator : unmanaged, IAccumulator<T>
         {
             return NativeLinqUtilities.Sum<T, TEnumerator, TAccumulator>(source.GetEnumerator(), default);
         }
@@ -327,7 +18,7 @@ namespace KrasCore
         public static T Average<T, TEnumerator, TAccumulator>(this Query<T, TEnumerator> source)
             where T : unmanaged
             where TEnumerator : unmanaged, IEnumerator<T>
-            where TAccumulator : unmanaged, INativeAccumulator<T>
+            where TAccumulator : unmanaged, IAccumulator<T>
         {
             return NativeLinqUtilities.Average<T, TEnumerator, TAccumulator>(source.GetEnumerator(), default);
         }
@@ -339,14 +30,14 @@ namespace KrasCore
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Sum<TAccumulator>(TAccumulator accumulator)
-            where TAccumulator : unmanaged, INativeAccumulator<T>
+            where TAccumulator : unmanaged, IAccumulator<T>
         {
             return NativeLinqUtilities.Sum<T, TEnumerator, TAccumulator>(GetEnumerator(), accumulator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Average<TAccumulator>(TAccumulator accumulator)
-            where TAccumulator : unmanaged, INativeAccumulator<T>
+            where TAccumulator : unmanaged, IAccumulator<T>
         {
             return NativeLinqUtilities.Average<T, TEnumerator, TAccumulator>(GetEnumerator(), accumulator);
         }
@@ -358,7 +49,7 @@ namespace KrasCore
         public static T Sum<T, TEnumerator, TAccumulator>(TEnumerator enumerator, TAccumulator accumulator)
             where T : unmanaged
             where TEnumerator : unmanaged, IEnumerator<T>
-            where TAccumulator : unmanaged, INativeAccumulator<T>
+            where TAccumulator : unmanaged, IAccumulator<T>
         {
             var total = default(T);
             while (enumerator.MoveNext())
@@ -375,7 +66,7 @@ namespace KrasCore
         public static T Average<T, TEnumerator, TAccumulator>(TEnumerator enumerator, TAccumulator accumulator)
             where T : unmanaged
             where TEnumerator : unmanaged, IEnumerator<T>
-            where TAccumulator : unmanaged, INativeAccumulator<T>
+            where TAccumulator : unmanaged, IAccumulator<T>
         {
             var total = default(T);
             var count = 0u;
