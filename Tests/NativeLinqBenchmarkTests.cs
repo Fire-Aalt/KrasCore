@@ -339,16 +339,12 @@ namespace KrasCore.Tests
 
         private static int QueryNativeLinqGroupBy(NativeArray<int> values)
         {
-            var grouped = values
+            var result = values
                 .AsQuery()
-                .GroupBy(new GroupByKeySelector(), Allocator.Temp);
-
-            var result = grouped
-                .AsQuery()
+                .GroupBy(new GroupByKeySelector())
                 .Select<int, GroupByAggregateSelector>(new GroupByAggregateSelector())
                 .Sum();
 
-            grouped.Dispose();
             return result;
         }
 
