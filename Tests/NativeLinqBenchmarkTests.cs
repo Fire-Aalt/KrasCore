@@ -135,6 +135,36 @@ namespace KrasCore.Tests
                 QueryLinqGroupBy);
         }
 
+        [Test]
+        [Performance]
+        [Explicit("Benchmark test. Run manually.")]
+        [Category("Benchmark")]
+        [TestCase(128)]
+        [TestCase(1_024)]
+        [TestCase(8_192)]
+        [TestCase(65_536)]
+        [TestCase(262_144)]
+        public void AggregateByQuery_CompareLinqNativeLinq(int elementCount)
+        {
+            MeasureLinq(
+                $"LINQ.GroupByAggregate/{elementCount}",
+                elementCount,
+                QueryLinqGroupBy,
+                QueryLinqGroupBy);
+
+            MeasureNativeLinq(
+                $"NativeLINQ.NoBurst.AggregateBy/{elementCount}",
+                elementCount,
+                QueryNativeLinqAggregateBy,
+                QueryLinqGroupBy);
+
+            MeasureBurstNativeLinq(
+                $"NativeLINQ.Burst.AggregateBy/{elementCount}",
+                elementCount,
+                array => QueryNativeLinqAggregateByBurst(array),
+                QueryLinqGroupBy);
+        }
+
         private static void MeasureLinq(
             string sampleGroupName,
             int elementCount,
@@ -348,6 +378,25 @@ namespace KrasCore.Tests
         private static int QueryNativeLinqGroupByBurst(in NativeArray<int> values)
         {
             return QueryNativeLinqGroupBy(values);
+        }
+
+        private static int QueryNativeLinqAggregateBy(NativeArray<int> values)
+        {
+            var result = values
+                .AsQuery()
+                .AggregateBy(
+                    new GroupByKeySelector(),
+                    0,
+                    new GroupBySelectAggregator())
+                .Sum(new AggregateByAggregateSelector());
+
+            return result;
+        }
+
+        [BurstCompile]
+        private static int QueryNativeLinqAggregateByBurst(in NativeArray<int> values)
+        {
+            return QueryNativeLinqAggregateBy(values);
         }
 
         private static bool SimpleWhere(int value)
@@ -602,6 +651,22 @@ namespace KrasCore.Tests
             public int Select(in Group<int, int> group)
             {
                 return (group.Key + 1) * group.AsQuery().Sum(new GroupBySelectSelector());
+            }
+        }
+
+        private struct GroupBySelectAggregator : IAggregator<int, int>
+        {
+            public int Aggregate(in int aggregate, in int value)
+            {
+                return aggregate + GroupBySelect(value);
+            }
+        }
+
+        private struct AggregateByAggregateSelector : ISelector<KeyValuePair<int, int>, int>
+        {
+            public int Select(in KeyValuePair<int, int> value)
+            {
+                return (value.Key + 1) * value.Value;
             }
         }
     }

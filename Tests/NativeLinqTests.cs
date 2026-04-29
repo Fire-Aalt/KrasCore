@@ -284,6 +284,97 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void AggregateBy_AggregatesValuesPreservingKeyOrder()
+        {
+            var input = new NativeArray<GroupRecord>(
+                new[]
+                {
+                    new GroupRecord { Group = 2, Value = 10 },
+                    new GroupRecord { Group = 1, Value = 20 },
+                    new GroupRecord { Group = 2, Value = 30 },
+                    new GroupRecord { Group = 1, Value = 40 },
+                    new GroupRecord { Group = 3, Value = 50 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                var aggregates = input
+                    .AsQuery()
+                    .AggregateBy(
+                        new GroupRecordKeySelector(),
+                        0,
+                        new GroupRecordValueSumAggregator())
+                    .ToNativeList(Allocator.TempJob);
+
+                try
+                {
+                    Assert.That(aggregates.Length, Is.EqualTo(3));
+
+                    Assert.That(aggregates[0].Key, Is.EqualTo(2));
+                    Assert.That(aggregates[0].Value, Is.EqualTo(40));
+
+                    Assert.That(aggregates[1].Key, Is.EqualTo(1));
+                    Assert.That(aggregates[1].Value, Is.EqualTo(60));
+
+                    Assert.That(aggregates[2].Key, Is.EqualTo(3));
+                    Assert.That(aggregates[2].Value, Is.EqualTo(50));
+                }
+                finally
+                {
+                    aggregates.Dispose();
+                }
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void AggregateBy_WithSeedSelector_InitializesPerKey()
+        {
+            var input = new NativeArray<GroupRecord>(
+                new[]
+                {
+                    new GroupRecord { Group = 2, Value = 1 },
+                    new GroupRecord { Group = 1, Value = 4 },
+                    new GroupRecord { Group = 2, Value = 3 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                var aggregates = input
+                    .AsQuery()
+                    .ToAggregateBy<int, int, GroupRecordKeySelector, KeyTimesTenSeedSelector, GroupRecordValueSumAggregator>(
+                        new GroupRecordKeySelector(),
+                        new KeyTimesTenSeedSelector(),
+                        new GroupRecordValueSumAggregator(),
+                        Allocator.TempJob);
+
+                try
+                {
+                    Assert.That(aggregates.Length, Is.EqualTo(2));
+
+                    Assert.That(aggregates[0].Key, Is.EqualTo(2));
+                    Assert.That(aggregates[0].Value, Is.EqualTo(24));
+
+                    Assert.That(aggregates[1].Key, Is.EqualTo(1));
+                    Assert.That(aggregates[1].Value, Is.EqualTo(14));
+                }
+                finally
+                {
+                    aggregates.Dispose();
+                }
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
         public void OrderBy_SortsAscending()
         {
             var input = new NativeArray<int>(new[] { 3, 1, 2 }, Allocator.Persistent);
@@ -700,6 +791,40 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void BurstJob_CanExecuteNativeLinqAggregateBy()
+        {
+            var input = new NativeArray<GroupRecord>(
+                new[]
+                {
+                    new GroupRecord { Group = 2, Value = 10 },
+                    new GroupRecord { Group = 1, Value = 20 },
+                    new GroupRecord { Group = 2, Value = 30 },
+                },
+                Allocator.Persistent);
+            var output = new NativeArray<int>(5, Allocator.Persistent);
+
+            try
+            {
+                new BurstAggregateByJob
+                {
+                    Input = input,
+                    Output = output,
+                }.Schedule().Complete();
+
+                Assert.That(output[0], Is.EqualTo(2));
+                Assert.That(output[1], Is.EqualTo(2));
+                Assert.That(output[2], Is.EqualTo(40));
+                Assert.That(output[3], Is.EqualTo(1));
+                Assert.That(output[4], Is.EqualTo(20));
+            }
+            finally
+            {
+                input.Dispose();
+                output.Dispose();
+            }
+        }
+
+        [Test]
         public void BurstJob_CanExecuteNativeLinqQuery()
         {
             var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.Persistent);
@@ -778,6 +903,22 @@ namespace KrasCore.Tests
             public int Select(in GroupRecord value)
             {
                 return value.Group;
+            }
+        }
+
+        private struct KeyTimesTenSeedSelector : ISelector<int, int>
+        {
+            public int Select(in int value)
+            {
+                return value * 10;
+            }
+        }
+
+        private struct GroupRecordValueSumAggregator : IAggregator<int, GroupRecord>
+        {
+            public int Aggregate(in int aggregate, in GroupRecord value)
+            {
+                return aggregate + value.Value;
             }
         }
 
@@ -899,6 +1040,32 @@ namespace KrasCore.Tests
                 Output[6] = Input.AsQuery().Contains(2) ? 1 : 0;
                 Output[7] = Input.AsQuery().Min() + Input.AsQuery().Max();
                 Output[8] = Input.AsQuery().SequenceEquals(Input.AsQuery()) ? 1 : 0;
+            }
+        }
+
+        [BurstCompile(CompileSynchronously = true)]
+        private struct BurstAggregateByJob : IJob
+        {
+            [ReadOnly]
+            public NativeArray<GroupRecord> Input;
+
+            public NativeArray<int> Output;
+
+            public void Execute()
+            {
+                var aggregates = Input
+                    .AsQuery()
+                    .ToAggregateBy(
+                        new GroupRecordKeySelector(),
+                        0,
+                        new GroupRecordValueSumAggregator(),
+                        Allocator.Temp);
+
+                Output[0] = aggregates.Length;
+                Output[1] = aggregates[0].Key;
+                Output[2] = aggregates[0].Value;
+                Output[3] = aggregates[1].Key;
+                Output[4] = aggregates[1].Value;
             }
         }
 

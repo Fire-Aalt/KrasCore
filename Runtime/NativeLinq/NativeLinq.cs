@@ -25,6 +25,13 @@ namespace KrasCore
         T Divide(in T total, uint count);
     }
 
+    public interface IAggregator<TAccumulate, TSource>
+        where TAccumulate : unmanaged
+        where TSource : unmanaged
+    {
+        TAccumulate Aggregate(in TAccumulate aggregate, in TSource value);
+    }
+
     public interface INativeEqualityComparer<T>
         where T : unmanaged
     {
