@@ -193,7 +193,7 @@ namespace KrasCore.Tests
             {
                 var grouped = input
                     .AsQuery()
-                    .GroupBy<int, GroupRecordKeySelector>(new GroupRecordKeySelector(), Allocator.Temp);
+                    .ToLookup<int, GroupRecordKeySelector>(new GroupRecordKeySelector(), Allocator.Temp);
 
                 try
                 {
@@ -234,7 +234,7 @@ namespace KrasCore.Tests
             {
                 var grouped = input
                     .AsQuery()
-                    .GroupBy(new ModuloTwoSelector(), Allocator.Temp);
+                    .ToLookup(new ModuloTwoSelector(), Allocator.Temp);
 
                 try
                 {
@@ -252,7 +252,7 @@ namespace KrasCore.Tests
                         }
                         else
                         {
-                            even = group.ToNativeList(Allocator.Temp);
+                            even = group.AsQuery().ToNativeList(Allocator.Temp);
                         }
                     }
 
@@ -479,6 +479,28 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void Sum_WithSelector_UsesBuiltInAccumulator()
+        {
+            var input = new NativeArray<GroupRecord>(
+                new[]
+                {
+                    new GroupRecord { Group = 1, Value = 10 },
+                    new GroupRecord { Group = 2, Value = 20 },
+                    new GroupRecord { Group = 3, Value = 30 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                Assert.That(input.AsQuery().Sum(new GroupRecordKeySelector()), Is.EqualTo(6));
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
         public void Average_UsesBuiltInAccumulator()
         {
             var input = new NativeArray<float>(new[] { 1f, 2f, 3f }, Allocator.Persistent);
@@ -486,6 +508,28 @@ namespace KrasCore.Tests
             try
             {
                 Assert.That(input.AsQuery().Average(), Is.EqualTo(2f));
+            }
+            finally
+            {
+                input.Dispose();
+            }
+        }
+
+        [Test]
+        public void Average_WithSelector_UsesBuiltInAccumulator()
+        {
+            var input = new NativeArray<GroupRecord>(
+                new[]
+                {
+                    new GroupRecord { Group = 2, Value = 10 },
+                    new GroupRecord { Group = 4, Value = 20 },
+                    new GroupRecord { Group = 6, Value = 30 },
+                },
+                Allocator.Persistent);
+
+            try
+            {
+                Assert.That(input.AsQuery().Average(new GroupRecordKeySelector()), Is.EqualTo(4));
             }
             finally
             {
@@ -870,7 +914,7 @@ namespace KrasCore.Tests
             {
                 var grouped = Input
                     .AsQuery()
-                    .GroupBy<int, ModuloTwoSelector>(new ModuloTwoSelector(), Allocator.Temp);
+                    .ToLookup<int, ModuloTwoSelector>(new ModuloTwoSelector(), Allocator.Temp);
 
                 Output[0] = grouped.GroupCount;
                 Output[1] = grouped.ValueCount;

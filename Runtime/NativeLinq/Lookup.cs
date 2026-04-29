@@ -61,49 +61,6 @@ namespace KrasCore
             return _values.AsQuery();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeArray<T> ToNativeArray(AllocatorManager.AllocatorHandle allocator)
-        {
-            var list = ToNativeList(Allocator.Temp);
-            return list.ToArray(allocator);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeList<T> ToNativeList(AllocatorManager.AllocatorHandle allocator)
-        {
-            var list = new NativeList<T>(_values.Length, allocator);
-            for (var i = 0; i < _values.Length; i++)
-            {
-                list.Add(_values[i]);
-            }
-
-            return list;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public T[] ToManagedArray()
-        {
-            var array = new T[_values.Length];
-            for (var i = 0; i < _values.Length; i++)
-            {
-                array[i] = _values[i];
-            }
-
-            return array;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public List<T> ToManagedList()
-        {
-            var list = new List<T>(_values.Length);
-            for (var i = 0; i < _values.Length; i++)
-            {
-                list.Add(_values[i]);
-            }
-
-            return list;
-        }
-
         internal void Dispose()
         {
             if (_values.IsCreated)
@@ -114,14 +71,14 @@ namespace KrasCore
         }
     }
 
-    public struct GroupedQuery<TKey, T> : IDisposable
+    public struct Lookup<TKey, T> : IDisposable
         where TKey : unmanaged
         where T : unmanaged
     {
         private NativeList<Group<TKey, T>> _groups;
         private int _valueCount;
 
-        public GroupedQuery(NativeList<Group<TKey, T>> groups, int valueCount)
+        public Lookup(NativeList<Group<TKey, T>> groups, int valueCount)
         {
             _groups = groups;
             _valueCount = valueCount;
@@ -138,15 +95,15 @@ namespace KrasCore
         public Group<TKey, T> this[int index] => _groups[index];
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Query<Group<TKey, T>, GroupedQueryEnumerator<TKey, T>> AsQuery()
+        public Query<Group<TKey, T>, LookupEnumerator<TKey, T>> AsQuery()
         {
-            return new Query<Group<TKey, T>, GroupedQueryEnumerator<TKey, T>>(GetEnumerator());
+            return new Query<Group<TKey, T>, LookupEnumerator<TKey, T>>(GetEnumerator());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GroupedQueryEnumerator<TKey, T> GetEnumerator()
+        public LookupEnumerator<TKey, T> GetEnumerator()
         {
-            return new GroupedQueryEnumerator<TKey, T>(_groups.AsArray());
+            return new LookupEnumerator<TKey, T>(_groups.AsArray());
         }
 
         public void Dispose()
@@ -168,14 +125,14 @@ namespace KrasCore
         }
     }
 
-    public struct GroupedQueryEnumerator<TKey, T> : IEnumerator<Group<TKey, T>>
+    public struct LookupEnumerator<TKey, T> : IEnumerator<Group<TKey, T>>
         where TKey : unmanaged
         where T : unmanaged
     {
         private NativeArray<Group<TKey, T>> _groups;
         private int _index;
 
-        public GroupedQueryEnumerator(NativeArray<Group<TKey, T>> groups)
+        public LookupEnumerator(NativeArray<Group<TKey, T>> groups)
         {
             _groups = groups;
             _index = -1;

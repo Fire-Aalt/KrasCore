@@ -126,6 +126,19 @@ namespace KrasCore.AccumulatorGenerator
 
                 classWriter.Blank();
                 AppendAggressiveInlining(classWriter);
+                classWriter.Line($"public static {accumulator.FullTypeName} Sum<TSource, TEnumerator, TSelector>(this global::KrasCore.Query<TSource, TEnumerator> source, TSelector selector, {accumulator.FullTypeName} _ = default)");
+                classWriter.Indent();
+                classWriter.Line("where TSource : unmanaged");
+                classWriter.Line("where TEnumerator : unmanaged, global::System.Collections.Generic.IEnumerator<TSource>");
+                classWriter.Line($"where TSelector : unmanaged, global::KrasCore.ISelector<TSource, {accumulator.FullTypeName}>");
+                classWriter.Unindent();
+                classWriter.Block(methodWriter =>
+                {
+                    methodWriter.Line($"return source.Sum<TSource, {accumulator.FullTypeName}, TEnumerator, TSelector, global::KrasCore.{accumulator.StructName}>(selector);");
+                });
+
+                classWriter.Blank();
+                AppendAggressiveInlining(classWriter);
                 classWriter.Line($"public static {accumulator.FullTypeName} Average<TEnumerator>(this global::KrasCore.Query<{accumulator.FullTypeName}, TEnumerator> source)");
                 classWriter.Indent();
                 classWriter.Line($"where TEnumerator : unmanaged, global::System.Collections.Generic.IEnumerator<{accumulator.FullTypeName}>");
@@ -133,6 +146,19 @@ namespace KrasCore.AccumulatorGenerator
                 classWriter.Block(methodWriter =>
                 {
                     methodWriter.Line($"return source.Average<{accumulator.FullTypeName}, TEnumerator, global::KrasCore.{accumulator.StructName}>();");
+                });
+
+                classWriter.Blank();
+                AppendAggressiveInlining(classWriter);
+                classWriter.Line($"public static {accumulator.FullTypeName} Average<TSource, TEnumerator, TSelector>(this global::KrasCore.Query<TSource, TEnumerator> source, TSelector selector, {accumulator.FullTypeName} _ = default)");
+                classWriter.Indent();
+                classWriter.Line("where TSource : unmanaged");
+                classWriter.Line("where TEnumerator : unmanaged, global::System.Collections.Generic.IEnumerator<TSource>");
+                classWriter.Line($"where TSelector : unmanaged, global::KrasCore.ISelector<TSource, {accumulator.FullTypeName}>");
+                classWriter.Unindent();
+                classWriter.Block(methodWriter =>
+                {
+                    methodWriter.Line($"return source.Average<TSource, {accumulator.FullTypeName}, TEnumerator, TSelector, global::KrasCore.{accumulator.StructName}>(selector);");
                 });
             });
         }

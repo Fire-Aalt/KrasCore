@@ -246,8 +246,7 @@ namespace KrasCore.Tests
             return values
                 .AsQuery()
                 .Where(new SimpleWherePredicate())
-                .Select(new SimpleSelectSelector())
-                .Sum();
+                .Sum(new SimpleSelectSelector());
         }
 
         [BurstCompile]
@@ -289,8 +288,7 @@ namespace KrasCore.Tests
                 .Where(new ComplexWhere4Predicate())
                 .Select(new ComplexSelect4Selector())
                 .Where(new ComplexWhere5Predicate())
-                .Select(new ComplexSelect5Selector())
-                .Sum();
+                .Sum(new ComplexSelect5Selector());
         }
 
         [BurstCompile]
@@ -317,8 +315,7 @@ namespace KrasCore.Tests
 
             var result = ordered
                 .AsQuery()
-                .Select(new OrderBySelectSelector())
-                .Sum();
+                .Sum(new OrderBySelectSelector());
 
             ordered.Dispose();
             return result;
@@ -342,8 +339,7 @@ namespace KrasCore.Tests
             var result = values
                 .AsQuery()
                 .GroupBy(new GroupByKeySelector())
-                .Select<int, GroupByAggregateSelector>(new GroupByAggregateSelector())
-                .Sum();
+                .Sum(new GroupByAggregateSelector());
 
             return result;
         }
@@ -605,7 +601,7 @@ namespace KrasCore.Tests
         {
             public int Select(in Group<int, int> group)
             {
-                return (group.Key + 1) * group.AsQuery().Select(new GroupBySelectSelector()).Sum();
+                return (group.Key + 1) * group.AsQuery().Sum(new GroupBySelectSelector());
             }
         }
     }

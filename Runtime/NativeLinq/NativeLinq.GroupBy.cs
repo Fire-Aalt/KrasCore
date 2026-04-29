@@ -8,7 +8,7 @@ namespace KrasCore
     public static partial class NativeLinqExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Query<Group<T, T>, GroupedQueryEnumerator<T, T>> GroupBy<T, TEnumerator, TKeySelector>(this Query<T, TEnumerator> source,
+        public static Query<Group<T, T>, LookupEnumerator<T, T>> GroupBy<T, TEnumerator, TKeySelector>(this Query<T, TEnumerator> source,
             TKeySelector keySelector)
             where T : unmanaged, IEquatable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
@@ -21,7 +21,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static GroupedQuery<T, T> GroupBy<T, TEnumerator, TKeySelector>(this Query<T, TEnumerator> source,
+        public static Lookup<T, T> ToLookup<T, TEnumerator, TKeySelector>(this Query<T, TEnumerator> source,
             TKeySelector keySelector,
             AllocatorManager.AllocatorHandle allocator)
             where T : unmanaged, IEquatable<T>
@@ -40,7 +40,7 @@ namespace KrasCore
         where TEnumerator : unmanaged, IEnumerator<T>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Query<Group<TKey, T>, GroupedQueryEnumerator<TKey, T>> GroupBy<TKey, TKeySelector>(
+        public Query<Group<TKey, T>, LookupEnumerator<TKey, T>> GroupBy<TKey, TKeySelector>(
             TKeySelector keySelector)
             where TKey : unmanaged, IEquatable<TKey>
             where TKeySelector : unmanaged, ISelector<T, TKey>
@@ -52,7 +52,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GroupedQuery<TKey, T> GroupBy<TKey, TKeySelector>(
+        public Lookup<TKey, T> ToLookup<TKey, TKeySelector>(
             TKeySelector keySelector,
             AllocatorManager.AllocatorHandle allocator)
             where TKey : unmanaged, IEquatable<TKey>
@@ -70,7 +70,7 @@ namespace KrasCore
         private const int DEFAULT_GROUP_BY_CAPACITY = 64;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static GroupedQuery<TKey, T> GroupBy<T, TKey, TEnumerator, TKeySelector>(
+        public static Lookup<TKey, T> GroupBy<T, TKey, TEnumerator, TKeySelector>(
             TEnumerator source,
             TKeySelector keySelector,
             AllocatorManager.AllocatorHandle allocator)
@@ -110,7 +110,7 @@ namespace KrasCore
 
             source.Dispose();
 
-            return new GroupedQuery<TKey, T>(groups, valueCount);
+            return new Lookup<TKey, T>(groups, valueCount);
         }
     }
 }
