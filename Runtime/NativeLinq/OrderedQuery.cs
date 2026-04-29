@@ -71,14 +71,7 @@ namespace KrasCore
         public T[] ToManagedArray()
         {
             var list = ToNativeList(Allocator.Temp);
-            try
-            {
-                return list.ToManagedArray();
-            }
-            finally
-            {
-                list.Dispose();
-            }
+            return list.ToManagedArray();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -24,19 +24,19 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeList<T> OrderBy<T, TEnumerator>(this Query<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
+        public static NativeList<T> ToOrderedBy<T, TEnumerator>(this Query<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
             where T : unmanaged, IComparable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.OrderBy(new AscendingComparer<T>(), allocator);
+            return source.ToOrderedBy(new AscendingComparer<T>(), allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NativeList<T> OrderByDescending<T, TEnumerator>(this Query<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
+        public static NativeList<T> ToOrderedByDescending<T, TEnumerator>(this Query<T, TEnumerator> source, AllocatorManager.AllocatorHandle allocator)
             where T : unmanaged, IComparable<T>
             where TEnumerator : unmanaged, IEnumerator<T>
         {
-            return source.OrderBy(new DescendingComparer<T>(), allocator);
+            return source.ToOrderedBy(new DescendingComparer<T>(), allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -79,7 +79,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeList<T> OrderBy<TComparer>(TComparer comparer, AllocatorManager.AllocatorHandle allocator)
+        public NativeList<T> ToOrderedBy<TComparer>(TComparer comparer, AllocatorManager.AllocatorHandle allocator)
             where TComparer : unmanaged, IComparer<T>
         {
             var list = ToNativeList(allocator);
@@ -88,7 +88,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeList<T> OrderByDescending<TComparer>(TComparer comparer, AllocatorManager.AllocatorHandle allocator)
+        public NativeList<T> ToOrderedByDescending<TComparer>(TComparer comparer, AllocatorManager.AllocatorHandle allocator)
             where TComparer : unmanaged, IComparer<T>
         {
             var list = ToNativeList(allocator);

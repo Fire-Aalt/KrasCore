@@ -341,7 +341,7 @@ namespace KrasCore.Tests
             var ordered = values
                 .AsQuery()
                 .Where(new OrderByWherePredicate())
-                .OrderBy(new OrderByKeyComparer(), Allocator.Temp);
+                .ToOrderedBy(new OrderByKeyComparer(), Allocator.Temp);
 
             var result = ordered
                 .AsQuery()

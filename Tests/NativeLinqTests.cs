@@ -347,7 +347,7 @@ namespace KrasCore.Tests
             {
                 var aggregates = input
                     .AsQuery()
-                    .ToAggregateBy<int, int, GroupRecordKeySelector, KeyTimesTenSeedSelector, GroupRecordValueSumAggregator>(
+                    .ToAggregatedBy<int, int, GroupRecordKeySelector, KeyTimesTenSeedSelector, GroupRecordValueSumAggregator>(
                         new GroupRecordKeySelector(),
                         new KeyTimesTenSeedSelector(),
                         new GroupRecordValueSumAggregator(),
@@ -381,7 +381,7 @@ namespace KrasCore.Tests
 
             try
             {
-                var ordered = input.AsQuery().OrderBy(Allocator.Temp);
+                var ordered = input.AsQuery().ToOrderedBy(Allocator.Temp);
                 
                 try
                 {
@@ -408,7 +408,7 @@ namespace KrasCore.Tests
 
             try
             {
-                var ordered = input.AsQuery().OrderByDescending(Allocator.Temp);
+                var ordered = input.AsQuery().ToOrderedByDescending(Allocator.Temp);
 
                 try
                 {
@@ -1055,7 +1055,7 @@ namespace KrasCore.Tests
             {
                 var aggregates = Input
                     .AsQuery()
-                    .ToAggregateBy(
+                    .ToAggregatedBy(
                         new GroupRecordKeySelector(),
                         0,
                         new GroupRecordValueSumAggregator(),

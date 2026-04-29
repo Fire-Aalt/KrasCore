@@ -75,7 +75,7 @@ namespace KrasCore
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NativeList<KeyValuePair<TAccumulate, TAccumulate>>
-            ToAggregateBy<TSource, TAccumulate, TEnumerator, TKeySelector, TAggregator>(
+            ToAggregatedBy<TSource, TAccumulate, TEnumerator, TKeySelector, TAggregator>(
                 this Query<TSource, TEnumerator> source,
                 TKeySelector keySelector,
                 TAccumulate seed,
@@ -97,7 +97,7 @@ namespace KrasCore
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NativeList<KeyValuePair<TKey, TAccumulate>>
-            ToAggregateBy<TSource, TKey, TAccumulate, TEnumerator, TKeySelector, TAggregator>(
+            ToAggregatedBy<TSource, TKey, TAccumulate, TEnumerator, TKeySelector, TAggregator>(
                 this Query<TSource, TEnumerator> source,
                 TKeySelector keySelector,
                 TAccumulate seed,
@@ -120,7 +120,7 @@ namespace KrasCore
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static NativeList<KeyValuePair<TKey, TAccumulate>>
-            ToAggregateBy<TSource, TKey, TAccumulate, TEnumerator, TKeySelector, TSeedSelector, TAggregator>(
+            ToAggregatedBy<TSource, TKey, TAccumulate, TEnumerator, TKeySelector, TSeedSelector, TAggregator>(
                 this Query<TSource, TEnumerator> source,
                 TKeySelector keySelector,
                 TSeedSelector seedSelector,
@@ -205,7 +205,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeList<KeyValuePair<TAccumulate, TAccumulate>> ToAggregateBy<TAccumulate, TKeySelector, TAggregator>(
+        public NativeList<KeyValuePair<TAccumulate, TAccumulate>> ToAggregatedBy<TAccumulate, TKeySelector, TAggregator>(
             TKeySelector keySelector,
             TAccumulate seed,
             TAggregator aggregator,
@@ -223,7 +223,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeList<KeyValuePair<TKey, TAccumulate>> ToAggregateBy<TKey, TAccumulate, TKeySelector, TAggregator>(
+        public NativeList<KeyValuePair<TKey, TAccumulate>> ToAggregatedBy<TKey, TAccumulate, TKeySelector, TAggregator>(
             TKeySelector keySelector,
             TAccumulate seed,
             TAggregator aggregator,
@@ -242,7 +242,7 @@ namespace KrasCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public NativeList<KeyValuePair<TKey, TAccumulate>> ToAggregateBy<TKey, TAccumulate, TKeySelector, TSeedSelector, TAggregator>(
+        public NativeList<KeyValuePair<TKey, TAccumulate>> ToAggregatedBy<TKey, TAccumulate, TKeySelector, TSeedSelector, TAggregator>(
             TKeySelector keySelector,
             TSeedSelector seedSelector,
             TAggregator aggregator,
