@@ -19,9 +19,7 @@ namespace KrasCore.Tests
         [Performance]
         [Explicit("Benchmark test. Run manually.")]
         [Category("Benchmark")]
-        [TestCase(128)]
         [TestCase(1_024)]
-        [TestCase(8_192)]
         [TestCase(65_536)]
         [TestCase(262_144)]
         public void SimpleQuery_CompareLinqNativeLinq(int elementCount)
@@ -49,9 +47,7 @@ namespace KrasCore.Tests
         [Performance]
         [Explicit("Benchmark test. Run manually.")]
         [Category("Benchmark")]
-        [TestCase(128)]
         [TestCase(1_024)]
-        [TestCase(8_192)]
         [TestCase(65_536)]
         [TestCase(262_144)]
         public void ComplexQuery_CompareLinqNativeLinq(int elementCount)
@@ -79,9 +75,7 @@ namespace KrasCore.Tests
         [Performance]
         [Explicit("Benchmark test. Run manually.")]
         [Category("Benchmark")]
-        [TestCase(128)]
         [TestCase(1_024)]
-        [TestCase(8_192)]
         [TestCase(65_536)]
         [TestCase(262_144)]
         public void OrderByQuery_CompareLinqNativeLinq(int elementCount)
@@ -109,9 +103,7 @@ namespace KrasCore.Tests
         [Performance]
         [Explicit("Benchmark test. Run manually.")]
         [Category("Benchmark")]
-        [TestCase(128)]
         [TestCase(1_024)]
-        [TestCase(8_192)]
         [TestCase(65_536)]
         [TestCase(262_144)]
         public void GroupByQuery_CompareLinqNativeLinq(int elementCount)
@@ -139,9 +131,7 @@ namespace KrasCore.Tests
         [Performance]
         [Explicit("Benchmark test. Run manually.")]
         [Category("Benchmark")]
-        [TestCase(128)]
         [TestCase(1_024)]
-        [TestCase(8_192)]
         [TestCase(65_536)]
         [TestCase(262_144)]
         public void AggregateByQuery_CompareLinqNativeLinq(int elementCount)
