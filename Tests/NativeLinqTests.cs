@@ -262,6 +262,7 @@ namespace KrasCore.Tests
                         Assert.That(even.Length, Is.EqualTo(2));
                         Assert.That(even[0], Is.EqualTo(2));
                         Assert.That(even[1], Is.EqualTo(4));
+                        Assert.That(grouped.AsQuery().Select<int, GroupLengthSelector>(new GroupLengthSelector()).Sum(), Is.EqualTo(5));
                     }
                     finally
                     {
@@ -733,6 +734,14 @@ namespace KrasCore.Tests
             public int Select(in GroupRecord value)
             {
                 return value.Group;
+            }
+        }
+
+        private struct GroupLengthSelector : ISelector<Group<int, int>, int>
+        {
+            public int Select(in Group<int, int> value)
+            {
+                return value.Length;
             }
         }
 

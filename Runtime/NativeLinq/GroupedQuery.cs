@@ -9,7 +9,8 @@ namespace KrasCore
         where TKey : unmanaged
     {
         public TKey Key;
-        public int StartIndex;
+        public int HeadIndex;
+        public int TailIndex;
         public int Length;
     }
 
@@ -18,12 +19,14 @@ namespace KrasCore
         where T : unmanaged
     {
         private GroupRange<TKey> _range;
-        private NativeList<T> _values;
+        private NativeArray<T> _values;
+        private NativeArray<int> _nextIndexes;
 
-        public Group(GroupRange<TKey> range, NativeList<T> values)
+        public Group(GroupRange<TKey> range, NativeArray<T> values, NativeArray<int> nextIndexes)
         {
             _range = range;
             _values = values;
+            _nextIndexes = nextIndexes;
         }
 
         public TKey Key
@@ -50,14 +53,20 @@ namespace KrasCore
                 }
 #endif
 
-                return _values[_range.StartIndex + index];
+                var valueIndex = _range.HeadIndex;
+                for (var i = 0; i < index; i++)
+                {
+                    valueIndex = _nextIndexes[valueIndex];
+                }
+
+                return _values[valueIndex];
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GroupEnumerator<T> GetEnumerator()
         {
-            return new GroupEnumerator<T>(_values.AsArray(), _range.StartIndex, _range.Length);
+            return new GroupEnumerator<T>(_values, _nextIndexes, _range.HeadIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,23 +79,16 @@ namespace KrasCore
         public NativeArray<T> ToNativeArray(AllocatorManager.AllocatorHandle allocator)
         {
             var list = ToNativeList(Allocator.Temp);
-            try
-            {
-                return list.ToArray(allocator);
-            }
-            finally
-            {
-                list.Dispose();
-            }
+            return list.ToArray(allocator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public NativeList<T> ToNativeList(AllocatorManager.AllocatorHandle allocator)
         {
             var list = new NativeList<T>(_range.Length, allocator);
-            for (var i = 0; i < _range.Length; i++)
+            foreach (var value in this)
             {
-                list.Add(this[i]);
+                list.Add(value);
             }
 
             return list;
@@ -96,9 +98,11 @@ namespace KrasCore
         public T[] ToManagedArray()
         {
             var array = new T[_range.Length];
-            for (var i = 0; i < _range.Length; i++)
+            var index = 0;
+            foreach (var value in this)
             {
-                array[i] = this[i];
+                array[index] = value;
+                index++;
             }
 
             return array;
@@ -108,9 +112,9 @@ namespace KrasCore
         public List<T> ToManagedList()
         {
             var list = new List<T>(_range.Length);
-            for (var i = 0; i < _range.Length; i++)
+            foreach (var value in this)
             {
-                list.Add(this[i]);
+                list.Add(value);
             }
 
             return list;
@@ -123,14 +127,16 @@ namespace KrasCore
     {
         private NativeList<GroupRange<TKey>> _groups;
         private NativeList<T> _values;
+        private NativeList<int> _nextIndexes;
 
-        public GroupedQuery(NativeList<GroupRange<TKey>> groups, NativeList<T> values)
+        public GroupedQuery(NativeList<GroupRange<TKey>> groups, NativeList<T> values, NativeList<int> nextIndexes)
         {
             _groups = groups;
             _values = values;
+            _nextIndexes = nextIndexes;
         }
 
-        public bool IsCreated => _groups.IsCreated && _values.IsCreated;
+        public bool IsCreated => _groups.IsCreated && _values.IsCreated && _nextIndexes.IsCreated;
 
         public int GroupCount => _groups.Length;
 
@@ -140,12 +146,20 @@ namespace KrasCore
 
         public NativeArray<T> Values => _values.AsArray();
 
-        public Group<TKey, T> this[int index] => new(_groups[index], _values);
+        public NativeArray<int> NextIndexes => _nextIndexes.AsArray();
+
+        public Group<TKey, T> this[int index] => new Group<TKey, T>(_groups[index], _values.AsArray(), _nextIndexes.AsArray());
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Query<Group<TKey, T>, GroupedQueryEnumerator<TKey, T>> AsQuery()
+        {
+            return new Query<Group<TKey, T>, GroupedQueryEnumerator<TKey, T>>(GetEnumerator());
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GroupedQueryEnumerator<TKey, T> GetEnumerator()
         {
-            return new GroupedQueryEnumerator<TKey, T>(_groups, _values);
+            return new GroupedQueryEnumerator<TKey, T>(_groups.AsArray(), _values.AsArray(), _nextIndexes.AsArray());
         }
 
         public void Dispose()
@@ -159,6 +173,11 @@ namespace KrasCore
             {
                 _values.Dispose();
             }
+
+            if (_nextIndexes.IsCreated)
+            {
+                _nextIndexes.Dispose();
+            }
         }
     }
 
@@ -166,21 +185,23 @@ namespace KrasCore
         where TKey : unmanaged
         where T : unmanaged
     {
-        private NativeList<GroupRange<TKey>> _groups;
-        private NativeList<T> _values;
+        private NativeArray<GroupRange<TKey>> _groups;
+        private NativeArray<T> _values;
+        private NativeArray<int> _nextIndexes;
         private int _index;
 
-        public GroupedQueryEnumerator(NativeList<GroupRange<TKey>> groups, NativeList<T> values)
+        public GroupedQueryEnumerator(NativeArray<GroupRange<TKey>> groups, NativeArray<T> values, NativeArray<int> nextIndexes)
         {
             _groups = groups;
             _values = values;
+            _nextIndexes = nextIndexes;
             _index = -1;
         }
 
         public Group<TKey, T> Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => new Group<TKey, T>(_groups[_index], _values);
+            get => new Group<TKey, T>(_groups[_index], _values, _nextIndexes);
         }
 
         object System.Collections.IEnumerator.Current => Current;
@@ -206,22 +227,24 @@ namespace KrasCore
         where T : unmanaged
     {
         private NativeArray<T> _values;
-        private int _startIndex;
-        private int _length;
-        private int _index;
+        private NativeArray<int> _nextIndexes;
+        private int _headIndex;
+        private int _nextIndex;
+        private int _currentIndex;
 
-        public GroupEnumerator(NativeArray<T> values, int startIndex, int length)
+        public GroupEnumerator(NativeArray<T> values, NativeArray<int> nextIndexes, int headIndex)
         {
             _values = values;
-            _startIndex = startIndex;
-            _length = length;
-            _index = -1;
+            _nextIndexes = nextIndexes;
+            _headIndex = headIndex;
+            _nextIndex = headIndex;
+            _currentIndex = -1;
         }
 
         public T Current
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _values[_startIndex + _index];
+            get => _values[_currentIndex];
         }
 
         object System.Collections.IEnumerator.Current => Current;
@@ -229,13 +252,20 @@ namespace KrasCore
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool MoveNext()
         {
-            _index++;
-            return _index < _length;
+            if (_nextIndex < 0)
+            {
+                return false;
+            }
+
+            _currentIndex = _nextIndex;
+            _nextIndex = _nextIndexes[_currentIndex];
+            return true;
         }
 
         public void Reset()
         {
-            _index = -1;
+            _nextIndex = _headIndex;
+            _currentIndex = -1;
         }
 
         public void Dispose()

@@ -343,11 +343,10 @@ namespace KrasCore.Tests
                 .AsQuery()
                 .GroupBy(new GroupByKeySelector(), Allocator.Temp);
 
-            var result = 0;
-            foreach (var group in grouped)
-            {
-                result += (group.Key + 1) * group.AsQuery().Select(new GroupBySelectSelector()).Sum();
-            }
+            var result = grouped
+                .AsQuery()
+                .Select<int, GroupByAggregateSelector>(new GroupByAggregateSelector())
+                .Sum();
 
             grouped.Dispose();
             return result;
@@ -603,6 +602,14 @@ namespace KrasCore.Tests
             public int Select(in int value)
             {
                 return GroupBySelect(value);
+            }
+        }
+
+        private struct GroupByAggregateSelector : ISelector<Group<int, int>, int>
+        {
+            public int Select(in Group<int, int> group)
+            {
+                return (group.Key + 1) * group.AsQuery().Select(new GroupBySelectSelector()).Sum();
             }
         }
     }

@@ -42,6 +42,8 @@ namespace KrasCore
 
     internal static partial class NativeLinqUtilities
     {
+        private const int DEFAULT_GROUP_BY_CAPACITY = 64;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static GroupedQuery<TKey, T> GroupBy<T, TKey, TEnumerator, TKeySelector>(
             TEnumerator source,
@@ -52,19 +54,22 @@ namespace KrasCore
             where TEnumerator : unmanaged, IEnumerator<T>
             where TKeySelector : unmanaged, ISelector<T, TKey>
         {
-            var keyToGroupIndex = new NativeParallelHashMap<TKey, int>(16, Allocator.Temp);
-            var sourceValues = new NativeList<T>(Allocator.Temp);
-            var sourceGroupIndexes = new NativeList<int>(Allocator.Temp);
-            var groups = new NativeList<GroupRange<TKey>>(allocator);
+            var keyToGroupIndex = new NativeHashMap<TKey, int>(DEFAULT_GROUP_BY_CAPACITY, Allocator.Temp);
+            var groups = new NativeList<GroupRange<TKey>>(DEFAULT_GROUP_BY_CAPACITY, allocator);
+            var values = new NativeList<T>(DEFAULT_GROUP_BY_CAPACITY, allocator);
+            var nextIndexes = new NativeList<int>(DEFAULT_GROUP_BY_CAPACITY, allocator);
 
             while (source.MoveNext())
             {
                 var value = source.Current;
                 var key = keySelector.Select(in value);
+                var valueIndex = values.Length;
 
+                var defaultRange = default(GroupRange<TKey>);
+                ref var group = ref defaultRange;
                 if (!keyToGroupIndex.TryGetValue(key, out var groupIndex))
                 {
-                    if (keyToGroupIndex.Count() == keyToGroupIndex.Capacity)
+                    if (groups.Length == keyToGroupIndex.Capacity)
                     {
                         keyToGroupIndex.Capacity *= 2;
                     }
@@ -74,46 +79,28 @@ namespace KrasCore
                     groups.Add(new GroupRange<TKey>
                     {
                         Key = key,
-                        StartIndex = 0,
+                        HeadIndex = valueIndex,
+                        TailIndex = valueIndex,
                         Length = 0,
                     });
+
+                    group = ref groups.ElementAt(groupIndex);
+                }
+                else
+                {
+                    group = ref groups.ElementAt(groupIndex);
+                    nextIndexes[group.TailIndex] = valueIndex;
+                    group.TailIndex = valueIndex;
                 }
 
-                var group = groups[groupIndex];
                 group.Length++;
-                groups[groupIndex] = group;
-
-                sourceValues.Add(value);
-                sourceGroupIndexes.Add(groupIndex);
+                values.Add(value);
+                nextIndexes.Add(-1);
             }
 
             source.Dispose();
 
-            var values = new NativeList<T>(sourceValues.Length, allocator);
-            values.Resize(sourceValues.Length, NativeArrayOptions.UninitializedMemory);
-
-            var writeIndexes = new NativeList<int>(groups.Length, Allocator.Temp);
-            writeIndexes.Resize(groups.Length, NativeArrayOptions.UninitializedMemory);
-
-            var startIndex = 0;
-            for (var i = 0; i < groups.Length; i++)
-            {
-                var group = groups[i];
-                group.StartIndex = startIndex;
-                groups[i] = group;
-                writeIndexes[i] = startIndex;
-                startIndex += group.Length;
-            }
-
-            for (var i = 0; i < sourceValues.Length; i++)
-            {
-                var groupIndex = sourceGroupIndexes[i];
-                var valueIndex = writeIndexes[groupIndex];
-                values[valueIndex] = sourceValues[i];
-                writeIndexes[groupIndex] = valueIndex + 1;
-            }
-
-            return new GroupedQuery<TKey, T>(groups, values);
+            return new GroupedQuery<TKey, T>(groups, values, nextIndexes);
         }
     }
 }
