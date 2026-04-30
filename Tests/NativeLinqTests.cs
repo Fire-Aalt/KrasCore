@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -454,8 +455,8 @@ namespace KrasCore.Tests
         [Test]
         public void BurstJob_CanExecuteNativeLinqGroupBy()
         {
-            var input = new NativeArray<int>(new[] { 1, 2, 3, 4, 5 }, Allocator.Temp);
-            var output = new NativeArray<int>(5, Allocator.Temp);
+            var input = new NativeArray<int>(new[] { 1, 2, 3, 4, 5 }, Allocator.TempJob);
+            var output = new NativeArray<int>(5, Allocator.TempJob);
 
             new BurstGroupByJob
             {
@@ -463,11 +464,19 @@ namespace KrasCore.Tests
                 Output = output,
             }.Schedule().Complete();
 
-            Assert.That(output[0], Is.EqualTo(2));
-            Assert.That(output[1], Is.EqualTo(5));
-            Assert.That(output[2], Is.EqualTo(1));
-            Assert.That(output[3], Is.EqualTo(3));
-            Assert.That(output[4], Is.EqualTo(9));
+            try
+            {
+                Assert.That(output[0], Is.EqualTo(2));
+                Assert.That(output[1], Is.EqualTo(5));
+                Assert.That(output[2], Is.EqualTo(1));
+                Assert.That(output[3], Is.EqualTo(3));
+                Assert.That(output[4], Is.EqualTo(9));
+            }
+            finally
+            {
+                input.Dispose();
+                output.Dispose();
+            }
         }
 
         [Test]
@@ -480,8 +489,8 @@ namespace KrasCore.Tests
                     new GroupRecord { Group = 1, Value = 20 },
                     new GroupRecord { Group = 2, Value = 30 },
                 },
-                Allocator.Temp);
-            var output = new NativeArray<int>(5, Allocator.Temp);
+                Allocator.TempJob);
+            var output = new NativeArray<int>(5, Allocator.TempJob);
 
             new BurstAggregateByJob
             {
@@ -489,34 +498,50 @@ namespace KrasCore.Tests
                 Output = output,
             }.Schedule().Complete();
 
-            Assert.That(output[0], Is.EqualTo(2));
-            Assert.That(output[1], Is.EqualTo(2));
-            Assert.That(output[2], Is.EqualTo(40));
-            Assert.That(output[3], Is.EqualTo(1));
-            Assert.That(output[4], Is.EqualTo(20));
+            try
+            {
+                Assert.That(output[0], Is.EqualTo(2));
+                Assert.That(output[1], Is.EqualTo(2));
+                Assert.That(output[2], Is.EqualTo(40));
+                Assert.That(output[3], Is.EqualTo(1));
+                Assert.That(output[4], Is.EqualTo(20));
+            }
+            finally
+            {
+                input.Dispose();
+                output.Dispose();
+            }
         }
 
         [Test]
         public void BurstJob_CanExecuteNativeLinqQuery()
         {
-            var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.Temp);
-            var output = new NativeArray<int>(9, Allocator.Temp);
+            var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.TempJob);
+            var output = new NativeArray<int>(9, Allocator.TempJob);
 
             new BurstQueryJob
             {
                 Input = input,
                 Output = output,
             }.Schedule().Complete();
-
-            Assert.That(output[0], Is.EqualTo(10));
-            Assert.That(output[1], Is.EqualTo(0));
-            Assert.That(output[2], Is.EqualTo(0));
-            Assert.That(output[3], Is.EqualTo(2));
-            Assert.That(output[4], Is.EqualTo(6));
-            Assert.That(output[5], Is.EqualTo(1));
-            Assert.That(output[6], Is.EqualTo(1));
-            Assert.That(output[7], Is.EqualTo(3));
-            Assert.That(output[8], Is.EqualTo(1));
+            
+            try
+            {
+                Assert.That(output[0], Is.EqualTo(10));
+                Assert.That(output[1], Is.EqualTo(0));
+                Assert.That(output[2], Is.EqualTo(0));
+                Assert.That(output[3], Is.EqualTo(2));
+                Assert.That(output[4], Is.EqualTo(6));
+                Assert.That(output[5], Is.EqualTo(1));
+                Assert.That(output[6], Is.EqualTo(1));
+                Assert.That(output[7], Is.EqualTo(3));
+                Assert.That(output[8], Is.EqualTo(1));
+            }
+            finally
+            {
+                input.Dispose();
+                output.Dispose();
+            }
         }
 
         private struct GreaterThan : IPredicate<int>
