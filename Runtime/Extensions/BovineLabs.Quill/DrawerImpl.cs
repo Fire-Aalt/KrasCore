@@ -1,3 +1,4 @@
+#if BL_QUILL
 using BovineLabs.Core.Utility;
 using Unity.Assertions;
 using Unity.Collections;
@@ -189,3 +190,4 @@ namespace KrasCore.Quill
         }
     }
 }
+#endif

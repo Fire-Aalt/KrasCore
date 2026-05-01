@@ -2,28 +2,25 @@
     "name": "KrasCore",
     "rootNamespace": "KrasCore",
     "references": [
+        "BovineLabs.Core.Extensions",
+        "BovineLabs.Core",
         "Unity.Mathematics",
         "Unity.Burst",
         "Unity.Collections",
-        "abzorba.artificetoolkit.runtime",
         "Unity.Entities",
         "Unity.Entities.Graphics",
+        "Unity.Mathematics.Extensions",
         "Unity.Physics",
+        "Unity.Physics.Hybrid",
+        "Unity.Physics.Custom",
         "Unity.Transforms",
         "Unity.Entities.Hybrid",
-        "BovineLabs.Core.Extensions",
-        "BovineLabs.Core",
+        "Unity.Scenes",
         "BovineLabs.Quill",
         "BovineLabs.Bridge",
         "BovineLabs.Bridge.Data",
-        "Unity.Scenes",
         "BovineLabs.Essence",
-        "BovineLabs.Essence.Data",
-        "UniTask",
-        "PrimeTween.Runtime",
-        "Unity.Physics.Custom",
-        "Unity.Mathematics.Extensions",
-        "Unity.Physics.Hybrid"
+        "BovineLabs.Essence.Data"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -33,11 +30,6 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [
-        {
-            "name": "com.bovinelabs.core",
-            "expression": "",
-            "define": "BL_CORE"
-        },
         {
             "name": "com.bovinelabs.quill",
             "expression": "",
@@ -57,7 +49,7 @@
             "name": "com.unity.addressables",
             "expression": "",
             "define": "ADDRESSABLES"
-        }
+        },
     ],
     "noEngineReferences": false
 }

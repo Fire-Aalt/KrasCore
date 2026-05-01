@@ -1,42 +1,41 @@
 {
-    "name": "KrasCore.Editor",
-    "rootNamespace": "KrasCore.Editor",
-    "references": [
-        "Unity.Mathematics",
-        "Unity.Collections",
-        "Unity.Entities",
-        "BovineLabs.Core.Editor",
-        "BovineLabs.Anchor.Debug",
-        "abzorba.artificetoolkit.runtime",
-        "abzorba.artificetoolkit.editor",
-        "Unity.Addressables",
-        "Unity.Addressables.Editor",
-        "KrasCore",
-        "UniTask",
-        "BovineLabs.Core",
-        "Unity.Burst",
-        "BovineLabs.Anchor",
-        "Unity.AppUI",
-        "Unity.AppUI.MVVM",
-        "KrasCore.Essentials",
-        "Eflatun.SceneReference",
-        "Unity.Transforms"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": true,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.addressables",
-            "expression": "",
-            "define": "ADDRESSABLES"
-        }
-    ],
-    "noEngineReferences": false
+  "name": "KrasCore.Editor",
+  "rootNamespace": "KrasCore.Editor",
+  "references": [
+    "KrasCore",
+    "BovineLabs.Core",
+    "BovineLabs.Core.Editor",
+    "Unity.Mathematics",
+    "Unity.Collections",
+    "Unity.Entities",
+    "Unity.Burst",
+    "Unity.Transforms",
+    "Unity.Addressables",
+    "Unity.Addressables.Editor",
+    "BovineLabs.Anchor",
+    "Unity.AppUI",
+    "Unity.AppUI.MVVM"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.addressables",
+      "expression": "",
+      "define": "ADDRESSABLES"
+    },
+    {
+      "name": "com.bovinelabs.anchor",
+      "expression": "",
+      "define": "BL_ANCHOR"
+    }
+  ],
+  "noEngineReferences": false
 }

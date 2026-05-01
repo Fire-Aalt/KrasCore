@@ -1,5 +1,3 @@
-#if BL_CORE
-using BovineLabs.Core.Collections;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -50,4 +48,3 @@ namespace KrasCore
         }
     }
 }
-#endif

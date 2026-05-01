@@ -1,3 +1,4 @@
+#if BL_ANCHOR
 using BovineLabs.Anchor;
 using BovineLabs.Anchor.Debug.Toolbar;
 using BovineLabs.Anchor.MVVM;
@@ -115,3 +116,4 @@ namespace KrasCore.Editor
         }
     }
 }
+#endif

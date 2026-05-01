@@ -6,34 +6,6 @@ namespace KrasCore
 {
     public static class EntityManagerExtensions
     {
-        private const EntityQueryOptions QueryOptions = EntityQueryOptions.IncludeSystems;
-        
-#if !BL_CORE
-        public static T GetSingleton<T>(this EntityManager em, bool completeDependency = true)
-            where T : unmanaged, IComponentData
-        {
-            using var query = new EntityQueryBuilder(Allocator.Temp).WithAll<T>().WithOptions(QueryOptions).Build(em);
-            if (completeDependency)
-            {
-                query.CompleteDependency();
-            }
-
-            return query.GetSingleton<T>();
-        }
-        
-        public static RefRW<T> GetSingletonRW<T>(this EntityManager em, bool completeDependency = true)
-            where T : unmanaged, IComponentData
-        {
-            using var query = new EntityQueryBuilder(Allocator.Temp).WithAllRW<T>().WithOptions(QueryOptions).Build(em);
-            if (completeDependency)
-            {
-                query.CompleteDependency();
-            }
-
-            return query.GetSingletonRW<T>();
-        }
-#endif
-
         // From https://forum.unity.com/threads/really-hoped-for-refrw-refro-getcomponentrw-ro-entity.1369275/
         /// <summary>
         /// Gets the value of a component for an entity associated with a system.

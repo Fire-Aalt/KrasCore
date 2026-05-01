@@ -1,3 +1,4 @@
+#if PHYSICS_CUSTOM
 using Unity.Mathematics;
 using Unity.Physics.Authoring;
 
@@ -43,3 +44,4 @@ namespace KrasCore
         }
     }
 }
+#endif
