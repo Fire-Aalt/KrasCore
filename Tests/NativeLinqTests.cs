@@ -90,6 +90,29 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void DelegatePipeline_WhereSelectSum_UsesUnmanagedCapturedValues()
+        {
+            var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.Temp);
+            var min = 1;
+            var factor = 3;
+            var offset = 2;
+
+            var result = input
+                .AsQuery()
+                .WithDelegates()
+                .Where((in int value) => value > min)
+                .Select((in int value) => (float)(value * factor))
+                .Sum((in float value) => value + offset);
+
+            Assert.That(result, Is.EqualTo(19));
+        }
+
+        private static float Sum(in float value)
+        {
+            return value + 2;
+        }
+
+        [Test]
         public void SelectMany_FlattensEnumerators()
         {
             var input = new NativeArray<int>(new[] { 1, 3 }, Allocator.Temp);

@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Fire\\Documents\\Unity\\2.5D-TopDown\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj": {}
+    "C:\\Users\\forty\\Documents\\Unity\\Sandbox\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Fire\\Documents\\Unity\\2.5D-TopDown\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj": {
+    "C:\\Users\\forty\\Documents\\Unity\\Sandbox\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fire\\Documents\\Unity\\2.5D-TopDown\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj",
+        "projectUniqueName": "C:\\Users\\forty\\Documents\\Unity\\Sandbox\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj",
         "projectName": "KrasCore.AccumulatorGenerator",
-        "projectPath": "C:\\Users\\Fire\\Documents\\Unity\\2.5D-TopDown\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj",
-        "packagesPath": "C:\\Users\\Fire\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fire\\Documents\\Unity\\2.5D-TopDown\\Packages\\com.firealt.krascore\\SourceGenerator~\\obj\\",
+        "projectPath": "C:\\Users\\forty\\Documents\\Unity\\Sandbox\\Packages\\com.firealt.krascore\\SourceGenerator~\\KrasCore.AccumulatorGenerator.csproj",
+        "packagesPath": "C:\\Users\\forty\\Documents\\Unity\\Sandbox\\.dotnet\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\forty\\Documents\\Unity\\Sandbox\\Packages\\com.firealt.krascore\\SourceGenerator~\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\Fire\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\forty\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config"
         ],
         "originalTargetFrameworks": [
           "netstandard2.0"
@@ -44,9 +48,15 @@
         "netstandard2.0": {
           "targetAlias": "netstandard2.0",
           "dependencies": {
-            "Microsoft.CodeAnalysis.CSharp": {
+            "Microsoft.CodeAnalysis.Analyzers": {
+              "suppressParent": "All",
               "target": "Package",
-              "version": "[4.1.0, )"
+              "version": "[3.11.0, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[4.3.1, )"
             },
             "NETStandard.Library": {
               "suppressParent": "All",
@@ -66,7 +76,7 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.203\\RuntimeIdentifierGraph.json"
         }
       }
     }

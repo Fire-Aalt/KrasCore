@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KrasCore.AccumulatorGenerator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c9245e1de57a3136c14b7a6c0a7d3cce96890e30")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+61dd1b0fb6726022e11d13cd0f3989f5c0d30119")]
 [assembly: System.Reflection.AssemblyProductAttribute("KrasCore.AccumulatorGenerator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KrasCore.AccumulatorGenerator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

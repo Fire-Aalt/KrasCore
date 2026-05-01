@@ -9,25 +9,25 @@
     ".NETStandard,Version=v2.0/": {
       "KrasCore.AccumulatorGenerator/1.0.0": {
         "dependencies": {
-          "Microsoft.CodeAnalysis.CSharp": "4.1.0"
+          "Microsoft.CodeAnalysis.CSharp": "4.3.1"
         },
         "runtime": {
           "KrasCore.AccumulatorGenerator.dll": {}
         }
       },
-      "Microsoft.CodeAnalysis.Common/4.1.0": {
+      "Microsoft.CodeAnalysis.Common/4.3.1": {
         "dependencies": {
-          "System.Collections.Immutable": "5.0.0",
+          "System.Collections.Immutable": "6.0.0",
           "System.Memory": "4.5.4",
           "System.Reflection.Metadata": "5.0.0",
-          "System.Runtime.CompilerServices.Unsafe": "5.0.0",
-          "System.Text.Encoding.CodePages": "4.5.1",
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0",
+          "System.Text.Encoding.CodePages": "6.0.0",
           "System.Threading.Tasks.Extensions": "4.5.4"
         },
         "runtime": {
           "lib/netstandard2.0/Microsoft.CodeAnalysis.dll": {
-            "assemblyVersion": "4.1.0.0",
-            "fileVersion": "4.100.22.11411"
+            "assemblyVersion": "4.3.0.0",
+            "fileVersion": "4.300.122.47918"
           }
         },
         "resources": {
@@ -72,14 +72,14 @@
           }
         }
       },
-      "Microsoft.CodeAnalysis.CSharp/4.1.0": {
+      "Microsoft.CodeAnalysis.CSharp/4.3.1": {
         "dependencies": {
-          "Microsoft.CodeAnalysis.Common": "4.1.0"
+          "Microsoft.CodeAnalysis.Common": "4.3.1"
         },
         "runtime": {
           "lib/netstandard2.0/Microsoft.CodeAnalysis.CSharp.dll": {
-            "assemblyVersion": "4.1.0.0",
-            "fileVersion": "4.100.22.11411"
+            "assemblyVersion": "4.3.0.0",
+            "fileVersion": "4.300.122.47918"
           }
         },
         "resources": {
@@ -132,14 +132,15 @@
           }
         }
       },
-      "System.Collections.Immutable/5.0.0": {
+      "System.Collections.Immutable/6.0.0": {
         "dependencies": {
-          "System.Memory": "4.5.4"
+          "System.Memory": "4.5.4",
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "runtime": {
           "lib/netstandard2.0/System.Collections.Immutable.dll": {
-            "assemblyVersion": "5.0.0.0",
-            "fileVersion": "5.0.20.51904"
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
           }
         }
       },
@@ -147,7 +148,7 @@
         "dependencies": {
           "System.Buffers": "4.5.1",
           "System.Numerics.Vectors": "4.4.0",
-          "System.Runtime.CompilerServices.Unsafe": "5.0.0"
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "runtime": {
           "lib/netstandard2.0/System.Memory.dll": {
@@ -166,7 +167,7 @@
       },
       "System.Reflection.Metadata/5.0.0": {
         "dependencies": {
-          "System.Collections.Immutable": "5.0.0"
+          "System.Collections.Immutable": "6.0.0"
         },
         "runtime": {
           "lib/netstandard2.0/System.Reflection.Metadata.dll": {
@@ -175,28 +176,29 @@
           }
         }
       },
-      "System.Runtime.CompilerServices.Unsafe/5.0.0": {
+      "System.Runtime.CompilerServices.Unsafe/6.0.0": {
         "runtime": {
           "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll": {
-            "assemblyVersion": "5.0.0.0",
-            "fileVersion": "5.0.20.51904"
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
           }
         }
       },
-      "System.Text.Encoding.CodePages/4.5.1": {
+      "System.Text.Encoding.CodePages/6.0.0": {
         "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "5.0.0"
+          "System.Memory": "4.5.4",
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "runtime": {
           "lib/netstandard2.0/System.Text.Encoding.CodePages.dll": {
-            "assemblyVersion": "4.1.1.0",
-            "fileVersion": "4.6.27129.4"
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
           }
         }
       },
       "System.Threading.Tasks.Extensions/4.5.4": {
         "dependencies": {
-          "System.Runtime.CompilerServices.Unsafe": "5.0.0"
+          "System.Runtime.CompilerServices.Unsafe": "6.0.0"
         },
         "runtime": {
           "lib/netstandard2.0/System.Threading.Tasks.Extensions.dll": {
@@ -213,19 +215,19 @@
       "serviceable": false,
       "sha512": ""
     },
-    "Microsoft.CodeAnalysis.Common/4.1.0": {
+    "Microsoft.CodeAnalysis.Common/4.3.1": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-bNzTyxP3iD5FPFHfVDl15Y6/wSoI7e3MeV0lOaj9igbIKTjgrmuw6LoVJ06jUNFA7+KaDC/OIsStWl/FQJz6sQ==",
-      "path": "microsoft.codeanalysis.common/4.1.0",
-      "hashPath": "microsoft.codeanalysis.common.4.1.0.nupkg.sha512"
+      "sha512": "sha512-wexpJffSEEwptwe6UTMxRDZCCtz+XubI4Qewl4JECnNhcQrtb0anhSUEV9Nz7WkoNfWkx1fptR8xh1egoxYrqw==",
+      "path": "microsoft.codeanalysis.common/4.3.1",
+      "hashPath": "microsoft.codeanalysis.common.4.3.1.nupkg.sha512"
     },
-    "Microsoft.CodeAnalysis.CSharp/4.1.0": {
+    "Microsoft.CodeAnalysis.CSharp/4.3.1": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-sbu6kDGzo9bfQxuqWpeEE7I9P30bSuZEnpDz9/qz20OU6pm79Z63+/BsAzO2e/R/Q97kBrpj647wokZnEVr97w==",
-      "path": "microsoft.codeanalysis.csharp/4.1.0",
-      "hashPath": "microsoft.codeanalysis.csharp.4.1.0.nupkg.sha512"
+      "sha512": "sha512-5C9VHvahL98tumlyaT/loB5rW+K/6q0UU7uLyT1Dv15YjZraRkqML9u2t2e8GaO7XqEOtBVqK/SlxXOPqwzxog==",
+      "path": "microsoft.codeanalysis.csharp/4.3.1",
+      "hashPath": "microsoft.codeanalysis.csharp.4.3.1.nupkg.sha512"
     },
     "System.Buffers/4.5.1": {
       "type": "package",
@@ -234,12 +236,12 @@
       "path": "system.buffers/4.5.1",
       "hashPath": "system.buffers.4.5.1.nupkg.sha512"
     },
-    "System.Collections.Immutable/5.0.0": {
+    "System.Collections.Immutable/6.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-FXkLXiK0sVVewcso0imKQoOxjoPAj42R8HtjjbSjVPAzwDfzoyoznWxgA3c38LDbN9SJux1xXoXYAhz98j7r2g==",
-      "path": "system.collections.immutable/5.0.0",
-      "hashPath": "system.collections.immutable.5.0.0.nupkg.sha512"
+      "sha512": "sha512-l4zZJ1WU2hqpQQHXz1rvC3etVZN+2DLmQMO79FhOTZHMn8tDRr+WU287sbomD0BETlmKDn0ygUgVy9k5xkkJdA==",
+      "path": "system.collections.immutable/6.0.0",
+      "hashPath": "system.collections.immutable.6.0.0.nupkg.sha512"
     },
     "System.Memory/4.5.4": {
       "type": "package",
@@ -262,19 +264,19 @@
       "path": "system.reflection.metadata/5.0.0",
       "hashPath": "system.reflection.metadata.5.0.0.nupkg.sha512"
     },
-    "System.Runtime.CompilerServices.Unsafe/5.0.0": {
+    "System.Runtime.CompilerServices.Unsafe/6.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-ZD9TMpsmYJLrxbbmdvhwt9YEgG5WntEnZ/d1eH8JBX9LBp+Ju8BSBhUGbZMNVHHomWo2KVImJhTDl2hIgw/6MA==",
-      "path": "system.runtime.compilerservices.unsafe/5.0.0",
-      "hashPath": "system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512"
+      "sha512": "sha512-/iUeP3tq1S0XdNNoMz5C9twLSrM/TH+qElHkXWaPvuNOt+99G75NrV0OS2EqHx5wMN7popYjpc8oTjC1y16DLg==",
+      "path": "system.runtime.compilerservices.unsafe/6.0.0",
+      "hashPath": "system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512"
     },
-    "System.Text.Encoding.CodePages/4.5.1": {
+    "System.Text.Encoding.CodePages/6.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-4J2JQXbftjPMppIHJ7IC+VXQ9XfEagN92vZZNoG12i+zReYlim5dMoXFC1Zzg7tsnKDM7JPo5bYfFK4Jheq44w==",
-      "path": "system.text.encoding.codepages/4.5.1",
-      "hashPath": "system.text.encoding.codepages.4.5.1.nupkg.sha512"
+      "sha512": "sha512-ZFCILZuOvtKPauZ/j/swhvw68ZRi9ATCfvGbk1QfydmcXBkIWecWKn/250UH7rahZ5OoDBaiAudJtPvLwzw85A==",
+      "path": "system.text.encoding.codepages/6.0.0",
+      "hashPath": "system.text.encoding.codepages.6.0.0.nupkg.sha512"
     },
     "System.Threading.Tasks.Extensions/4.5.4": {
       "type": "package",

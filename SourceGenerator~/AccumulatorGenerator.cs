@@ -170,7 +170,7 @@ namespace KrasCore.AccumulatorGenerator
 
         private static string GetCountExpression(TypedConstant divisorType)
         {
-            return (int)divisorType.Value == 0 ? "(int)count" : "count";
+            return divisorType.Value is int value && value == 0 ? "(int)count" : "count";
         }
     }
 }

@@ -9,3 +9,14 @@ C:\Users\Fire\Documents\Unity\2.5D-TopDown\Packages\com.firealt.krascore\Runtime
 C:\Users\Fire\Documents\Unity\2.5D-TopDown\Packages\com.firealt.krascore\Runtime\SourceGenerators\KrasCore.AccumulatorGenerator.pdb
 C:\Users\Fire\Documents\Unity\2.5D-TopDown\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.dll
 C:\Users\Fire\Documents\Unity\2.5D-TopDown\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.pdb
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.dll
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\Runtime\SourceGenerators\KrasCore.AccumulatorGenerator.deps.json
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\Runtime\SourceGenerators\KrasCore.AccumulatorGenerator.dll
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\Runtime\SourceGenerators\KrasCore.AccumulatorGenerator.pdb
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.csproj.AssemblyReference.cache
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.AssemblyInfoInputs.cache
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.AssemblyInfo.cs
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.csproj.CoreCompileInputs.cache
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.sourcelink.json
+C:\Users\forty\Documents\Unity\Sandbox\Packages\com.firealt.krascore\SourceGenerator~\obj\Release\netstandard2.0\KrasCore.AccumulatorGenerator.pdb
