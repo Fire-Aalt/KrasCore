@@ -1,13 +1,9 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
-using Unity.Mathematics;
+
+// ReSharper disable Unity.BurstFunctionSignatureContainsManagedTypes
 
 namespace KrasCore.Tests
 {
@@ -51,20 +47,25 @@ namespace KrasCore.Tests
             public NativeArray<int> Input;
 
             public NativeArray<float> Output;
-
+            
             public void Execute()
             {
                 var min = 1;
                 var factor = 3;
                 var offset = 2;
-
+                
                 var result = Input
                     .AsQuery()
                     .Where(value => value > min)
                     .Select(value => (float)(value * factor))
-                    .FirstOrDefault(val => val > 5);    
+                    .FirstOrDefault(Check);
 
                 Output[0] = result;
+            }
+            
+            private static bool Check(float val)
+            {
+                return val > 5;
             }
         }
     }

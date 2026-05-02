@@ -109,7 +109,7 @@ namespace KrasCore.NativeLinq.CodeGen
 
             if (delegateParameters.Length != interfaceDefinitions.Length)
             {
-                AddError(diagnostics, owner, $"NativeLinq delegate method '{placeholder.FullName}' has {interfaceDefinitions.Length} delegate attributes but {delegateParameters.Length} delegate parameters.");
+                AddError(diagnostics, owner, callInstruction, $"NativeLinq delegate method '{placeholder.FullName}' has {interfaceDefinitions.Length} delegate attributes but {delegateParameters.Length} delegate parameters.");
                 return false;
             }
 
@@ -124,7 +124,7 @@ namespace KrasCore.NativeLinq.CodeGen
                 }
 
                 var delegateType = CloseMethodGenericType(module, parameter.ParameterType, placeholderCall);
-                var signature = ResolveDelegateSignature(module, delegateType, diagnostics, owner);
+                var signature = ResolveDelegateSignature(module, delegateType, diagnostics, owner, callInstruction);
                 if (signature == null)
                 {
                     return false;
@@ -145,7 +145,7 @@ namespace KrasCore.NativeLinq.CodeGen
                 adapters.Add(parameter.Index, adapter);
             }
 
-            var target = FindTargetMethod(module, placeholderCall, placeholder, adapters, diagnostics, owner);
+            var target = FindTargetMethod(module, placeholderCall, placeholder, adapters, diagnostics, owner, callInstruction);
             if (target == null)
             {
                 return false;
@@ -216,7 +216,7 @@ namespace KrasCore.NativeLinq.CodeGen
                 var producer = PreviousMeaningful(current);
                 if (producer == null || producer.OpCode.FlowControl != FlowControl.Next)
                 {
-                    AddError(diagnostics, owner, "NativeLinq delegate weaving only supports simple trailing arguments after the delegate parameter.");
+                    AddError(diagnostics, owner, callInstruction, "NativeLinq delegate weaving only supports simple trailing arguments after the delegate parameter.");
                     return null;
                 }
 
@@ -272,13 +272,14 @@ namespace KrasCore.NativeLinq.CodeGen
             ModuleDefinition module,
             TypeReference delegateType,
             List<DiagnosticMessage> diagnostics,
-            MethodDefinition owner)
+            MethodDefinition owner,
+            Instruction diagnosticInstruction)
         {
             var delegateDefinition = delegateType.Resolve();
             var invoke = delegateDefinition?.Methods.FirstOrDefault(method => method.Name == "Invoke");
             if (invoke == null)
             {
-                AddError(diagnostics, owner, $"NativeLinq delegate type '{delegateType.FullName}' does not have an Invoke method.");
+                AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate type '{delegateType.FullName}' does not have an Invoke method.");
                 return null;
             }
 
@@ -360,7 +361,8 @@ namespace KrasCore.NativeLinq.CodeGen
             MethodDefinition placeholder,
             IReadOnlyDictionary<int, AdapterInfo> adapters,
             List<DiagnosticMessage> diagnostics,
-            MethodDefinition owner)
+            MethodDefinition owner,
+            Instruction diagnosticInstruction)
         {
             var placeholderGenericArguments = new Dictionary<string, TypeReference>();
             for (var i = 0; i < placeholder.GenericParameters.Count; i++)
@@ -384,7 +386,7 @@ namespace KrasCore.NativeLinq.CodeGen
                 }
             }
 
-            AddError(diagnostics, owner, $"NativeLinq delegate weaving could not find unmanaged overload for '{placeholder.FullName}'.");
+            AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate weaving could not find unmanaged overload for '{placeholder.FullName}'.");
             return null;
         }
 
@@ -683,7 +685,7 @@ namespace KrasCore.NativeLinq.CodeGen
                     delegateCtorInstruction.Operand is not MethodReference cachedDelegateCtor ||
                     cachedDelegateCtor.Parameters.Count != 2)
                 {
-                    AddError(diagnostics, owner, "NativeLinq delegate weaving only supports direct lambda or compiler-cached static lambda delegate construction.");
+                    AddError(diagnostics, owner, callInstruction, "NativeLinq delegate weaving only supports direct lambda or compiler-cached static lambda delegate construction.");
                     return null;
                 }
             }
@@ -692,14 +694,14 @@ namespace KrasCore.NativeLinq.CodeGen
             if (functionInstruction?.OpCode != OpCodes.Ldftn ||
                 functionInstruction.Operand is not MethodReference lambdaReference)
             {
-                AddError(diagnostics, owner, "NativeLinq delegate weaving could not find the lambda method.");
+                AddError(diagnostics, owner, callInstruction, "NativeLinq delegate weaving could not find the lambda method.");
                 return null;
             }
 
             var lambda = lambdaReference.Resolve();
             if (lambda == null)
             {
-                AddError(diagnostics, owner, $"NativeLinq delegate weaving could not resolve '{lambdaReference.FullName}'.");
+                AddError(diagnostics, owner, callInstruction, $"NativeLinq delegate weaving could not resolve '{lambdaReference.FullName}'.");
                 return null;
             }
 
@@ -713,15 +715,36 @@ namespace KrasCore.NativeLinq.CodeGen
                 }
             }
 
-            var capturedFields = GetCapturedFields(lambda, diagnostics, owner);
+            var capturesInstanceTarget = !lambda.IsStatic && !IsCompilerGeneratedLambdaContainer(lambda.DeclaringType);
+            if (capturesInstanceTarget)
+            {
+                if (targetInstruction == null)
+                {
+                    AddError(diagnostics, owner, callInstruction, "NativeLinq delegate weaving could not find the instance method target.");
+                    return null;
+                }
+
+                if (!IsUnmanaged(lambdaReference.DeclaringType))
+                {
+                    AddError(diagnostics, owner, callInstruction, $"NativeLinq delegate target '{lambdaReference.DeclaringType.FullName}' has managed type.");
+                    return null;
+                }
+            }
+
+            var capturedFields = GetCapturedFields(lambda, diagnostics, owner, callInstruction);
             if (capturedFields == null)
+            {
+                return null;
+            }
+
+            if (!ValidateLambdaBodyUsesOnlyUnmanagedTypes(lambda, capturedFields, diagnostics, owner, callInstruction))
             {
                 return null;
             }
 
             IReadOnlyDictionary<FieldDefinition, VariableDefinition> captureLocals = null;
             if (capturedFields.Count != 0 &&
-                !TryRewriteClosureCaptures(owner, lambda.DeclaringType, targetInstruction, capturedFields, diagnostics, out captureLocals))
+                !TryRewriteClosureCaptures(owner, lambda.DeclaringType, targetInstruction, capturedFields, diagnostics, callInstruction, out captureLocals))
             {
                 return null;
             }
@@ -739,6 +762,13 @@ namespace KrasCore.NativeLinq.CodeGen
             adapterType.Interfaces.Add(new InterfaceImplementation(interfaceType));
 
             var fieldMap = new Dictionary<FieldDefinition, FieldDefinition>();
+            FieldDefinition instanceTargetField = null;
+            if (capturesInstanceTarget)
+            {
+                instanceTargetField = new FieldDefinition("__target", FieldAttributes.Private, module.ImportReference(lambdaReference.DeclaringType));
+                adapterType.Fields.Add(instanceTargetField);
+            }
+
             foreach (var capturedField in capturedFields)
             {
                 var adapterField = new FieldDefinition(capturedField.Name, FieldAttributes.Private, module.ImportReference(capturedField.FieldType));
@@ -746,15 +776,15 @@ namespace KrasCore.NativeLinq.CodeGen
                 fieldMap.Add(capturedField, adapterField);
             }
 
-            if (capturedFields.Count == 0)
+            if (!capturesInstanceTarget && capturedFields.Count == 0)
             {
                 adapterType.PackingSize = 0;
                 adapterType.ClassSize = 1;
             }
 
-            var ctor = CreateAdapterConstructor(module, adapterType, capturedFields, fieldMap);
+            var ctor = CreateAdapterConstructor(module, adapterType, instanceTargetField, capturedFields, fieldMap);
             adapterType.Methods.Add(ctor);
-            adapterType.Methods.Add(CloneLambdaMethod(module, adapterType, lambda, signature, interfaceType, fieldMap));
+            adapterType.Methods.Add(CloneLambdaMethod(module, adapterType, lambda, signature, interfaceType, instanceTargetField, fieldMap));
 
             foreach (var instruction in instructionsToRemove)
             {
@@ -766,7 +796,17 @@ namespace KrasCore.NativeLinq.CodeGen
             functionInstruction.Operand = null;
             delegateCtorInstruction.Operand = ctor;
 
-            if (capturedFields.Count == 0 && targetInstruction != null)
+            if (capturesInstanceTarget)
+            {
+                if (targetInstruction.OpCode == OpCodes.Box &&
+                    targetInstruction.Operand is TypeReference boxedType &&
+                    TypeDefinitionsMatch(boxedType, lambdaReference.DeclaringType))
+                {
+                    targetInstruction.OpCode = OpCodes.Nop;
+                    targetInstruction.Operand = null;
+                }
+            }
+            else if (capturedFields.Count == 0 && targetInstruction != null)
             {
                 targetInstruction.OpCode = OpCodes.Nop;
                 targetInstruction.Operand = null;
@@ -831,13 +871,14 @@ namespace KrasCore.NativeLinq.CodeGen
             Instruction targetInstruction,
             IReadOnlyList<FieldDefinition> capturedFields,
             List<DiagnosticMessage> diagnostics,
+            Instruction diagnosticInstruction,
             out IReadOnlyDictionary<FieldDefinition, VariableDefinition> captureLocals)
         {
             captureLocals = null;
             if (targetInstruction == null ||
                 !TryGetLoadedLocal(owner, targetInstruction, out var closureLocal))
             {
-                AddError(diagnostics, owner, "NativeLinq delegate weaving only supports local variable captures.");
+                AddError(diagnostics, owner, diagnosticInstruction, "NativeLinq delegate weaving only supports local variable captures.");
                 return false;
             }
 
@@ -856,7 +897,7 @@ namespace KrasCore.NativeLinq.CodeGen
             }
 
             owner.Body.InitLocals = true;
-            if (!RewriteClosureLocalAccesses(owner, closureType, closureLocal, locals, diagnostics))
+            if (!RewriteClosureLocalAccesses(owner, closureType, closureLocal, locals, diagnostics, diagnosticInstruction))
             {
                 return false;
             }
@@ -871,7 +912,8 @@ namespace KrasCore.NativeLinq.CodeGen
             TypeDefinition closureType,
             VariableDefinition closureLocal,
             IReadOnlyDictionary<FieldDefinition, VariableDefinition> captureLocals,
-            List<DiagnosticMessage> diagnostics)
+            List<DiagnosticMessage> diagnostics,
+            Instruction diagnosticInstruction)
         {
             foreach (var instruction in owner.Body.Instructions.ToArray())
             {
@@ -895,7 +937,7 @@ namespace KrasCore.NativeLinq.CodeGen
                     var target = valueStart == null ? null : PreviousMeaningful(valueStart);
                     if (target == null || !IsLoadLocal(owner, target, closureLocal))
                     {
-                        AddError(diagnostics, owner, "NativeLinq delegate weaving only supports direct captured local assignments.");
+                        AddError(diagnostics, owner, diagnosticInstruction, "NativeLinq delegate weaving only supports direct captured local assignments.");
                         return false;
                     }
 
@@ -909,7 +951,7 @@ namespace KrasCore.NativeLinq.CodeGen
                     var target = PreviousMeaningful(instruction);
                     if (target == null || !IsLoadLocal(owner, target, closureLocal))
                     {
-                        AddError(diagnostics, owner, "NativeLinq delegate weaving only supports direct captured local reads.");
+                        AddError(diagnostics, owner, diagnosticInstruction, "NativeLinq delegate weaving only supports direct captured local reads.");
                         return false;
                     }
 
@@ -944,6 +986,7 @@ namespace KrasCore.NativeLinq.CodeGen
         private static MethodDefinition CreateAdapterConstructor(
             ModuleDefinition module,
             TypeDefinition adapterType,
+            FieldDefinition instanceTargetField,
             IReadOnlyList<FieldDefinition> capturedFields,
             IReadOnlyDictionary<FieldDefinition, FieldDefinition> fieldMap)
         {
@@ -951,6 +994,14 @@ namespace KrasCore.NativeLinq.CodeGen
                 ".ctor",
                 MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
                 module.TypeSystem.Void);
+
+            if (instanceTargetField != null)
+            {
+                ctor.Parameters.Add(new ParameterDefinition(
+                    "target",
+                    Mono.Cecil.ParameterAttributes.None,
+                    module.ImportReference(instanceTargetField.FieldType)));
+            }
 
             foreach (var capturedField in capturedFields)
             {
@@ -961,11 +1012,18 @@ namespace KrasCore.NativeLinq.CodeGen
             }
 
             var il = ctor.Body.GetILProcessor();
+            if (instanceTargetField != null)
+            {
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg, ctor.Parameters[0]);
+                il.Emit(OpCodes.Stfld, instanceTargetField);
+            }
+
             for (var i = 0; i < capturedFields.Count; i++)
             {
                 var capturedField = capturedFields[i];
                 il.Emit(OpCodes.Ldarg_0);
-                il.Emit(OpCodes.Ldarg, ctor.Parameters[i]);
+                il.Emit(OpCodes.Ldarg, ctor.Parameters[i + (instanceTargetField == null ? 0 : 1)]);
                 il.Emit(OpCodes.Stfld, fieldMap[capturedField]);
             }
 
@@ -979,6 +1037,7 @@ namespace KrasCore.NativeLinq.CodeGen
             MethodDefinition lambda,
             DelegateSignature signature,
             TypeReference interfaceType,
+            FieldDefinition instanceTargetField,
             IReadOnlyDictionary<FieldDefinition, FieldDefinition> fieldMap)
         {
             var interfaceMethod = interfaceType.Resolve().Methods.First(method =>
@@ -1018,6 +1077,7 @@ namespace KrasCore.NativeLinq.CodeGen
                     il,
                     sourceInstruction,
                     signature,
+                    instanceTargetField,
                     fieldMap,
                     variableMap,
                     lambda,
@@ -1058,6 +1118,7 @@ namespace KrasCore.NativeLinq.CodeGen
             ILProcessor il,
             Instruction sourceInstruction,
             DelegateSignature signature,
+            FieldDefinition instanceTargetField,
             IReadOnlyDictionary<FieldDefinition, FieldDefinition> fieldMap,
             IReadOnlyDictionary<VariableDefinition, VariableDefinition> variableMap,
             MethodDefinition sourceMethod,
@@ -1065,6 +1126,14 @@ namespace KrasCore.NativeLinq.CodeGen
         {
             if (TryGetArgumentAccess(sourceInstruction, sourceMethod, out var argumentIndex, out var loadAddress, out var store))
             {
+                if (sourceMethod.HasThis && argumentIndex == 0 && instanceTargetField != null)
+                {
+                    var loadThis = Instruction.Create(OpCodes.Ldarg_0);
+                    il.Append(loadThis);
+                    il.Append(Instruction.Create(OpCodes.Ldflda, instanceTargetField));
+                    return loadThis;
+                }
+
                 var lambdaParameterOffset = sourceMethod.IsStatic ? 0 : 1;
                 var lambdaParameterIndex = argumentIndex - lambdaParameterOffset;
                 if (lambdaParameterIndex >= 0 && lambdaParameterIndex < signature.ParameterTypes.Count)
@@ -1255,7 +1324,8 @@ namespace KrasCore.NativeLinq.CodeGen
         private static IReadOnlyList<FieldDefinition> GetCapturedFields(
             MethodDefinition lambda,
             List<DiagnosticMessage> diagnostics,
-            MethodDefinition owner)
+            MethodDefinition owner,
+            Instruction diagnosticInstruction)
         {
             if (lambda.IsStatic)
             {
@@ -1263,9 +1333,14 @@ namespace KrasCore.NativeLinq.CodeGen
             }
 
             var declaringType = lambda.DeclaringType;
-            if (!declaringType.Name.StartsWith("<>c", StringComparison.Ordinal))
+            if (!IsCompilerGeneratedLambdaContainer(declaringType))
             {
-                AddError(diagnostics, owner, $"NativeLinq delegate target '{lambda.FullName}' is not a compiler-generated lambda.");
+                if (IsUnmanaged(declaringType))
+                {
+                    return Array.Empty<FieldDefinition>();
+                }
+
+                AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate target '{lambda.FullName}' is not a compiler-generated lambda.");
                 return null;
             }
 
@@ -1277,7 +1352,7 @@ namespace KrasCore.NativeLinq.CodeGen
             {
                 if (!IsUnmanaged(field.FieldType))
                 {
-                    AddError(diagnostics, owner, $"NativeLinq delegate capture '{field.Name}' has managed type '{field.FieldType.FullName}'.");
+                    AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate capture '{field.Name}' has managed type '{field.FieldType.FullName}'.");
                     return null;
                 }
             }
@@ -1285,31 +1360,295 @@ namespace KrasCore.NativeLinq.CodeGen
             return fields;
         }
 
+        private static bool IsCompilerGeneratedLambdaContainer(TypeDefinition type)
+        {
+            return type.Name.StartsWith("<>c", StringComparison.Ordinal);
+        }
+
+        private static bool ValidateLambdaBodyUsesOnlyUnmanagedTypes(
+            MethodDefinition lambda,
+            IReadOnlyList<FieldDefinition> capturedFields,
+            List<DiagnosticMessage> diagnostics,
+            MethodDefinition owner,
+            Instruction diagnosticInstruction)
+        {
+            foreach (var parameter in lambda.Parameters)
+            {
+                if (!IsUnmanaged(parameter.ParameterType))
+                {
+                    AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate parameter '{parameter.Name}' has managed type '{parameter.ParameterType.FullName}'.");
+                    return false;
+                }
+            }
+
+            if (lambda.ReturnType.MetadataType != MetadataType.Void &&
+                !IsUnmanaged(lambda.ReturnType))
+            {
+                AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate return type '{lambda.ReturnType.FullName}' is managed.");
+                return false;
+            }
+
+            foreach (var variable in lambda.Body.Variables)
+            {
+                if (!IsUnmanaged(variable.VariableType))
+                {
+                    AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate local '{lambda.Body.Variables.IndexOf(variable)}' has managed type '{variable.VariableType.FullName}'.");
+                    return false;
+                }
+            }
+
+            foreach (var handler in lambda.Body.ExceptionHandlers)
+            {
+                if (handler.CatchType != null)
+                {
+                    AddError(diagnostics, owner, diagnosticInstruction, $"NativeLinq delegate body cannot catch managed exception type '{handler.CatchType.FullName}'.");
+                    return false;
+                }
+            }
+
+            var capturedFieldNames = new HashSet<string>(capturedFields.Select(field => field.FullName));
+            foreach (var instruction in lambda.Body.Instructions)
+            {
+                if (TryGetManagedTypeUsage(instruction, capturedFieldNames, out var message))
+                {
+                    AddError(diagnostics, lambda, instruction, owner, diagnosticInstruction, message);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool TryGetManagedTypeUsage(
+            Instruction instruction,
+            ISet<string> capturedFieldNames,
+            out string message)
+        {
+            message = null;
+
+            switch (instruction.OpCode.Code)
+            {
+                case Code.Ldstr:
+                    message = "NativeLinq delegate body cannot use string literals.";
+                    return true;
+                case Code.Newarr:
+                    if (instruction.Operand is TypeReference arrayElementType)
+                    {
+                        message = $"NativeLinq delegate body cannot create managed array '{arrayElementType.FullName}[]'.";
+                    }
+                    else
+                    {
+                        message = "NativeLinq delegate body cannot create managed arrays.";
+                    }
+
+                    return true;
+                case Code.Box:
+                    if (instruction.Operand is TypeReference boxedType)
+                    {
+                        message = $"NativeLinq delegate body cannot box '{boxedType.FullName}'.";
+                    }
+                    else
+                    {
+                        message = "NativeLinq delegate body cannot box values.";
+                    }
+
+                    return true;
+            }
+
+            if (instruction.OpCode == OpCodes.Newobj &&
+                instruction.Operand is MethodReference constructor &&
+                !IsUnmanaged(constructor.DeclaringType))
+            {
+                message = $"NativeLinq delegate body cannot create managed type '{constructor.DeclaringType.FullName}'.";
+                return true;
+            }
+
+            if (instruction.Operand is FieldReference fieldReference)
+            {
+                var resolvedField = fieldReference.Resolve();
+                var fieldName = resolvedField?.FullName ?? fieldReference.FullName;
+                if (!capturedFieldNames.Contains(fieldName) &&
+                    !IsUnmanaged(fieldReference.FieldType))
+                {
+                    message = $"NativeLinq delegate body cannot use managed field type '{fieldReference.FieldType.FullName}'.";
+                    return true;
+                }
+
+                if (TryGetManagedGenericArgument(fieldReference.DeclaringType, out var managedDeclaringGenericArgument))
+                {
+                    message = $"NativeLinq delegate body cannot use managed generic type '{managedDeclaringGenericArgument.FullName}'.";
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (instruction.Operand is MethodReference methodReference)
+            {
+                if (methodReference.HasThis && !IsUnmanaged(methodReference.DeclaringType))
+                {
+                    message = $"NativeLinq delegate body cannot call instance method on managed type '{methodReference.DeclaringType.FullName}'.";
+                    return true;
+                }
+
+                if (methodReference.ReturnType.MetadataType != MetadataType.Void &&
+                    !IsUnmanaged(methodReference.ReturnType))
+                {
+                    message = $"NativeLinq delegate body cannot use managed return type '{methodReference.ReturnType.FullName}'.";
+                    return true;
+                }
+
+                foreach (var parameter in methodReference.Parameters)
+                {
+                    if (!IsUnmanaged(parameter.ParameterType))
+                    {
+                        message = $"NativeLinq delegate body cannot call method '{methodReference.FullName}' because parameter type '{parameter.ParameterType.FullName}' is managed.";
+                        return true;
+                    }
+                }
+
+                if (methodReference is GenericInstanceMethod genericMethod)
+                {
+                    foreach (var genericArgument in genericMethod.GenericArguments)
+                    {
+                        if (!IsUnmanaged(genericArgument))
+                        {
+                            message = $"NativeLinq delegate body cannot use managed generic argument '{genericArgument.FullName}'.";
+                            return true;
+                        }
+                    }
+                }
+
+                if (TryGetManagedGenericArgument(methodReference.DeclaringType, out var managedMethodDeclaringGenericArgument))
+                {
+                    message = $"NativeLinq delegate body cannot use managed generic type '{managedMethodDeclaringGenericArgument.FullName}'.";
+                    return true;
+                }
+
+                return false;
+            }
+
+            if (instruction.Operand is CallSite callSite)
+            {
+                if (callSite.ReturnType.MetadataType != MetadataType.Void &&
+                    !IsUnmanaged(callSite.ReturnType))
+                {
+                    message = $"NativeLinq delegate body cannot use managed return type '{callSite.ReturnType.FullName}'.";
+                    return true;
+                }
+
+                foreach (var parameter in callSite.Parameters)
+                {
+                    if (!IsUnmanaged(parameter.ParameterType))
+                    {
+                        message = $"NativeLinq delegate body cannot use managed calli parameter type '{parameter.ParameterType.FullName}'.";
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            if (instruction.Operand is TypeReference typeReference &&
+                IsManagedTypeOperand(instruction.OpCode.Code, typeReference))
+            {
+                message = $"NativeLinq delegate body cannot use managed type '{typeReference.FullName}'.";
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsManagedTypeOperand(Code opcode, TypeReference typeReference)
+        {
+            switch (opcode)
+            {
+                case Code.Castclass:
+                case Code.Isinst:
+                case Code.Ldtoken:
+                case Code.Unbox:
+                case Code.Unbox_Any:
+                case Code.Cpobj:
+                case Code.Initobj:
+                case Code.Ldobj:
+                case Code.Stobj:
+                case Code.Mkrefany:
+                    return !IsUnmanaged(typeReference);
+                default:
+                    return false;
+            }
+        }
+
+        private static bool TryGetManagedGenericArgument(TypeReference type, out TypeReference managedType)
+        {
+            managedType = null;
+            switch (type)
+            {
+                case null:
+                    return false;
+                case GenericInstanceType genericInstance:
+                    foreach (var genericArgument in genericInstance.GenericArguments)
+                    {
+                        if (!IsUnmanaged(genericArgument))
+                        {
+                            managedType = genericArgument;
+                            return true;
+                        }
+
+                        if (TryGetManagedGenericArgument(genericArgument, out managedType))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                case ByReferenceType byReference:
+                    return TryGetManagedGenericArgument(byReference.ElementType, out managedType);
+                case PointerType pointer:
+                    return TryGetManagedGenericArgument(pointer.ElementType, out managedType);
+                case RequiredModifierType requiredModifier:
+                    return TryGetManagedGenericArgument(requiredModifier.ElementType, out managedType);
+                case OptionalModifierType optionalModifier:
+                    return TryGetManagedGenericArgument(optionalModifier.ElementType, out managedType);
+                default:
+                    return false;
+            }
+        }
+
         private static bool IsUnmanaged(TypeReference type)
         {
+            return IsUnmanaged(type, new HashSet<string>());
+        }
+
+        private static bool IsUnmanaged(TypeReference type, ISet<string> visited)
+        {
+            switch (type)
+            {
+                case null:
+                    return false;
+                case RequiredModifierType requiredModifier:
+                    return IsUnmanaged(requiredModifier.ElementType, visited);
+                case OptionalModifierType optionalModifier:
+                    return IsUnmanaged(optionalModifier.ElementType, visited);
+                case ByReferenceType byReference:
+                    return IsUnmanaged(byReference.ElementType, visited);
+                case PointerType:
+                    return true;
+                case ArrayType:
+                    return false;
+                case GenericParameter genericParameter:
+                    return genericParameter.HasNotNullableValueTypeConstraint;
+            }
+
             type = type.GetElementType();
-            if (type.IsPointer)
+            if (type.MetadataType == MetadataType.Void || type.IsPrimitive)
             {
                 return true;
             }
 
-            switch (type.MetadataType)
+            if (type.MetadataType == MetadataType.IntPtr || type.MetadataType == MetadataType.UIntPtr)
             {
-                case MetadataType.Boolean:
-                case MetadataType.Char:
-                case MetadataType.SByte:
-                case MetadataType.Byte:
-                case MetadataType.Int16:
-                case MetadataType.UInt16:
-                case MetadataType.Int32:
-                case MetadataType.UInt32:
-                case MetadataType.Int64:
-                case MetadataType.UInt64:
-                case MetadataType.Single:
-                case MetadataType.Double:
-                case MetadataType.IntPtr:
-                case MetadataType.UIntPtr:
-                    return true;
+                return true;
             }
 
             var definition = type.Resolve();
@@ -1323,7 +1662,50 @@ namespace KrasCore.NativeLinq.CodeGen
                 return true;
             }
 
-            return definition.Fields.Where(f => !f.IsStatic).All(f => IsUnmanaged(f.FieldType));
+            var visitKey = type.FullName;
+            if (!visited.Add(visitKey))
+            {
+                return true;
+            }
+
+            try
+            {
+                return definition.Fields
+                    .Where(field => !field.IsStatic)
+                    .All(field => IsUnmanaged(CloseTypeGenericType(type, field.FieldType), visited));
+            }
+            finally
+            {
+                visited.Remove(visitKey);
+            }
+        }
+
+        private static TypeReference CloseTypeGenericType(TypeReference declaringType, TypeReference fieldType)
+        {
+            var declaringInstance = declaringType as GenericInstanceType;
+            switch (fieldType)
+            {
+                case GenericParameter genericParameter when genericParameter.Type == GenericParameterType.Type && declaringInstance != null:
+                    return declaringInstance.GenericArguments[genericParameter.Position];
+                case GenericInstanceType genericInstance:
+                    var closedInstance = new GenericInstanceType(genericInstance.ElementType);
+                    foreach (var argument in genericInstance.GenericArguments)
+                    {
+                        closedInstance.GenericArguments.Add(CloseTypeGenericType(declaringType, argument));
+                    }
+
+                    return closedInstance;
+                case ByReferenceType byReference:
+                    return new ByReferenceType(CloseTypeGenericType(declaringType, byReference.ElementType));
+                case PointerType pointer:
+                    return new PointerType(CloseTypeGenericType(declaringType, pointer.ElementType));
+                case RequiredModifierType requiredModifier:
+                    return new RequiredModifierType(requiredModifier.ModifierType, CloseTypeGenericType(declaringType, requiredModifier.ElementType));
+                case OptionalModifierType optionalModifier:
+                    return new OptionalModifierType(optionalModifier.ModifierType, CloseTypeGenericType(declaringType, optionalModifier.ElementType));
+                default:
+                    return fieldType;
+            }
         }
 
         private static Instruction PreviousMeaningful(Instruction instruction)
@@ -1576,13 +1958,75 @@ namespace KrasCore.NativeLinq.CodeGen
             instruction.Operand = null;
         }
 
-        private static void AddError(List<DiagnosticMessage> diagnostics, MethodDefinition method, string message)
+        private static void AddError(
+            List<DiagnosticMessage> diagnostics,
+            MethodDefinition method,
+            Instruction instruction,
+            string message)
         {
-            diagnostics.Add(new DiagnosticMessage
+            AddError(diagnostics, method, instruction, null, null, message);
+        }
+
+        private static void AddError(
+            List<DiagnosticMessage> diagnostics,
+            MethodDefinition method,
+            Instruction instruction,
+            MethodDefinition fallbackMethod,
+            Instruction fallbackInstruction,
+            string message)
+        {
+            var diagnostic = new DiagnosticMessage
             {
                 DiagnosticType = DiagnosticType.Error,
                 MessageData = $"{message} Method: {method.FullName}",
-            });
+            };
+
+            var sequencePoint = FindBestSequencePointFor(method, instruction) ??
+                FindBestSequencePointFor(fallbackMethod, fallbackInstruction);
+            if (sequencePoint != null)
+            {
+                diagnostic.File = sequencePoint.Document.Url;
+                diagnostic.Line = sequencePoint.StartLine;
+                diagnostic.Column = sequencePoint.StartColumn;
+
+                var shortenedFilePath = sequencePoint.Document.Url.Replace(
+                    $"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}",
+                    string.Empty);
+                diagnostic.MessageData = $"{shortenedFilePath}({sequencePoint.StartLine},{sequencePoint.StartColumn}): {diagnostic.MessageData}";
+            }
+
+            diagnostics.Add(diagnostic);
+        }
+
+        private static SequencePoint FindBestSequencePointFor(MethodDefinition method, Instruction instruction)
+        {
+            if (method == null || instruction == null)
+            {
+                return null;
+            }
+
+            var sequencePoints = method.DebugInformation?
+                .GetSequencePointMapping()
+                .Values
+                .OrderBy(point => point.Offset)
+                .ToArray();
+            if (sequencePoints == null || sequencePoints.Length == 0)
+            {
+                return null;
+            }
+
+            var best = sequencePoints[0];
+            foreach (var sequencePoint in sequencePoints)
+            {
+                if (sequencePoint.Offset > instruction.Offset)
+                {
+                    break;
+                }
+
+                best = sequencePoint;
+            }
+
+            return best;
         }
 
         private static AssemblyDefinition AssemblyDefinitionFor(ICompiledAssembly compiledAssembly)

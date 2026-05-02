@@ -38,14 +38,17 @@ namespace KrasCore.AccumulatorGenerator
                 return;
             }
 
-            var lambda = invocation.ArgumentList.Arguments
-                .Select(a => a.Expression)
-                .OfType<AnonymousFunctionExpressionSyntax>()
-                .FirstOrDefault();
-
-            if (lambda == null)
+            var delegateArgument = invocation.ArgumentList.Arguments
+                .FirstOrDefault(argument => IsDelegateExpression(context, argument.Expression));
+            if (delegateArgument == null)
             {
-                Report(context, invocation, "NativeLinq delegate operators only accept lambda expressions.");
+                Report(context, invocation, "NativeLinq delegate operators require a lambda or method group delegate argument.");
+                return;
+            }
+
+            if (delegateArgument.Expression is not AnonymousFunctionExpressionSyntax lambda)
+            {
+                ValidateMethodGroup(context, delegateArgument.Expression);
                 return;
             }
 
@@ -59,43 +62,70 @@ namespace KrasCore.AccumulatorGenerator
                 Report(context, lambda, "NativeLinq delegate lambdas cannot contain nested lambdas or anonymous functions.");
             }
 
-            if (lambda.DescendantNodes().OfType<ThisExpressionSyntax>().Any())
-            {
-                Report(context, lambda, "NativeLinq delegate lambdas cannot capture this.");
-            }
-
-            if (lambda.DescendantNodes().OfType<InvocationExpressionSyntax>().Any())
-            {
-                Report(context, lambda, "NativeLinq delegate lambdas cannot call methods in the initial unmanaged-only implementation.");
-            }
-
-            if (lambda.DescendantNodes().OfType<ObjectCreationExpressionSyntax>().Any())
-            {
-                Report(context, lambda, "NativeLinq delegate lambdas cannot allocate or construct objects.");
-            }
-
-            if (lambda.DescendantNodes().OfType<ElementAccessExpressionSyntax>().Any())
-            {
-                Report(context, lambda, "NativeLinq delegate lambdas cannot use indexers or array access.");
-            }
-
-            foreach (var memberAccess in lambda.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
-            {
-                var symbol = context.SemanticModel.GetSymbolInfo(memberAccess, context.CancellationToken).Symbol;
-                if (symbol is IPropertySymbol or IEventSymbol)
-                {
-                    Report(context, memberAccess, "NativeLinq delegate lambdas cannot use properties, events, or indexers.");
-                }
-            }
-
             ValidateSignature(context, lambda);
+            ValidateBody(context, lambda.Body, lambda, context.ContainingSymbol?.ContainingType);
             ValidateCaptures(context, lambda);
+        }
+
+        private static bool IsDelegateExpression(SyntaxNodeAnalysisContext context, ExpressionSyntax expression)
+        {
+            return context.SemanticModel.GetTypeInfo(expression, context.CancellationToken).ConvertedType is INamedTypeSymbol
+            {
+                DelegateInvokeMethod: not null,
+            };
         }
 
         private static bool IsNativeDelegateOperator(IMethodSymbol method)
         {
-            return method.GetAttributes().Any(attribute =>
-                attribute.AttributeClass?.ToDisplayString() == ATTRIBUTE_METADATA_NAME);
+            return HasNativeDelegateMethodAttribute(method) ||
+                HasNativeDelegateMethodAttribute(method.OriginalDefinition) ||
+                HasNativeDelegateMethodAttribute(method.ReducedFrom) ||
+                HasNativeDelegateMethodAttribute(method.ReducedFrom?.OriginalDefinition);
+        }
+
+        private static bool HasNativeDelegateMethodAttribute(IMethodSymbol? method)
+        {
+            return method?.GetAttributes().Any(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == ATTRIBUTE_METADATA_NAME) == true;
+        }
+
+        private static void ValidateMethodGroup(SyntaxNodeAnalysisContext context, ExpressionSyntax expression)
+        {
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(expression, context.CancellationToken);
+            var method = symbolInfo.Symbol as IMethodSymbol ??
+                symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+            if (method == null)
+            {
+                Report(context, expression, "NativeLinq delegate method group could not be resolved.");
+                return;
+            }
+
+            ValidateMethodSignature(context, expression, method);
+
+            if (!method.IsStatic)
+            {
+                var receiverType = expression is MemberAccessExpressionSyntax memberAccess
+                    ? context.SemanticModel.GetTypeInfo(memberAccess.Expression, context.CancellationToken).Type
+                    : method.ContainingType;
+                if (receiverType != null && !receiverType.IsUnmanagedType)
+                {
+                    Report(context, expression, $"NativeLinq delegate target '{receiverType.ToDisplayString()}' must be unmanaged.");
+                }
+            }
+
+            foreach (var reference in method.DeclaringSyntaxReferences)
+            {
+                var syntax = reference.GetSyntax(context.CancellationToken);
+                switch (syntax)
+                {
+                    case MethodDeclarationSyntax methodDeclaration:
+                        ValidateMethodBody(context, methodDeclaration, method);
+                        return;
+                    case LocalFunctionStatementSyntax localFunction:
+                        ValidateLocalFunctionBody(context, localFunction, method);
+                        return;
+                }
+            }
         }
 
         private static void ValidateSignature(SyntaxNodeAnalysisContext context, AnonymousFunctionExpressionSyntax lambda)
@@ -132,9 +162,199 @@ namespace KrasCore.AccumulatorGenerator
                     }
                 }
             }
-            else
+        }
+
+        private static void ValidateMethodSignature(SyntaxNodeAnalysisContext context, SyntaxNode location, IMethodSymbol method)
+        {
+            foreach (var parameter in method.Parameters)
             {
-                Report(context, lambda, "NativeLinq delegate lambdas must use an explicit parameter list.");
+                if (!parameter.Type.IsUnmanagedType)
+                {
+                    Report(context, location, $"NativeLinq delegate parameter '{parameter.Name}' must be unmanaged.");
+                }
+
+                if (parameter.RefKind == RefKind.Ref || parameter.RefKind == RefKind.Out)
+                {
+                    Report(context, location, "NativeLinq delegate method parameters cannot be ref or out parameters.");
+                }
+            }
+
+            if (method.ReturnType.SpecialType != SpecialType.System_Void && !method.ReturnType.IsUnmanagedType)
+            {
+                Report(context, location, "NativeLinq delegate return type must be unmanaged.");
+            }
+        }
+
+        private static void ValidateMethodBody(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax methodDeclaration, IMethodSymbol method)
+        {
+            if (methodDeclaration.Body != null)
+            {
+                ValidateBody(context, methodDeclaration.Body, methodDeclaration, method.ContainingType);
+            }
+
+            if (methodDeclaration.ExpressionBody?.Expression != null)
+            {
+                ValidateBody(context, methodDeclaration.ExpressionBody.Expression, methodDeclaration.ExpressionBody.Expression, method.ContainingType);
+            }
+        }
+
+        private static void ValidateLocalFunctionBody(SyntaxNodeAnalysisContext context, LocalFunctionStatementSyntax localFunction, IMethodSymbol method)
+        {
+            if (localFunction.Body != null)
+            {
+                ValidateBody(context, localFunction.Body, localFunction, method.ContainingType);
+            }
+
+            if (localFunction.ExpressionBody?.Expression != null)
+            {
+                ValidateBody(context, localFunction.ExpressionBody.Expression, localFunction.ExpressionBody.Expression, method.ContainingType);
+            }
+        }
+
+        private static void ValidateBody(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode body,
+            SyntaxNode diagnosticLocation,
+            ITypeSymbol? thisType)
+        {
+            foreach (var nestedLambda in body.DescendantNodes().OfType<AnonymousFunctionExpressionSyntax>())
+            {
+                Report(context, nestedLambda, "NativeLinq delegate bodies cannot contain nested lambdas or anonymous functions.");
+            }
+
+            foreach (var thisExpression in body.DescendantNodes().OfType<ThisExpressionSyntax>())
+            {
+                if (thisType == null || !thisType.IsUnmanagedType)
+                {
+                    Report(context, thisExpression, "NativeLinq delegate bodies can only use this when the containing type is unmanaged.");
+                }
+            }
+
+            foreach (var literal in body.DescendantNodes().OfType<LiteralExpressionSyntax>())
+            {
+                if (literal.IsKind(SyntaxKind.StringLiteralExpression))
+                {
+                    Report(context, literal, "NativeLinq delegate bodies cannot use managed string literals.");
+                }
+            }
+
+            foreach (var invocationExpression in body.DescendantNodes().OfType<InvocationExpressionSyntax>())
+            {
+                ValidateInvocation(context, invocationExpression);
+            }
+
+            foreach (var objectCreation in body.DescendantNodes().OfType<ObjectCreationExpressionSyntax>())
+            {
+                var createdType = context.SemanticModel.GetTypeInfo(objectCreation, context.CancellationToken).Type;
+                if (createdType == null || !createdType.IsUnmanagedType)
+                {
+                    Report(context, objectCreation, "NativeLinq delegate bodies cannot create managed objects.");
+                }
+            }
+
+            foreach (var arrayCreation in body.DescendantNodes().OfType<ArrayCreationExpressionSyntax>())
+            {
+                Report(context, arrayCreation, "NativeLinq delegate bodies cannot create managed arrays.");
+            }
+
+            foreach (var implicitArrayCreation in body.DescendantNodes().OfType<ImplicitArrayCreationExpressionSyntax>())
+            {
+                Report(context, implicitArrayCreation, "NativeLinq delegate bodies cannot create managed arrays.");
+            }
+
+            foreach (var elementAccess in body.DescendantNodes().OfType<ElementAccessExpressionSyntax>())
+            {
+                var receiverType = context.SemanticModel.GetTypeInfo(elementAccess.Expression, context.CancellationToken).Type;
+                if (receiverType?.SpecialType == SpecialType.System_String)
+                {
+                    if (!elementAccess.Expression.IsKind(SyntaxKind.StringLiteralExpression))
+                    {
+                        Report(context, elementAccess.Expression, "NativeLinq delegate bodies cannot use managed strings.");
+                    }
+                }
+                else if (receiverType == null || !receiverType.IsUnmanagedType)
+                {
+                    Report(context, elementAccess, "NativeLinq delegate bodies cannot use managed indexers or array access.");
+                }
+            }
+
+            foreach (var local in body.DescendantNodes().OfType<VariableDeclaratorSyntax>())
+            {
+                if (context.SemanticModel.GetDeclaredSymbol(local, context.CancellationToken) is ILocalSymbol localSymbol &&
+                    localSymbol.Type.SpecialType != SpecialType.System_Void &&
+                    !localSymbol.Type.IsUnmanagedType)
+                {
+                    Report(context, local, $"NativeLinq delegate local '{localSymbol.Name}' must be unmanaged.");
+                }
+            }
+
+            foreach (var memberAccess in body.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+            {
+                var symbol = context.SemanticModel.GetSymbolInfo(memberAccess, context.CancellationToken).Symbol;
+                if (symbol is IEventSymbol)
+                {
+                    Report(context, memberAccess, "NativeLinq delegate bodies cannot use events.");
+                }
+                else if (symbol is IPropertySymbol property)
+                {
+                    ValidatePropertyUse(context, memberAccess, property);
+                }
+            }
+        }
+
+        private static void ValidateInvocation(SyntaxNodeAnalysisContext context, InvocationExpressionSyntax invocationExpression)
+        {
+            var symbolInfo = context.SemanticModel.GetSymbolInfo(invocationExpression, context.CancellationToken);
+            var method = symbolInfo.Symbol as IMethodSymbol ??
+                symbolInfo.CandidateSymbols.OfType<IMethodSymbol>().FirstOrDefault();
+            if (method == null)
+            {
+                Report(context, invocationExpression, "NativeLinq delegate method call could not be resolved.");
+                return;
+            }
+
+            ValidateMethodUse(context, invocationExpression, method);
+        }
+
+        private static void ValidateMethodUse(SyntaxNodeAnalysisContext context, SyntaxNode location, IMethodSymbol method)
+        {
+            if (!method.IsStatic && method.ContainingType != null && !method.ContainingType.IsUnmanagedType)
+            {
+                Report(context, location, $"NativeLinq delegate bodies cannot call instance methods on managed type '{method.ContainingType.ToDisplayString()}'.");
+            }
+
+            foreach (var parameter in method.Parameters)
+            {
+                if (!parameter.Type.IsUnmanagedType)
+                {
+                    Report(context, location, $"NativeLinq delegate method parameter '{parameter.Name}' must be unmanaged.");
+                }
+            }
+
+            if (method.ReturnType.SpecialType != SpecialType.System_Void && !method.ReturnType.IsUnmanagedType)
+            {
+                Report(context, location, "NativeLinq delegate method return type must be unmanaged.");
+            }
+
+            foreach (var typeArgument in method.TypeArguments)
+            {
+                if (!typeArgument.IsUnmanagedType)
+                {
+                    Report(context, location, $"NativeLinq delegate generic argument '{typeArgument.ToDisplayString()}' must be unmanaged.");
+                }
+            }
+        }
+
+        private static void ValidatePropertyUse(SyntaxNodeAnalysisContext context, SyntaxNode location, IPropertySymbol property)
+        {
+            if (!property.IsStatic && property.ContainingType != null && !property.ContainingType.IsUnmanagedType)
+            {
+                Report(context, location, $"NativeLinq delegate bodies cannot use properties on managed type '{property.ContainingType.ToDisplayString()}'.");
+            }
+
+            if (!property.Type.IsUnmanagedType)
+            {
+                Report(context, location, $"NativeLinq delegate property '{property.Name}' must return an unmanaged type.");
             }
         }
 
@@ -160,12 +380,6 @@ namespace KrasCore.AccumulatorGenerator
                 return;
             }
 
-            if (captured.Length == 0)
-            {
-                Report(context, lambda, "NativeLinq delegate lambdas without captures must be static.");
-                return;
-            }
-
             foreach (var symbol in captured)
             {
                 if (symbol is ILocalSymbol local)
@@ -175,6 +389,17 @@ namespace KrasCore.AccumulatorGenerator
                 else if (symbol is IParameterSymbol parameter)
                 {
                     ValidateCapturedType(context, lambda, parameter.Name, parameter.Type);
+                }
+                else if (symbol is IFieldSymbol field)
+                {
+                    if (!field.IsStatic &&
+                        field.ContainingType != null &&
+                        !field.ContainingType.IsUnmanagedType)
+                    {
+                        Report(context, lambda, $"NativeLinq delegate capture '{field.Name}' is on managed type '{field.ContainingType.ToDisplayString()}'.");
+                    }
+
+                    ValidateCapturedType(context, lambda, field.Name, field.Type);
                 }
                 else
                 {
