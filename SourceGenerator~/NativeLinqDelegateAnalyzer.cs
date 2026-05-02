@@ -1,5 +1,6 @@
 namespace KrasCore.AccumulatorGenerator
 {
+    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
     using Microsoft.CodeAnalysis;
@@ -137,19 +138,15 @@ namespace KrasCore.AccumulatorGenerator
                 return;
             }
 
-            foreach (var parameter in delegateType.DelegateInvokeMethod.Parameters)
-            {
-                if (!parameter.Type.IsUnmanagedType)
-                {
-                    Report(context, lambda, $"NativeLinq delegate parameter '{parameter.Name}' must be unmanaged.");
-                }
-            }
-
-            var returnType = delegateType.DelegateInvokeMethod.ReturnType;
-            if (returnType.SpecialType != SpecialType.System_Void && !returnType.IsUnmanagedType)
-            {
-                Report(context, lambda, "NativeLinq delegate return type must be unmanaged.");
-            }
+            ValidateUnmanagedSignature(
+                context,
+                lambda,
+                delegateType.DelegateInvokeMethod.Parameters,
+                delegateType.DelegateInvokeMethod.ReturnType,
+                "NativeLinq delegate parameter '{0}' must be unmanaged.",
+                "NativeLinq delegate return type must be unmanaged.",
+                false,
+                null);
 
             if (lambda is ParenthesizedLambdaExpressionSyntax parenthesized)
             {
@@ -166,23 +163,15 @@ namespace KrasCore.AccumulatorGenerator
 
         private static void ValidateMethodSignature(SyntaxNodeAnalysisContext context, SyntaxNode location, IMethodSymbol method)
         {
-            foreach (var parameter in method.Parameters)
-            {
-                if (!parameter.Type.IsUnmanagedType)
-                {
-                    Report(context, location, $"NativeLinq delegate parameter '{parameter.Name}' must be unmanaged.");
-                }
-
-                if (parameter.RefKind == RefKind.Ref || parameter.RefKind == RefKind.Out)
-                {
-                    Report(context, location, "NativeLinq delegate method parameters cannot be ref or out parameters.");
-                }
-            }
-
-            if (method.ReturnType.SpecialType != SpecialType.System_Void && !method.ReturnType.IsUnmanagedType)
-            {
-                Report(context, location, "NativeLinq delegate return type must be unmanaged.");
-            }
+            ValidateUnmanagedSignature(
+                context,
+                location,
+                method.Parameters,
+                method.ReturnType,
+                "NativeLinq delegate parameter '{0}' must be unmanaged.",
+                "NativeLinq delegate return type must be unmanaged.",
+                true,
+                "NativeLinq delegate method parameters cannot be ref or out parameters.");
         }
 
         private static void ValidateMethodBody(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax methodDeclaration, IMethodSymbol method)
@@ -323,18 +312,15 @@ namespace KrasCore.AccumulatorGenerator
                 Report(context, location, $"NativeLinq delegate bodies cannot call instance methods on managed type '{method.ContainingType.ToDisplayString()}'.");
             }
 
-            foreach (var parameter in method.Parameters)
-            {
-                if (!parameter.Type.IsUnmanagedType)
-                {
-                    Report(context, location, $"NativeLinq delegate method parameter '{parameter.Name}' must be unmanaged.");
-                }
-            }
-
-            if (method.ReturnType.SpecialType != SpecialType.System_Void && !method.ReturnType.IsUnmanagedType)
-            {
-                Report(context, location, "NativeLinq delegate method return type must be unmanaged.");
-            }
+            ValidateUnmanagedSignature(
+                context,
+                location,
+                method.Parameters,
+                method.ReturnType,
+                "NativeLinq delegate method parameter '{0}' must be unmanaged.",
+                "NativeLinq delegate method return type must be unmanaged.",
+                false,
+                null);
 
             foreach (var typeArgument in method.TypeArguments)
             {
@@ -355,6 +341,36 @@ namespace KrasCore.AccumulatorGenerator
             if (!property.Type.IsUnmanagedType)
             {
                 Report(context, location, $"NativeLinq delegate property '{property.Name}' must return an unmanaged type.");
+            }
+        }
+
+        private static void ValidateUnmanagedSignature(
+            SyntaxNodeAnalysisContext context,
+            SyntaxNode location,
+            IEnumerable<IParameterSymbol> parameters,
+            ITypeSymbol returnType,
+            string parameterMessageFormat,
+            string returnMessage,
+            bool rejectRefOutParameters,
+            string? refOutMessage)
+        {
+            foreach (var parameter in parameters)
+            {
+                if (!parameter.Type.IsUnmanagedType)
+                {
+                    Report(context, location, string.Format(parameterMessageFormat, parameter.Name));
+                }
+
+                if (rejectRefOutParameters &&
+                    (parameter.RefKind == RefKind.Ref || parameter.RefKind == RefKind.Out))
+                {
+                    Report(context, location, refOutMessage!);
+                }
+            }
+
+            if (returnType.SpecialType != SpecialType.System_Void && !returnType.IsUnmanagedType)
+            {
+                Report(context, location, returnMessage);
             }
         }
 
