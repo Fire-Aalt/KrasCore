@@ -2,18 +2,26 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Collections;
 
 namespace KrasCore
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public sealed class NativeDelegateMethodAttribute : Attribute
     {
-        public NativeDelegateMethodAttribute(Type nativeDelegateInterfaceType)
+        public NativeDelegateMethodAttribute(params Type[] nativeDelegateInterfaceTypes)
         {
-            NativeDelegateInterfaceType = nativeDelegateInterfaceType;
+            if (nativeDelegateInterfaceTypes == null || nativeDelegateInterfaceTypes.Length == 0)
+            {
+                throw new ArgumentException("At least one native delegate interface type is required.", nameof(nativeDelegateInterfaceTypes));
+            }
+
+            NativeDelegateInterfaceTypes = nativeDelegateInterfaceTypes;
         }
 
-        public Type NativeDelegateInterfaceType { get; }
+        public Type NativeDelegateInterfaceType => NativeDelegateInterfaceTypes[0];
+
+        public Type[] NativeDelegateInterfaceTypes { get; }
     }
 
     public struct NativeDelegateWhereQuery<T, TEnumerator> : IEnumerator<T>
@@ -151,6 +159,38 @@ namespace KrasCore
             where TEnumerator : unmanaged, IEnumerator<TSource>
         {
             return Throw<TResult>();
+        }
+
+        [NativeDelegateMethod(typeof(ISelector<,>), typeof(IAggregator<,>))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static Query<KeyValuePair<TKey, TAccumulate>, NativeArray<KeyValuePair<TKey, TAccumulate>>.Enumerator>
+            AggregateBy<TSource, TKey, TAccumulate, TEnumerator>(
+                this Query<TSource, TEnumerator> source,
+                Func<TSource, TKey> keySelector,
+                TAccumulate seed,
+                Func<TAccumulate, TSource, TAccumulate> aggregator)
+            where TSource : unmanaged
+            where TKey : unmanaged, IEquatable<TKey>
+            where TAccumulate : unmanaged
+            where TEnumerator : unmanaged, IEnumerator<TSource>
+        {
+            return Throw<Query<KeyValuePair<TKey, TAccumulate>, NativeArray<KeyValuePair<TKey, TAccumulate>>.Enumerator>>();
+        }
+
+        [NativeDelegateMethod(typeof(ISelector<,>), typeof(ISelector<,>), typeof(IAggregator<,>))]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static Query<KeyValuePair<TKey, TAccumulate>, NativeArray<KeyValuePair<TKey, TAccumulate>>.Enumerator>
+            AggregateBy<TSource, TKey, TAccumulate, TEnumerator>(
+                this Query<TSource, TEnumerator> source,
+                Func<TSource, TKey> keySelector,
+                Func<TKey, TAccumulate> seedSelector,
+                Func<TAccumulate, TSource, TAccumulate> aggregator)
+            where TSource : unmanaged
+            where TKey : unmanaged, IEquatable<TKey>
+            where TAccumulate : unmanaged
+            where TEnumerator : unmanaged, IEnumerator<TSource>
+        {
+            return Throw<Query<KeyValuePair<TKey, TAccumulate>, NativeArray<KeyValuePair<TKey, TAccumulate>>.Enumerator>>();
         }
 
         private static T Throw<T>()

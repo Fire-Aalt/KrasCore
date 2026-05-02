@@ -39,17 +39,26 @@ namespace KrasCore.AccumulatorGenerator
                 return;
             }
 
-            var delegateArgument = invocation.ArgumentList.Arguments
-                .FirstOrDefault(argument => IsDelegateExpression(context, argument.Expression));
-            if (delegateArgument == null)
+            var delegateArguments = invocation.ArgumentList.Arguments
+                .Where(argument => IsDelegateExpression(context, argument.Expression))
+                .ToArray();
+            if (delegateArguments.Length == 0)
             {
                 Report(context, invocation, "NativeLinq delegate operators require a lambda or method group delegate argument.");
                 return;
             }
 
-            if (delegateArgument.Expression is not AnonymousFunctionExpressionSyntax lambda)
+            foreach (var delegateArgument in delegateArguments)
             {
-                ValidateMethodGroup(context, delegateArgument.Expression);
+                ValidateDelegateArgument(context, delegateArgument.Expression);
+            }
+        }
+
+        private static void ValidateDelegateArgument(SyntaxNodeAnalysisContext context, ExpressionSyntax expression)
+        {
+            if (expression is not AnonymousFunctionExpressionSyntax lambda)
+            {
+                ValidateMethodGroup(context, expression);
                 return;
             }
 

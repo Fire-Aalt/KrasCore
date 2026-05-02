@@ -89,13 +89,26 @@ namespace KrasCore.NativeLinq.CodeGen
             foreach (var attribute in method.CustomAttributes)
             {
                 if (attribute.AttributeType.FullName != NativeDelegateMethodAttributeTypeName ||
-                    attribute.ConstructorArguments.Count != 1 ||
-                    attribute.ConstructorArguments[0].Value is not TypeReference interfaceType)
+                    attribute.ConstructorArguments.Count != 1)
                 {
                     continue;
                 }
 
-                yield return interfaceType;
+                var argumentValue = attribute.ConstructorArguments[0].Value;
+                if (argumentValue is TypeReference interfaceType)
+                {
+                    yield return interfaceType;
+                }
+                else if (argumentValue is CustomAttributeArgument[] interfaceTypes)
+                {
+                    foreach (var interfaceTypeArgument in interfaceTypes)
+                    {
+                        if (interfaceTypeArgument.Value is TypeReference arrayInterfaceType)
+                        {
+                            yield return arrayInterfaceType;
+                        }
+                    }
+                }
             }
         }
 
@@ -134,24 +147,61 @@ namespace KrasCore.NativeLinq.CodeGen
                 return Array.Empty<Instruction>();
             }
 
-            var moved = new Instruction[trailingCount];
-            var current = callInstruction;
+            var moved = new List<Instruction>[trailingCount];
+            var current = PreviousMeaningful(callInstruction);
             for (var i = trailingCount - 1; i >= 0; i--)
             {
-                var producer = PreviousMeaningful(current);
-                if (producer == null || producer.OpCode.FlowControl != FlowControl.Next)
+                var producerStart = FindStackProducerStart(current, 1);
+                if (producerStart == null)
                 {
                     AddError(diagnostics, owner, callInstruction, "NativeLinq delegate weaving only supports simple trailing arguments after the delegate parameter.");
                     return null;
                 }
 
-                moved[i] = CloneSimpleInstruction(producer);
-                producer.OpCode = OpCodes.Nop;
-                producer.Operand = null;
-                current = producer;
+                var beforeProducer = PreviousMeaningful(producerStart);
+                moved[i] = new List<Instruction>();
+                foreach (var instruction in GetMeaningfulInstructionRange(producerStart, current))
+                {
+                    if (!CanMoveTrailingArgumentInstruction(instruction))
+                    {
+                        AddError(diagnostics, owner, callInstruction, "NativeLinq delegate weaving only supports simple trailing arguments after the delegate parameter.");
+                        return null;
+                    }
+
+                    moved[i].Add(CloneSimpleInstruction(instruction));
+                    instruction.OpCode = OpCodes.Nop;
+                    instruction.Operand = null;
+                }
+
+                current = beforeProducer;
             }
 
-            return moved;
+            return moved.SelectMany(argument => argument).ToArray();
+        }
+
+        private static IEnumerable<Instruction> GetMeaningfulInstructionRange(Instruction start, Instruction end)
+        {
+            var current = start;
+            while (current != null)
+            {
+                if (current.OpCode != OpCodes.Nop)
+                {
+                    yield return current;
+                }
+
+                if (current == end)
+                {
+                    yield break;
+                }
+
+                current = current.Next;
+            }
+        }
+
+        private static bool CanMoveTrailingArgumentInstruction(Instruction instruction)
+        {
+            return instruction.OpCode.FlowControl == FlowControl.Next ||
+                instruction.OpCode.FlowControl == FlowControl.Call;
         }
 
         private static Instruction CloneSimpleInstruction(Instruction instruction)
@@ -308,19 +358,47 @@ namespace KrasCore.NativeLinq.CodeGen
             target = null;
             var targetGenericArguments = new TypeReference[candidate.GenericParameters.Count];
 
+            foreach (var adapter in adapters)
+            {
+                if (!TryAssignAdapterGenericArgument(candidate.Parameters[adapter.Key].ParameterType, adapter.Value, targetGenericArguments))
+                {
+                    return false;
+                }
+            }
+
             for (var i = 0; i < candidate.GenericParameters.Count; i++)
             {
-                var genericParameter = candidate.GenericParameters[i];
-                var adapter = adapters.Values.FirstOrDefault(value => GenericParameterAcceptsInterface(genericParameter, value.InterfaceType));
-                if (adapter != null)
+                if (targetGenericArguments[i] != null)
                 {
-                    targetGenericArguments[i] = adapter.AdapterType;
+                    continue;
+                }
+
+                var genericParameter = candidate.GenericParameters[i];
+                var matchingAdapters = adapters.Values
+                    .Where(value => GenericParameterAcceptsInterface(genericParameter, value.InterfaceType))
+                    .ToArray();
+                if (matchingAdapters.Length == 1)
+                {
+                    targetGenericArguments[i] = matchingAdapters[0].AdapterType;
                 }
                 else if (placeholderGenericArguments.TryGetValue(genericParameter.Name, out var argument))
                 {
                     targetGenericArguments[i] = argument;
                 }
                 else
+                {
+                    return false;
+                }
+            }
+
+            foreach (var adapter in adapters)
+            {
+                if (!AdapterSatisfiesCandidateParameter(
+                    module,
+                    candidate.Parameters[adapter.Key].ParameterType,
+                    candidate,
+                    targetGenericArguments,
+                    adapter.Value))
                 {
                     return false;
                 }
@@ -355,6 +433,74 @@ namespace KrasCore.NativeLinq.CodeGen
                 genericMethod,
                 SubstituteMethodGenericArguments(module, candidate.ReturnType, candidate, targetGenericArguments));
             return true;
+        }
+
+        private static bool TryAssignAdapterGenericArgument(
+            TypeReference parameterType,
+            AdapterInfo adapter,
+            TypeReference[] targetGenericArguments)
+        {
+            if (parameterType is GenericParameter genericParameter &&
+                genericParameter.Type == GenericParameterType.Method)
+            {
+                if (!GenericParameterAcceptsInterface(genericParameter, adapter.InterfaceType))
+                {
+                    return false;
+                }
+
+                var existing = targetGenericArguments[genericParameter.Position];
+                if (existing != null && !TypeReferencesMatch(existing, adapter.AdapterType))
+                {
+                    return false;
+                }
+
+                targetGenericArguments[genericParameter.Position] = adapter.AdapterType;
+                return true;
+            }
+
+            if (parameterType is GenericInstanceType genericInstance)
+            {
+                foreach (var argument in genericInstance.GenericArguments)
+                {
+                    if (TryAssignAdapterGenericArgument(argument, adapter, targetGenericArguments))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool AdapterSatisfiesCandidateParameter(
+            ModuleDefinition module,
+            TypeReference parameterType,
+            MethodDefinition candidate,
+            IReadOnlyList<TypeReference> targetGenericArguments,
+            AdapterInfo adapter)
+        {
+            if (parameterType is GenericParameter genericParameter &&
+                genericParameter.Type == GenericParameterType.Method)
+            {
+                var candidateGenericParameter = candidate.GenericParameters[genericParameter.Position];
+                return candidateGenericParameter.Constraints.Any(constraint =>
+                    TypeReferencesMatch(
+                        SubstituteMethodGenericArguments(module, constraint.ConstraintType, candidate, targetGenericArguments),
+                        adapter.InterfaceType));
+            }
+
+            if (parameterType is GenericInstanceType genericInstance)
+            {
+                foreach (var argument in genericInstance.GenericArguments)
+                {
+                    if (AdapterSatisfiesCandidateParameter(module, argument, candidate, targetGenericArguments, adapter))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static bool TypeReferencesMatch(TypeReference left, TypeReference right)
