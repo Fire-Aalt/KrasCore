@@ -84,8 +84,9 @@ namespace KrasCore.NativeLinq.CodeGen
             _rewrittenCaptureLocals.Clear();
             var instructions = method.Body.Instructions;
 
-            foreach (var instruction in instructions)
+            for (var i = 0; i < instructions.Count; i++)
             {
+                var instruction = instructions[i];
                 if (instruction.OpCode != OpCodes.Call || instruction.Operand is not MethodReference call)
                 {
                     continue;

@@ -52,7 +52,6 @@ namespace KrasCore.Tests
             {
                 var min = 1;
                 var factor = 3;
-                var offset = 2;
                 
                 var result = Input
                     .AsQuery()
