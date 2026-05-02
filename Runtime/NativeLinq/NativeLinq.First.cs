@@ -55,9 +55,33 @@ namespace KrasCore
                     return value;
                 }
             }
-
+        
             enumerator.Dispose();
             return default;
         }
     }
+    
+    // public partial class NativeLinqExtensions
+    // {
+    //     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    //     public static T FirstOrDefault<T, TEnumerator, TPredicate>(this Query<T, TEnumerator> source, TPredicate predicate)
+    //         where T : unmanaged
+    //         where TEnumerator : unmanaged, IEnumerator<T>
+    //         where TPredicate : unmanaged, IPredicate<T>
+    //     {
+    //         var enumerator = source.GetEnumerator();
+    //         while (enumerator.MoveNext())
+    //         {
+    //             var value = enumerator.Current;
+    //             if (predicate.Match(in value))
+    //             {
+    //                 enumerator.Dispose();
+    //                 return value;
+    //             }
+    //         }
+    //
+    //         enumerator.Dispose();
+    //         return default;
+    //     }
+    // }
 }

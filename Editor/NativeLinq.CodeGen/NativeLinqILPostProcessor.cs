@@ -13,12 +13,7 @@ namespace KrasCore.NativeLinq.CodeGen
     internal sealed class NativeLinqILPostProcessor : ILPostProcessor
     {
         private const string KrasCoreAssemblyName = "KrasCore";
-        private const string DelegateExtensionsTypeName = "KrasCore.NativeLinqDelegateExtensions";
-        private const string QueryTypeName = "KrasCore.Query`2";
-        private const string WhereQueryTypeName = "KrasCore.WhereQuery`3";
-        private const string SelectQueryTypeName = "KrasCore.SelectQuery`4";
-        private const string PredicateInterfaceTypeName = "KrasCore.IPredicate`1";
-        private const string SelectorInterfaceTypeName = "KrasCore.ISelector`2";
+        private const string NativeDelegateMethodAttributeTypeName = "KrasCore.NativeDelegateMethodAttribute";
 
         private int adapterIndex;
         private readonly Dictionary<string, TypeReference> rewrittenEnumeratorTypes = new Dictionary<string, TypeReference>();
@@ -87,25 +82,499 @@ namespace KrasCore.NativeLinq.CodeGen
             return modified;
         }
 
+        private bool TryRewriteNativeDelegateCall(
+            MethodDefinition owner,
+            Instruction callInstruction,
+            GenericInstanceMethod placeholderCall,
+            List<DiagnosticMessage> diagnostics)
+        {
+            var placeholder = placeholderCall.Resolve();
+            if (placeholder == null)
+            {
+                return false;
+            }
+
+            var interfaceDefinitions = GetNativeDelegateInterfaceDefinitions(placeholder).ToArray();
+            if (interfaceDefinitions.Length == 0)
+            {
+                return false;
+            }
+
+            var module = owner.Module;
+            var delegateParameters = placeholder.Parameters
+                .Where(parameter => IsDelegateType(CloseMethodGenericType(module, parameter.ParameterType, placeholderCall)))
+                .ToArray();
+
+            if (delegateParameters.Length != interfaceDefinitions.Length)
+            {
+                AddError(diagnostics, owner, $"NativeLinq delegate method '{placeholder.FullName}' has {interfaceDefinitions.Length} delegate attributes but {delegateParameters.Length} delegate parameters.");
+                return false;
+            }
+
+            var adapters = new Dictionary<int, AdapterInfo>();
+            for (var i = delegateParameters.Length - 1; i >= 0; i--)
+            {
+                var parameter = delegateParameters[i];
+                var trailingArguments = MoveTrailingArgumentsAfterDelegate(owner, callInstruction, placeholder, parameter, diagnostics);
+                if (trailingArguments == null)
+                {
+                    return false;
+                }
+
+                var delegateType = CloseMethodGenericType(module, parameter.ParameterType, placeholderCall);
+                var signature = ResolveDelegateSignature(module, delegateType, diagnostics, owner);
+                if (signature == null)
+                {
+                    return false;
+                }
+
+                var interfaceType = CreateNativeDelegateInterfaceType(module, interfaceDefinitions[i], signature);
+                var adapter = CreateAdapter(owner, callInstruction, signature, interfaceType, diagnostics);
+                if (adapter == null)
+                {
+                    return false;
+                }
+
+                foreach (var trailingArgument in trailingArguments)
+                {
+                    owner.Body.GetILProcessor().InsertBefore(callInstruction, trailingArgument);
+                }
+
+                adapters.Add(parameter.Index, adapter);
+            }
+
+            var target = FindTargetMethod(module, placeholderCall, placeholder, adapters, diagnostics, owner);
+            if (target == null)
+            {
+                return false;
+            }
+
+            callInstruction.Operand = target.Call;
+            MapRewrittenEnumerator(
+                CloseMethodGenericType(module, placeholderCall.ReturnType, placeholderCall),
+                target.ReturnType);
+
+            return true;
+        }
+
+        private static IEnumerable<TypeReference> GetNativeDelegateInterfaceDefinitions(MethodDefinition method)
+        {
+            foreach (var attribute in method.CustomAttributes)
+            {
+                if (attribute.AttributeType.FullName != NativeDelegateMethodAttributeTypeName ||
+                    attribute.ConstructorArguments.Count != 1 ||
+                    attribute.ConstructorArguments[0].Value is not TypeReference interfaceType)
+                {
+                    continue;
+                }
+
+                yield return interfaceType;
+            }
+        }
+
+        private static bool HasNativeDelegateMethodAttribute(MethodDefinition method)
+        {
+            return method.CustomAttributes.Any(attribute =>
+                attribute.AttributeType.FullName == NativeDelegateMethodAttributeTypeName);
+        }
+
+        private static bool IsDelegateType(TypeReference type)
+        {
+            var definition = type.Resolve();
+            while (definition != null)
+            {
+                if (definition.FullName == "System.MulticastDelegate")
+                {
+                    return true;
+                }
+
+                definition = definition.BaseType?.Resolve();
+            }
+
+            return false;
+        }
+
+        private static IReadOnlyList<Instruction> MoveTrailingArgumentsAfterDelegate(
+            MethodDefinition owner,
+            Instruction callInstruction,
+            MethodDefinition placeholder,
+            ParameterDefinition delegateParameter,
+            List<DiagnosticMessage> diagnostics)
+        {
+            var trailingCount = placeholder.Parameters.Count - delegateParameter.Index - 1;
+            if (trailingCount == 0)
+            {
+                return Array.Empty<Instruction>();
+            }
+
+            var moved = new Instruction[trailingCount];
+            var current = callInstruction;
+            for (var i = trailingCount - 1; i >= 0; i--)
+            {
+                var producer = PreviousMeaningful(current);
+                if (producer == null || producer.OpCode.FlowControl != FlowControl.Next)
+                {
+                    AddError(diagnostics, owner, "NativeLinq delegate weaving only supports simple trailing arguments after the delegate parameter.");
+                    return null;
+                }
+
+                moved[i] = CloneSimpleInstruction(producer);
+                producer.OpCode = OpCodes.Nop;
+                producer.Operand = null;
+                current = producer;
+            }
+
+            return moved;
+        }
+
+        private static Instruction CloneSimpleInstruction(Instruction instruction)
+        {
+            switch (instruction.Operand)
+            {
+                case null:
+                    return Instruction.Create(instruction.OpCode);
+                case sbyte value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case byte value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case int value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case long value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case float value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case double value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case string value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case TypeReference value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case MethodReference value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case FieldReference value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case ParameterDefinition value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case VariableDefinition value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case Instruction value:
+                    return Instruction.Create(instruction.OpCode, value);
+                case Instruction[] value:
+                    return Instruction.Create(instruction.OpCode, value);
+                default:
+                    throw new InvalidOperationException($"Unsupported instruction operand '{instruction.Operand.GetType().FullName}'.");
+            }
+        }
+
+        private DelegateSignature ResolveDelegateSignature(
+            ModuleDefinition module,
+            TypeReference delegateType,
+            List<DiagnosticMessage> diagnostics,
+            MethodDefinition owner)
+        {
+            var delegateDefinition = delegateType.Resolve();
+            var invoke = delegateDefinition?.Methods.FirstOrDefault(method => method.Name == "Invoke");
+            if (invoke == null)
+            {
+                AddError(diagnostics, owner, $"NativeLinq delegate type '{delegateType.FullName}' does not have an Invoke method.");
+                return null;
+            }
+
+            return new DelegateSignature(
+                invoke.Parameters
+                    .Select(parameter => CloseDelegateType(module, parameter.ParameterType, delegateType))
+                    .ToArray(),
+                CloseDelegateType(module, invoke.ReturnType, delegateType));
+        }
+
+        private static TypeReference CloseDelegateType(ModuleDefinition module, TypeReference type, TypeReference delegateType)
+        {
+            var delegateInstance = delegateType as GenericInstanceType;
+            switch (type)
+            {
+                case GenericParameter genericParameter when genericParameter.Type == GenericParameterType.Type && delegateInstance != null:
+                    return module.ImportReference(delegateInstance.GenericArguments[genericParameter.Position]);
+                case GenericInstanceType genericInstance:
+                    var closedInstance = new GenericInstanceType(module.ImportReference(genericInstance.ElementType));
+                    foreach (var argument in genericInstance.GenericArguments)
+                    {
+                        closedInstance.GenericArguments.Add(CloseDelegateType(module, argument, delegateType));
+                    }
+
+                    return closedInstance;
+                case ByReferenceType byReference:
+                    return new ByReferenceType(CloseDelegateType(module, byReference.ElementType, delegateType));
+                case RequiredModifierType requiredModifier:
+                    return new RequiredModifierType(
+                        module.ImportReference(requiredModifier.ModifierType),
+                        CloseDelegateType(module, requiredModifier.ElementType, delegateType));
+                case OptionalModifierType optionalModifier:
+                    return new OptionalModifierType(
+                        module.ImportReference(optionalModifier.ModifierType),
+                        CloseDelegateType(module, optionalModifier.ElementType, delegateType));
+                default:
+                    return module.ImportReference(type);
+            }
+        }
+
+        private static TypeReference CreateNativeDelegateInterfaceType(
+            ModuleDefinition module,
+            TypeReference interfaceDefinition,
+            DelegateSignature signature)
+        {
+            var importedDefinition = module.ImportReference(interfaceDefinition);
+            var genericParameterCount = importedDefinition.GenericParameters.Count;
+            var arityMarker = importedDefinition.Name.LastIndexOf('`');
+            if (genericParameterCount == 0 &&
+                arityMarker >= 0 &&
+                int.TryParse(importedDefinition.Name.Substring(arityMarker + 1), out var arity))
+            {
+                genericParameterCount = arity;
+            }
+
+            if (genericParameterCount == 0)
+            {
+                return importedDefinition;
+            }
+
+            var interfaceType = new GenericInstanceType(importedDefinition);
+            foreach (var parameterType in signature.ParameterTypes)
+            {
+                interfaceType.GenericArguments.Add(module.ImportReference(parameterType.GetElementType()));
+            }
+
+            if (interfaceType.GenericArguments.Count < genericParameterCount &&
+                signature.ReturnType.MetadataType != MetadataType.Void)
+            {
+                interfaceType.GenericArguments.Add(module.ImportReference(signature.ReturnType));
+            }
+
+            return interfaceType;
+        }
+
+        private TargetMethodInfo FindTargetMethod(
+            ModuleDefinition module,
+            GenericInstanceMethod placeholderCall,
+            MethodDefinition placeholder,
+            IReadOnlyDictionary<int, AdapterInfo> adapters,
+            List<DiagnosticMessage> diagnostics,
+            MethodDefinition owner)
+        {
+            var placeholderGenericArguments = new Dictionary<string, TypeReference>();
+            for (var i = 0; i < placeholder.GenericParameters.Count; i++)
+            {
+                placeholderGenericArguments[placeholder.GenericParameters[i].Name] =
+                    ResolveRewrittenType(module, placeholderCall.GenericArguments[i]);
+            }
+
+            var candidates = placeholder.DeclaringType.Resolve().Methods
+                .Where(method =>
+                    method.Name == placeholder.Name &&
+                    !HasNativeDelegateMethodAttribute(method) &&
+                    method.Parameters.Count == placeholder.Parameters.Count)
+                .ToArray();
+
+            foreach (var candidate in candidates)
+            {
+                if (TryCreateTargetMethod(module, placeholderCall, placeholder, candidate, placeholderGenericArguments, adapters, out var target))
+                {
+                    return target;
+                }
+            }
+
+            AddError(diagnostics, owner, $"NativeLinq delegate weaving could not find unmanaged overload for '{placeholder.FullName}'.");
+            return null;
+        }
+
+        private bool TryCreateTargetMethod(
+            ModuleDefinition module,
+            GenericInstanceMethod placeholderCall,
+            MethodDefinition placeholder,
+            MethodDefinition candidate,
+            IReadOnlyDictionary<string, TypeReference> placeholderGenericArguments,
+            IReadOnlyDictionary<int, AdapterInfo> adapters,
+            out TargetMethodInfo target)
+        {
+            target = null;
+            var targetGenericArguments = new TypeReference[candidate.GenericParameters.Count];
+
+            for (var i = 0; i < candidate.GenericParameters.Count; i++)
+            {
+                var genericParameter = candidate.GenericParameters[i];
+                var adapter = adapters.Values.FirstOrDefault(value => GenericParameterAcceptsInterface(genericParameter, value.InterfaceType));
+                if (adapter != null)
+                {
+                    targetGenericArguments[i] = adapter.AdapterType;
+                }
+                else if (placeholderGenericArguments.TryGetValue(genericParameter.Name, out var argument))
+                {
+                    targetGenericArguments[i] = argument;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            for (var i = 0; i < candidate.Parameters.Count; i++)
+            {
+                if (adapters.ContainsKey(i))
+                {
+                    continue;
+                }
+
+                var parameterType = SubstituteMethodGenericArguments(module, candidate.Parameters[i].ParameterType, candidate, targetGenericArguments);
+                var placeholderParameterType = ResolveRewrittenType(
+                    module,
+                    CloseMethodGenericType(module, placeholder.Parameters[i].ParameterType, placeholderCall));
+                if (parameterType.ContainsGenericParameter ||
+                    !TypeReferencesMatch(parameterType, placeholderParameterType))
+                {
+                    return false;
+                }
+            }
+
+            var methodReference = CreateMethodReference(module, candidate);
+            var genericMethod = new GenericInstanceMethod(methodReference);
+            foreach (var argument in targetGenericArguments)
+            {
+                genericMethod.GenericArguments.Add(module.ImportReference(argument));
+            }
+
+            target = new TargetMethodInfo(
+                genericMethod,
+                SubstituteMethodGenericArguments(module, candidate.ReturnType, candidate, targetGenericArguments));
+            return true;
+        }
+
+        private static bool TypeReferencesMatch(TypeReference left, TypeReference right)
+        {
+            if (left is GenericInstanceType leftGeneric && right is GenericInstanceType rightGeneric)
+            {
+                return leftGeneric.ElementType.FullName == rightGeneric.ElementType.FullName &&
+                    leftGeneric.GenericArguments.Count == rightGeneric.GenericArguments.Count &&
+                    leftGeneric.GenericArguments.Zip(rightGeneric.GenericArguments, TypeReferencesMatch).All(match => match);
+            }
+
+            return left.FullName == right.FullName;
+        }
+
+        private static bool GenericParameterAcceptsInterface(GenericParameter genericParameter, TypeReference interfaceType)
+        {
+            return genericParameter.Constraints.Any(constraint =>
+                TypeDefinitionsMatch(constraint.ConstraintType, interfaceType));
+        }
+
+        private static bool TypeDefinitionsMatch(TypeReference left, TypeReference right)
+        {
+            var leftElement = left.GetElementType();
+            var rightElement = right.GetElementType();
+            return leftElement.FullName == rightElement.FullName;
+        }
+
+        private static MethodReference CreateMethodReference(ModuleDefinition module, MethodDefinition methodDefinition)
+        {
+            var methodReference = new MethodReference(
+                methodDefinition.Name,
+                module.TypeSystem.Void,
+                module.ImportReference(methodDefinition.DeclaringType))
+            {
+                HasThis = methodDefinition.HasThis,
+                ExplicitThis = methodDefinition.ExplicitThis,
+                CallingConvention = methodDefinition.CallingConvention,
+            };
+
+            foreach (var genericParameter in methodDefinition.GenericParameters)
+            {
+                methodReference.GenericParameters.Add(new GenericParameter(genericParameter.Name, methodReference));
+            }
+
+            methodReference.ReturnType = ImportMethodReferenceSignatureType(module, methodDefinition.ReturnType, methodReference);
+            foreach (var parameter in methodDefinition.Parameters)
+            {
+                methodReference.Parameters.Add(new ParameterDefinition(
+                    ImportMethodReferenceSignatureType(module, parameter.ParameterType, methodReference)));
+            }
+
+            return methodReference;
+        }
+
+        private static TypeReference ImportMethodReferenceSignatureType(
+            ModuleDefinition module,
+            TypeReference type,
+            MethodReference methodGenericOwner)
+        {
+            switch (type)
+            {
+                case GenericParameter genericParameter when genericParameter.Type == GenericParameterType.Method:
+                    return methodGenericOwner.GenericParameters[genericParameter.Position];
+                case GenericInstanceType genericInstance:
+                    var importedInstance = new GenericInstanceType(module.ImportReference(genericInstance.ElementType));
+                    foreach (var argument in genericInstance.GenericArguments)
+                    {
+                        importedInstance.GenericArguments.Add(ImportMethodReferenceSignatureType(module, argument, methodGenericOwner));
+                    }
+
+                    return importedInstance;
+                case ByReferenceType byReference:
+                    return new ByReferenceType(ImportMethodReferenceSignatureType(module, byReference.ElementType, methodGenericOwner));
+                case RequiredModifierType requiredModifier:
+                    return new RequiredModifierType(
+                        module.ImportReference(requiredModifier.ModifierType),
+                        ImportMethodReferenceSignatureType(module, requiredModifier.ElementType, methodGenericOwner));
+                case OptionalModifierType optionalModifier:
+                    return new OptionalModifierType(
+                        module.ImportReference(optionalModifier.ModifierType),
+                        ImportMethodReferenceSignatureType(module, optionalModifier.ElementType, methodGenericOwner));
+                default:
+                    return module.ImportReference(type);
+            }
+        }
+
+        private static TypeReference SubstituteMethodGenericArguments(
+            ModuleDefinition module,
+            TypeReference type,
+            MethodDefinition method,
+            IReadOnlyList<TypeReference> genericArguments)
+        {
+            switch (type)
+            {
+                case GenericParameter genericParameter when genericParameter.Type == GenericParameterType.Method:
+                    return module.ImportReference(genericArguments[genericParameter.Position]);
+                case GenericInstanceType genericInstance:
+                    var closedInstance = new GenericInstanceType(module.ImportReference(genericInstance.ElementType));
+                    foreach (var argument in genericInstance.GenericArguments)
+                    {
+                        closedInstance.GenericArguments.Add(SubstituteMethodGenericArguments(module, argument, method, genericArguments));
+                    }
+
+                    return closedInstance;
+                case ByReferenceType byReference:
+                    return new ByReferenceType(SubstituteMethodGenericArguments(module, byReference.ElementType, method, genericArguments));
+                case RequiredModifierType requiredModifier:
+                    return new RequiredModifierType(
+                        module.ImportReference(requiredModifier.ModifierType),
+                        SubstituteMethodGenericArguments(module, requiredModifier.ElementType, method, genericArguments));
+                case OptionalModifierType optionalModifier:
+                    return new OptionalModifierType(
+                        module.ImportReference(optionalModifier.ModifierType),
+                        SubstituteMethodGenericArguments(module, optionalModifier.ElementType, method, genericArguments));
+                default:
+                    return module.ImportReference(type);
+            }
+        }
+
         private bool ProcessMethod(MethodDefinition method, List<DiagnosticMessage> diagnostics)
         {
             var modified = false;
+            rewrittenEnumeratorTypes.Clear();
             var instructions = method.Body.Instructions;
 
             for (var i = 0; i < instructions.Count; i++)
             {
                 var instruction = instructions[i];
-                if (instruction.OpCode != OpCodes.Call || instruction.Operand is not MethodReference call ||
-                    call.DeclaringType.FullName != DelegateExtensionsTypeName)
+                if (instruction.OpCode != OpCodes.Call || instruction.Operand is not MethodReference call)
                 {
-                    continue;
-                }
-
-                if (call.Name == "WithDelegates")
-                {
-                    instruction.OpCode = OpCodes.Nop;
-                    instruction.Operand = null;
-                    modified = true;
                     continue;
                 }
 
@@ -114,18 +583,7 @@ namespace KrasCore.NativeLinq.CodeGen
                     continue;
                 }
 
-                if (call.Name == "Where")
-                {
-                    modified |= RewriteWhere(method, instruction, genericCall, diagnostics);
-                }
-                else if (call.Name == "Select")
-                {
-                    modified |= RewriteSelect(method, instruction, genericCall, diagnostics);
-                }
-                else if (call.Name == "Sum")
-                {
-                    modified |= RewriteSum(method, instruction, genericCall, diagnostics);
-                }
+                modified |= TryRewriteNativeDelegateCall(method, instruction, genericCall, diagnostics);
             }
 
             if (modified)
@@ -134,147 +592,6 @@ namespace KrasCore.NativeLinq.CodeGen
             }
 
             return modified;
-        }
-
-        private bool RewriteWhere(
-            MethodDefinition owner,
-            Instruction callInstruction,
-            GenericInstanceMethod placeholderCall,
-            List<DiagnosticMessage> diagnostics)
-        {
-            var module = owner.Module;
-            var sourceType = module.ImportReference(placeholderCall.GenericArguments[0]);
-            var enumeratorType = ResolveRewrittenEnumerator(module, placeholderCall.GenericArguments[1]);
-            var adapter = CreateAdapter(owner, callInstruction, sourceType, module.TypeSystem.Boolean, true, diagnostics);
-            if (adapter == null)
-            {
-                return false;
-            }
-
-            var realWhereQueryType = CreateWhereQueryType(module, sourceType, enumeratorType, adapter.AdapterType);
-            MapRewrittenEnumerator(CloseMethodGenericType(module, placeholderCall.ReturnType, placeholderCall), realWhereQueryType);
-            PrepareValueTypeInstanceCall(
-                owner,
-                callInstruction,
-                CreateQueryType(module, sourceType, enumeratorType),
-                new[] { adapter.AdapterType });
-            callInstruction.Operand = CreateQueryMethodCall(
-                module,
-                "Where",
-                sourceType,
-                enumeratorType,
-                new[] { adapter.AdapterType });
-
-            return true;
-        }
-
-        private bool RewriteSelect(
-            MethodDefinition owner,
-            Instruction callInstruction,
-            GenericInstanceMethod placeholderCall,
-            List<DiagnosticMessage> diagnostics)
-        {
-            var module = owner.Module;
-            var sourceType = module.ImportReference(placeholderCall.GenericArguments[0]);
-            var resultType = module.ImportReference(placeholderCall.GenericArguments[1]);
-            var enumeratorType = ResolveRewrittenEnumerator(module, placeholderCall.GenericArguments[2]);
-            var adapter = CreateAdapter(owner, callInstruction, sourceType, resultType, false, diagnostics);
-            if (adapter == null)
-            {
-                return false;
-            }
-
-            var realSelectQueryType = CreateSelectQueryType(module, sourceType, resultType, enumeratorType, adapter.AdapterType);
-            MapRewrittenEnumerator(CloseMethodGenericType(module, placeholderCall.ReturnType, placeholderCall), realSelectQueryType);
-            PrepareValueTypeInstanceCall(
-                owner,
-                callInstruction,
-                CreateQueryType(module, sourceType, enumeratorType),
-                new[] { adapter.AdapterType });
-            callInstruction.Operand = CreateQueryMethodCall(
-                module,
-                "Select",
-                sourceType,
-                enumeratorType,
-                new[] { resultType, adapter.AdapterType });
-
-            return true;
-        }
-
-        private bool RewriteSum(
-            MethodDefinition owner,
-            Instruction callInstruction,
-            GenericInstanceMethod placeholderCall,
-            List<DiagnosticMessage> diagnostics)
-        {
-            var module = owner.Module;
-            var sourceType = module.ImportReference(placeholderCall.GenericArguments[0]);
-            var resultType = module.ImportReference(placeholderCall.GenericArguments[1]);
-            var enumeratorType = ResolveRewrittenEnumerator(module, placeholderCall.GenericArguments[2]);
-            var adapter = CreateAdapter(owner, callInstruction, sourceType, resultType, false, diagnostics);
-            if (adapter == null)
-            {
-                return false;
-            }
-
-            var accumulatorType = ResolveAccumulatorType(module, resultType);
-            if (accumulatorType == null)
-            {
-                AddError(diagnostics, owner, $"NativeLinq delegate Sum does not have an accumulator for '{resultType.FullName}'.");
-                return false;
-            }
-
-            var accumulatorLocal = new VariableDefinition(accumulatorType);
-            owner.Body.Variables.Add(accumulatorLocal);
-            owner.Body.InitLocals = true;
-
-            var il = owner.Body.GetILProcessor();
-            il.InsertBefore(callInstruction, il.Create(OpCodes.Ldloca, accumulatorLocal));
-            il.InsertBefore(callInstruction, il.Create(OpCodes.Initobj, accumulatorType));
-            il.InsertBefore(callInstruction, il.Create(OpCodes.Ldloc, accumulatorLocal));
-
-            PrepareValueTypeInstanceCall(
-                owner,
-                callInstruction,
-                CreateQueryType(module, sourceType, enumeratorType),
-                new[] { adapter.AdapterType, accumulatorType });
-            callInstruction.Operand = CreateQueryMethodCall(
-                module,
-                "Sum",
-                sourceType,
-                enumeratorType,
-                new[] { resultType, adapter.AdapterType, accumulatorType });
-
-            return true;
-        }
-
-        private static void PrepareValueTypeInstanceCall(
-            MethodDefinition owner,
-            Instruction callInstruction,
-            TypeReference receiverType,
-            IReadOnlyList<TypeReference> argumentTypes)
-        {
-            var il = owner.Body.GetILProcessor();
-            var argumentLocals = new VariableDefinition[argumentTypes.Count];
-            for (var i = argumentTypes.Count - 1; i >= 0; i--)
-            {
-                var local = new VariableDefinition(owner.Module.ImportReference(argumentTypes[i]));
-                owner.Body.Variables.Add(local);
-                argumentLocals[i] = local;
-                il.InsertBefore(callInstruction, il.Create(OpCodes.Stloc, local));
-            }
-
-            var receiverLocal = new VariableDefinition(owner.Module.ImportReference(receiverType));
-            owner.Body.Variables.Add(receiverLocal);
-            owner.Body.InitLocals = true;
-
-            il.InsertBefore(callInstruction, il.Create(OpCodes.Stloc, receiverLocal));
-            il.InsertBefore(callInstruction, il.Create(OpCodes.Ldloca, receiverLocal));
-
-            foreach (var local in argumentLocals)
-            {
-                il.InsertBefore(callInstruction, il.Create(OpCodes.Ldloc, local));
-            }
         }
 
         private static TypeReference CloseMethodGenericType(
@@ -311,29 +628,45 @@ namespace KrasCore.NativeLinq.CodeGen
             }
         }
 
-        private void MapRewrittenEnumerator(TypeReference placeholderReturnType, TypeReference realEnumeratorType)
+        private void MapRewrittenEnumerator(TypeReference placeholderReturnType, TypeReference realReturnType)
         {
-            if (placeholderReturnType is not GenericInstanceType queryType || queryType.GenericArguments.Count != 2)
+            if (placeholderReturnType is not GenericInstanceType placeholderQueryType ||
+                placeholderQueryType.GenericArguments.Count != 2 ||
+                realReturnType is not GenericInstanceType realQueryType ||
+                realQueryType.GenericArguments.Count != 2)
             {
                 return;
             }
 
-            rewrittenEnumeratorTypes[queryType.GenericArguments[1].FullName] = realEnumeratorType;
+            rewrittenEnumeratorTypes[placeholderQueryType.GenericArguments[1].FullName] = realQueryType.GenericArguments[1];
         }
 
-        private TypeReference ResolveRewrittenEnumerator(ModuleDefinition module, TypeReference enumeratorType)
+        private TypeReference ResolveRewrittenType(ModuleDefinition module, TypeReference type)
         {
-            return rewrittenEnumeratorTypes.TryGetValue(enumeratorType.FullName, out var rewritten)
-                ? module.ImportReference(rewritten)
-                : module.ImportReference(enumeratorType);
+            if (rewrittenEnumeratorTypes.TryGetValue(type.FullName, out var rewritten))
+            {
+                return module.ImportReference(rewritten);
+            }
+
+            if (type is GenericInstanceType genericInstance)
+            {
+                var closed = new GenericInstanceType(module.ImportReference(genericInstance.ElementType));
+                foreach (var argument in genericInstance.GenericArguments)
+                {
+                    closed.GenericArguments.Add(ResolveRewrittenType(module, argument));
+                }
+
+                return closed;
+            }
+
+            return module.ImportReference(type);
         }
 
         private AdapterInfo CreateAdapter(
             MethodDefinition owner,
             Instruction callInstruction,
-            TypeReference sourceType,
-            TypeReference resultType,
-            bool predicate,
+            DelegateSignature signature,
+            TypeReference interfaceType,
             List<DiagnosticMessage> diagnostics)
         {
             var instructionsToRemove = new List<Instruction>();
@@ -369,6 +702,15 @@ namespace KrasCore.NativeLinq.CodeGen
 
             var targetInstruction = lambda.IsStatic ? null : PreviousMeaningful(functionInstruction);
             var targetType = lambda.IsStatic ? null : lambda.DeclaringType;
+            if (lambda.IsStatic)
+            {
+                var staticTargetInstruction = PreviousMeaningful(functionInstruction);
+                if (staticTargetInstruction?.OpCode == OpCodes.Ldnull)
+                {
+                    instructionsToRemove.Add(staticTargetInstruction);
+                }
+            }
+
             var capturedFields = GetCapturedFields(lambda, diagnostics, owner);
             if (capturedFields == null)
             {
@@ -385,10 +727,6 @@ namespace KrasCore.NativeLinq.CodeGen
             owner.DeclaringType.NestedTypes.Add(adapterType);
 
             var adapterTypeReference = module.ImportReference(adapterType);
-            var interfaceType = predicate
-                ? CreatePredicateInterfaceType(module, sourceType)
-                : CreateSelectorInterfaceType(module, sourceType, resultType);
-
             adapterType.Interfaces.Add(new InterfaceImplementation(interfaceType));
 
             var fieldMap = new Dictionary<FieldDefinition, FieldDefinition>();
@@ -401,7 +739,7 @@ namespace KrasCore.NativeLinq.CodeGen
 
             var ctor = CreateAdapterConstructor(module, adapterType, targetType, fieldMap);
             adapterType.Methods.Add(ctor);
-            adapterType.Methods.Add(CloneLambdaMethod(module, adapterType, lambda, sourceType, resultType, predicate, fieldMap));
+            adapterType.Methods.Add(CloneLambdaMethod(module, adapterType, lambda, signature, interfaceType, fieldMap));
 
             foreach (var instruction in instructionsToRemove)
             {
@@ -419,7 +757,7 @@ namespace KrasCore.NativeLinq.CodeGen
                 targetInstruction.Operand = null;
             }
 
-            return new AdapterInfo(adapterTypeReference);
+            return new AdapterInfo(adapterTypeReference, interfaceType);
         }
 
         private static Instruction TryGetCachedStaticLambdaCtor(Instruction callInstruction, ICollection<Instruction> instructionsToRemove)
@@ -458,6 +796,11 @@ namespace KrasCore.NativeLinq.CodeGen
             instructionsToRemove.Add(duplicateCachedValue);
             instructionsToRemove.Add(branchIfCached);
             instructionsToRemove.Add(popCachedMiss);
+            if (target?.OpCode == OpCodes.Ldnull)
+            {
+                instructionsToRemove.Add(target);
+            }
+
             instructionsToRemove.Add(duplicateForStore);
             instructionsToRemove.Add(storeCache);
             return delegateCtor;
@@ -496,17 +839,27 @@ namespace KrasCore.NativeLinq.CodeGen
             ModuleDefinition module,
             TypeDefinition adapterType,
             MethodDefinition lambda,
-            TypeReference sourceType,
-            TypeReference resultType,
-            bool predicate,
+            DelegateSignature signature,
+            TypeReference interfaceType,
             IReadOnlyDictionary<FieldDefinition, FieldDefinition> fieldMap)
         {
-            var method = new MethodDefinition(
-                predicate ? "Match" : "Select",
-                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.NewSlot,
-                module.ImportReference(resultType));
+            var interfaceMethod = interfaceType.Resolve().Methods.First(method =>
+                !method.IsSpecialName &&
+                method.HasThis);
 
-            method.Parameters.Add(CreateReadonlyInParameter(module, sourceType));
+            var method = new MethodDefinition(
+                interfaceMethod.Name,
+                MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.Virtual | MethodAttributes.Final | MethodAttributes.NewSlot,
+                CloseInterfaceType(module, interfaceMethod.ReturnType, interfaceType));
+
+            foreach (var parameter in interfaceMethod.Parameters)
+            {
+                method.Parameters.Add(new ParameterDefinition(
+                    parameter.Name,
+                    parameter.Attributes,
+                    CloseInterfaceType(module, parameter.ParameterType, interfaceType)));
+            }
+
             method.Body.InitLocals = lambda.Body.InitLocals;
 
             var variableMap = new Dictionary<VariableDefinition, VariableDefinition>();
@@ -522,11 +875,16 @@ namespace KrasCore.NativeLinq.CodeGen
 
             foreach (var sourceInstruction in lambda.Body.Instructions)
             {
-                var cloned = Instruction.Create(OpCodes.Nop);
-                cloned.OpCode = RemapArgumentOpcode(sourceInstruction.OpCode, lambda.IsStatic);
-                cloned.Operand = CloneOperand(module, sourceInstruction.Operand, fieldMap, variableMap, lambda, method);
-                instructionMap.Add(sourceInstruction, cloned);
-                il.Append(cloned);
+                var first = AppendClonedInstruction(
+                    module,
+                    il,
+                    sourceInstruction,
+                    signature,
+                    fieldMap,
+                    variableMap,
+                    lambda,
+                    method);
+                instructionMap.Add(sourceInstruction, first);
             }
 
             foreach (var cloned in method.Body.Instructions)
@@ -557,9 +915,142 @@ namespace KrasCore.NativeLinq.CodeGen
             return method;
         }
 
-        private static OpCode RemapArgumentOpcode(OpCode opcode, bool sourceMethodIsStatic)
+        private static Instruction AppendClonedInstruction(
+            ModuleDefinition module,
+            ILProcessor il,
+            Instruction sourceInstruction,
+            DelegateSignature signature,
+            IReadOnlyDictionary<FieldDefinition, FieldDefinition> fieldMap,
+            IReadOnlyDictionary<VariableDefinition, VariableDefinition> variableMap,
+            MethodDefinition sourceMethod,
+            MethodDefinition targetMethod)
         {
-            return sourceMethodIsStatic && opcode == OpCodes.Ldarg_0 ? OpCodes.Ldarg_1 : opcode;
+            if (TryGetArgumentAccess(sourceInstruction, sourceMethod, out var argumentIndex, out var loadAddress, out var store))
+            {
+                var lambdaParameterOffset = sourceMethod.IsStatic ? 0 : 1;
+                var lambdaParameterIndex = argumentIndex - lambdaParameterOffset;
+                if (lambdaParameterIndex >= 0 && lambdaParameterIndex < signature.ParameterTypes.Count)
+                {
+                    if (store)
+                    {
+                        var starg = Instruction.Create(OpCodes.Starg, targetMethod.Parameters[lambdaParameterIndex]);
+                        il.Append(starg);
+                        return starg;
+                    }
+
+                    var load = CreateLoadArgument(targetMethod, lambdaParameterIndex + 1);
+                    il.Append(load);
+                    if (loadAddress || signature.ParameterTypes[lambdaParameterIndex] is ByReferenceType)
+                    {
+                        return load;
+                    }
+
+                    il.Append(Instruction.Create(OpCodes.Ldobj, module.ImportReference(signature.ParameterTypes[lambdaParameterIndex])));
+                    return load;
+                }
+            }
+
+            var cloned = Instruction.Create(OpCodes.Nop);
+            cloned.OpCode = sourceInstruction.OpCode;
+            cloned.Operand = CloneOperand(module, sourceInstruction.Operand, fieldMap, variableMap, sourceMethod, targetMethod);
+            il.Append(cloned);
+            return cloned;
+        }
+
+        private static bool TryGetArgumentAccess(
+            Instruction instruction,
+            MethodDefinition method,
+            out int argumentIndex,
+            out bool loadAddress,
+            out bool store)
+        {
+            argumentIndex = -1;
+            loadAddress = false;
+            store = false;
+
+            if (instruction.OpCode == OpCodes.Ldarg_0)
+            {
+                argumentIndex = 0;
+                return true;
+            }
+
+            if (instruction.OpCode == OpCodes.Ldarg_1)
+            {
+                argumentIndex = 1;
+                return true;
+            }
+
+            if (instruction.OpCode == OpCodes.Ldarg_2)
+            {
+                argumentIndex = 2;
+                return true;
+            }
+
+            if (instruction.OpCode == OpCodes.Ldarg_3)
+            {
+                argumentIndex = 3;
+                return true;
+            }
+
+            if (instruction.Operand is not ParameterDefinition parameter)
+            {
+                return false;
+            }
+
+            argumentIndex = method.HasThis ? parameter.Index + 1 : parameter.Index;
+            loadAddress = instruction.OpCode == OpCodes.Ldarga || instruction.OpCode == OpCodes.Ldarga_S;
+            store = instruction.OpCode == OpCodes.Starg || instruction.OpCode == OpCodes.Starg_S;
+            return instruction.OpCode == OpCodes.Ldarg ||
+                instruction.OpCode == OpCodes.Ldarg_S ||
+                loadAddress ||
+                store;
+        }
+
+        private static Instruction CreateLoadArgument(MethodDefinition method, int argumentIndex)
+        {
+            switch (argumentIndex)
+            {
+                case 0:
+                    return Instruction.Create(OpCodes.Ldarg_0);
+                case 1:
+                    return Instruction.Create(OpCodes.Ldarg_1);
+                case 2:
+                    return Instruction.Create(OpCodes.Ldarg_2);
+                case 3:
+                    return Instruction.Create(OpCodes.Ldarg_3);
+                default:
+                    return Instruction.Create(OpCodes.Ldarg, method.Parameters[argumentIndex - 1]);
+            }
+        }
+
+        private static TypeReference CloseInterfaceType(ModuleDefinition module, TypeReference type, TypeReference interfaceType)
+        {
+            var interfaceInstance = interfaceType as GenericInstanceType;
+            switch (type)
+            {
+                case GenericParameter genericParameter when genericParameter.Type == GenericParameterType.Type && interfaceInstance != null:
+                    return module.ImportReference(interfaceInstance.GenericArguments[genericParameter.Position]);
+                case GenericInstanceType genericInstance:
+                    var closedInstance = new GenericInstanceType(module.ImportReference(genericInstance.ElementType));
+                    foreach (var argument in genericInstance.GenericArguments)
+                    {
+                        closedInstance.GenericArguments.Add(CloseInterfaceType(module, argument, interfaceType));
+                    }
+
+                    return closedInstance;
+                case ByReferenceType byReference:
+                    return new ByReferenceType(CloseInterfaceType(module, byReference.ElementType, interfaceType));
+                case RequiredModifierType requiredModifier:
+                    return new RequiredModifierType(
+                        module.ImportReference(requiredModifier.ModifierType),
+                        CloseInterfaceType(module, requiredModifier.ElementType, interfaceType));
+                case OptionalModifierType optionalModifier:
+                    return new OptionalModifierType(
+                        module.ImportReference(optionalModifier.ModifierType),
+                        CloseInterfaceType(module, optionalModifier.ElementType, interfaceType));
+                default:
+                    return module.ImportReference(type);
+            }
         }
 
         private static ParameterDefinition CreateReadonlyInParameter(ModuleDefinition module, TypeReference sourceType)
@@ -614,7 +1105,10 @@ namespace KrasCore.NativeLinq.CodeGen
                 case VariableDefinition variable:
                     return variableMap[variable];
                 case ParameterDefinition parameter:
-                    return sourceMethod.Parameters.IndexOf(parameter) == 0 ? targetMethod.Parameters[0] : parameter;
+                    var sourceParameterIndex = sourceMethod.Parameters.IndexOf(parameter);
+                    return sourceParameterIndex >= 0 && sourceParameterIndex < targetMethod.Parameters.Count
+                        ? targetMethod.Parameters[sourceParameterIndex]
+                        : parameter;
                 default:
                     return operand;
             }
@@ -651,188 +1145,6 @@ namespace KrasCore.NativeLinq.CodeGen
             }
 
             return fields;
-        }
-
-        private static TypeReference CreateQueryType(ModuleDefinition module, TypeReference valueType, TypeReference enumeratorType)
-        {
-            var query = new GenericInstanceType(CreateKrasCoreType(module, QueryTypeName, true));
-            query.GenericArguments.Add(module.ImportReference(valueType));
-            query.GenericArguments.Add(module.ImportReference(enumeratorType));
-            return query;
-        }
-
-        private static TypeReference CreateWhereQueryType(ModuleDefinition module, TypeReference sourceType, TypeReference enumeratorType, TypeReference predicateType)
-        {
-            var query = new GenericInstanceType(CreateKrasCoreType(module, WhereQueryTypeName, true));
-            query.GenericArguments.Add(module.ImportReference(sourceType));
-            query.GenericArguments.Add(module.ImportReference(enumeratorType));
-            query.GenericArguments.Add(module.ImportReference(predicateType));
-            return query;
-        }
-
-        private static TypeReference CreateSelectQueryType(ModuleDefinition module, TypeReference sourceType, TypeReference resultType, TypeReference enumeratorType, TypeReference selectorType)
-        {
-            var query = new GenericInstanceType(CreateKrasCoreType(module, SelectQueryTypeName, true));
-            query.GenericArguments.Add(module.ImportReference(sourceType));
-            query.GenericArguments.Add(module.ImportReference(resultType));
-            query.GenericArguments.Add(module.ImportReference(enumeratorType));
-            query.GenericArguments.Add(module.ImportReference(selectorType));
-            return query;
-        }
-
-        private static TypeReference CreatePredicateInterfaceType(ModuleDefinition module, TypeReference sourceType)
-        {
-            var interfaceType = new GenericInstanceType(CreateKrasCoreType(module, PredicateInterfaceTypeName, false));
-            interfaceType.GenericArguments.Add(module.ImportReference(sourceType));
-            return interfaceType;
-        }
-
-        private static TypeReference CreateSelectorInterfaceType(ModuleDefinition module, TypeReference sourceType, TypeReference resultType)
-        {
-            var interfaceType = new GenericInstanceType(CreateKrasCoreType(module, SelectorInterfaceTypeName, false));
-            interfaceType.GenericArguments.Add(module.ImportReference(sourceType));
-            interfaceType.GenericArguments.Add(module.ImportReference(resultType));
-            return interfaceType;
-        }
-
-        private static MethodReference CreateQueryMethodCall(
-            ModuleDefinition module,
-            string methodName,
-            TypeReference sourceType,
-            TypeReference enumeratorType,
-            IReadOnlyList<TypeReference> methodGenericArguments)
-        {
-            var queryType = (GenericInstanceType)CreateQueryType(module, sourceType, enumeratorType);
-            var queryDefinition = queryType.Resolve();
-            var methodDefinition = queryDefinition.Methods.First(m =>
-                m.Name == methodName &&
-                m.HasGenericParameters &&
-                m.GenericParameters.Count == methodGenericArguments.Count);
-
-            var methodReference = new MethodReference(methodDefinition.Name, module.TypeSystem.Void, queryType)
-            {
-                HasThis = methodDefinition.HasThis,
-                ExplicitThis = methodDefinition.ExplicitThis,
-                CallingConvention = methodDefinition.CallingConvention,
-            };
-
-            foreach (var genericParameter in methodDefinition.GenericParameters)
-            {
-                methodReference.GenericParameters.Add(new GenericParameter(genericParameter.Name, methodReference));
-            }
-
-            methodReference.ReturnType = ImportOpenMethodSignatureType(
-                module,
-                methodDefinition.ReturnType,
-                queryType.ElementType,
-                methodReference);
-
-            foreach (var parameter in methodDefinition.Parameters)
-            {
-                methodReference.Parameters.Add(new ParameterDefinition(
-                    ImportOpenMethodSignatureType(module, parameter.ParameterType, queryType.ElementType, methodReference)));
-            }
-
-            var genericMethod = new GenericInstanceMethod(methodReference);
-            foreach (var argument in methodGenericArguments)
-            {
-                genericMethod.GenericArguments.Add(module.ImportReference(argument));
-            }
-
-            return genericMethod;
-        }
-
-        private static TypeReference ImportOpenMethodSignatureType(
-            ModuleDefinition module,
-            TypeReference type,
-            TypeReference typeGenericOwner,
-            MethodReference methodGenericOwner)
-        {
-            switch (type)
-            {
-                case GenericParameter genericParameter:
-                    return genericParameter.Type == GenericParameterType.Method
-                        ? methodGenericOwner.GenericParameters[genericParameter.Position]
-                        : typeGenericOwner.GenericParameters[genericParameter.Position];
-                case GenericInstanceType genericInstance:
-                    var importedInstance = new GenericInstanceType(module.ImportReference(genericInstance.ElementType));
-                    foreach (var argument in genericInstance.GenericArguments)
-                    {
-                        importedInstance.GenericArguments.Add(ImportOpenMethodSignatureType(
-                            module,
-                            argument,
-                            typeGenericOwner,
-                            methodGenericOwner));
-                    }
-
-                    return importedInstance;
-                case ByReferenceType byReference:
-                    return new ByReferenceType(ImportOpenMethodSignatureType(
-                        module,
-                        byReference.ElementType,
-                        typeGenericOwner,
-                        methodGenericOwner));
-                case PointerType pointer:
-                    return new PointerType(ImportOpenMethodSignatureType(
-                        module,
-                        pointer.ElementType,
-                        typeGenericOwner,
-                        methodGenericOwner));
-                case RequiredModifierType requiredModifier:
-                    return new RequiredModifierType(
-                        module.ImportReference(requiredModifier.ModifierType),
-                        ImportOpenMethodSignatureType(module, requiredModifier.ElementType, typeGenericOwner, methodGenericOwner));
-                case OptionalModifierType optionalModifier:
-                    return new OptionalModifierType(
-                        module.ImportReference(optionalModifier.ModifierType),
-                        ImportOpenMethodSignatureType(module, optionalModifier.ElementType, typeGenericOwner, methodGenericOwner));
-                default:
-                    return module.ImportReference(type);
-            }
-        }
-
-        private static TypeReference ResolveAccumulatorType(ModuleDefinition module, TypeReference resultType)
-        {
-            var name = resultType.MetadataType switch
-            {
-                MetadataType.SByte => "SByteAccumulator",
-                MetadataType.Byte => "ByteAccumulator",
-                MetadataType.Int16 => "Int16Accumulator",
-                MetadataType.UInt16 => "UInt16Accumulator",
-                MetadataType.Int32 => "Int32Accumulator",
-                MetadataType.UInt32 => "UInt32Accumulator",
-                MetadataType.Int64 => "Int64Accumulator",
-                MetadataType.UInt64 => "UInt64Accumulator",
-                MetadataType.Single => "SingleAccumulator",
-                MetadataType.Double => "DoubleAccumulator",
-                _ => $"{resultType.Name}Accumulator",
-            };
-
-            var accumulatorType = CreateKrasCoreType(module, $"KrasCore.{name}", true);
-            return accumulatorType.Resolve() == null ? null : accumulatorType;
-        }
-
-        private static TypeReference CreateKrasCoreType(ModuleDefinition module, string fullName, bool isValueType)
-        {
-            var index = fullName.LastIndexOf('.');
-            var @namespace = fullName.Substring(0, index);
-            var name = fullName.Substring(index + 1);
-            var scope = module.Assembly.Name.Name == KrasCoreAssemblyName
-                ? module.Assembly.Name
-                : module.AssemblyReferences.First(r => r.Name == KrasCoreAssemblyName);
-
-            var type = new TypeReference(@namespace, name, module, scope, isValueType);
-            var arityMarker = name.LastIndexOf('`');
-            if (arityMarker >= 0 &&
-                int.TryParse(name.Substring(arityMarker + 1), out var arity))
-            {
-                for (var i = 0; i < arity; i++)
-                {
-                    type.GenericParameters.Add(new GenericParameter($"T{i}", type));
-                }
-            }
-
-            return type;
         }
 
         private static bool IsUnmanaged(TypeReference type)
@@ -916,12 +1228,41 @@ namespace KrasCore.NativeLinq.CodeGen
 
         private sealed class AdapterInfo
         {
-            public AdapterInfo(TypeReference adapterType)
+            public AdapterInfo(TypeReference adapterType, TypeReference interfaceType)
             {
                 AdapterType = adapterType;
+                InterfaceType = interfaceType;
             }
 
             public TypeReference AdapterType { get; }
+
+            public TypeReference InterfaceType { get; }
+        }
+
+        private sealed class DelegateSignature
+        {
+            public DelegateSignature(IReadOnlyList<TypeReference> parameterTypes, TypeReference returnType)
+            {
+                ParameterTypes = parameterTypes;
+                ReturnType = returnType;
+            }
+
+            public IReadOnlyList<TypeReference> ParameterTypes { get; }
+
+            public TypeReference ReturnType { get; }
+        }
+
+        private sealed class TargetMethodInfo
+        {
+            public TargetMethodInfo(MethodReference call, TypeReference returnType)
+            {
+                Call = call;
+                ReturnType = returnType;
+            }
+
+            public MethodReference Call { get; }
+
+            public TypeReference ReturnType { get; }
         }
 
         private sealed class PostProcessorAssemblyResolver : IAssemblyResolver

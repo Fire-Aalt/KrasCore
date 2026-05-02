@@ -10,7 +10,7 @@ namespace KrasCore.AccumulatorGenerator
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public sealed class NativeLinqDelegateAnalyzer : DiagnosticAnalyzer
     {
-        private const string EXTENSIONS_METADATA_NAME = "KrasCore.NativeLinqDelegateExtensions";
+        private const string ATTRIBUTE_METADATA_NAME = "KrasCore.NativeDelegateMethodAttribute";
 
         private static readonly DiagnosticDescriptor UnsupportedLambda = new DiagnosticDescriptor(
             "KCNL001",
@@ -33,7 +33,6 @@ namespace KrasCore.AccumulatorGenerator
         {
             var invocation = (InvocationExpressionSyntax)context.Node;
             if (context.SemanticModel.GetSymbolInfo(invocation, context.CancellationToken).Symbol is not IMethodSymbol method ||
-                method.ContainingType?.ToDisplayString() != EXTENSIONS_METADATA_NAME ||
                 !IsNativeDelegateOperator(method))
             {
                 return;
@@ -95,25 +94,8 @@ namespace KrasCore.AccumulatorGenerator
 
         private static bool IsNativeDelegateOperator(IMethodSymbol method)
         {
-            if (method.Name != "Where" && method.Name != "Select" && method.Name != "Sum")
-            {
-                return false;
-            }
-
-            return method.Parameters.Any(parameter => IsNativeLinqDelegate(parameter.Type));
-        }
-
-        private static bool IsNativeLinqDelegate(ITypeSymbol type)
-        {
-            var namedType = type as INamedTypeSymbol;
-            if (namedType == null)
-            {
-                return false;
-            }
-
-            var constructedFrom = namedType.ConstructedFrom.ToDisplayString();
-            return constructedFrom == "KrasCore.NativeLinqPredicate<T>" ||
-                constructedFrom == "KrasCore.NativeLinqSelector<TSource, TResult>";
+            return method.GetAttributes().Any(attribute =>
+                attribute.AttributeClass?.ToDisplayString() == ATTRIBUTE_METADATA_NAME);
         }
 
         private static void ValidateSignature(SyntaxNodeAnalysisContext context, AnonymousFunctionExpressionSyntax lambda)
@@ -143,9 +125,10 @@ namespace KrasCore.AccumulatorGenerator
             {
                 foreach (var parameter in parenthesized.ParameterList.Parameters)
                 {
-                    if (!parameter.Modifiers.Any(SyntaxKind.InKeyword))
+                    if (parameter.Modifiers.Any(SyntaxKind.RefKeyword) ||
+                        parameter.Modifiers.Any(SyntaxKind.OutKeyword))
                     {
-                        Report(context, parameter, "NativeLinq delegate lambda parameters must be explicit in parameters.");
+                        Report(context, parameter, "NativeLinq delegate lambda parameters cannot be ref or out parameters.");
                     }
                 }
             }
