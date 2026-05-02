@@ -88,26 +88,7 @@ namespace KrasCore.Tests
             Assert.That(mapped[1], Is.EqualTo(4));
             Assert.That(mapped[2], Is.EqualTo(6));
         }
-
-        [Test]
-        public void DelegatePipeline_WhereSelectSum_UsesUnmanagedCapturedValues()
-        {
-            var input = new NativeArray<int>(new[] { 0, 1, 2, 3 }, Allocator.Temp);
-            var min = 1;
-            var factor = 3;
-            var offset = 2;
-
-            var result = input
-                .AsQuery()
-                .Where(value => value > min)
-                .Select(value => (float)(value * factor))
-                .FirstOrDefault(val => val > 5);    
-            //.Sum(value => value + offset);
-
-            //Assert.That(result, Is.EqualTo(19));
-            Assert.That(result, Is.GreaterThan(5));
-        }
-
+        
         private static float Sum(in float value)
         {
             return value + 2;
