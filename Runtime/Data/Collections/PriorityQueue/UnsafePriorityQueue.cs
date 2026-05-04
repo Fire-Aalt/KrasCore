@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -80,9 +81,54 @@ namespace KrasCore
             _queue.TrimExcess();
         }
 
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(ref this);
+        }
+
         public void Dispose()
         {
             _queue.Dispose();
+        }
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private UnsafePriorityQueue<T, DefaultPriorityComparer>.Enumerator _enumerator;
+
+            public Enumerator(ref UnsafePriorityQueue<T> queue)
+            {
+                _enumerator = queue._queue.GetEnumerator();
+            }
+
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _enumerator.Current;
+            }
+
+            public int CurrentPriority
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _enumerator.CurrentPriority;
+            }
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose()
+            {
+                _enumerator.Dispose();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                return _enumerator.MoveNext();
+            }
+
+            public void Reset()
+            {
+                _enumerator.Reset();
+            }
         }
     }
 
@@ -243,6 +289,11 @@ namespace KrasCore
             _nodes.Capacity = _nodes.Length;
         }
 
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(ref this);
+        }
+
         public void Dispose()
         {
             if (_nodes.IsCreated)
@@ -380,6 +431,59 @@ namespace KrasCore
         private static void ThrowQueueEmpty()
         {
             throw new InvalidOperationException("The priority queue is empty.");
+        }
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private UnsafeList<Entry> _nodes;
+            private int _index;
+            private Entry _current;
+
+            public Enumerator(ref UnsafePriorityQueue<T, TComparer> queue)
+            {
+                _nodes = queue._nodes;
+                _index = -1;
+                _current = default;
+            }
+
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _current.Element;
+            }
+
+            public int CurrentPriority
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _current.Priority;
+            }
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose()
+            {
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                var nextIndex = _index + 1;
+                if (!_nodes.IsCreated || nextIndex >= _nodes.Length)
+                {
+                    _current = default;
+                    return false;
+                }
+
+                _index = nextIndex;
+                _current = _nodes.Ptr[nextIndex];
+                return true;
+            }
+
+            public void Reset()
+            {
+                _index = -1;
+                _current = default;
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]

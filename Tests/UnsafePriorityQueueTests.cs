@@ -102,6 +102,77 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void Enumerator_VisitsItemsAndPrioritiesWithoutDequeuing()
+        {
+            var queue = new UnsafePriorityQueue<int>(Allocator.Persistent);
+
+            try
+            {
+                queue.Enqueue(30, 3);
+                queue.Enqueue(10, 1);
+                queue.Enqueue(40, 4);
+                queue.Enqueue(20, 2);
+
+                var items = new List<int>();
+                var priorities = new List<int>();
+                var enumerator = queue.GetEnumerator();
+
+                while (enumerator.MoveNext())
+                {
+                    items.Add(enumerator.Current);
+                    priorities.Add(enumerator.CurrentPriority);
+                }
+
+                CollectionAssert.AreEquivalent(new[] { 10, 20, 30, 40 }, items);
+                CollectionAssert.AreEquivalent(new[] { 1, 2, 3, 4 }, priorities);
+                Assert.That(queue.Count, Is.EqualTo(4));
+
+                Assert.That(queue.TryDequeue(out var first, out var firstPriority), Is.True);
+                Assert.That(first, Is.EqualTo(10));
+                Assert.That(firstPriority, Is.EqualTo(1));
+            }
+            finally
+            {
+                queue.Dispose();
+            }
+        }
+
+        [Test]
+        public void CustomComparer_Enumerator_VisitsItemsAndPrioritiesWithoutDequeuing()
+        {
+            var queue = new UnsafePriorityQueue<int, DescendingComparer>(Allocator.Persistent);
+
+            try
+            {
+                queue.Enqueue(1, 1);
+                queue.Enqueue(2, 2);
+                queue.Enqueue(3, 3);
+
+                var items = new List<int>();
+                var priorities = new List<int>();
+                var enumerator = queue.GetEnumerator();
+
+                while (enumerator.MoveNext())
+                {
+                    items.Add(enumerator.Current);
+                    priorities.Add(enumerator.CurrentPriority);
+                }
+
+                CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, items);
+                CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, priorities);
+                Assert.That(queue.Count, Is.EqualTo(3));
+
+                Assert.That(queue.TryDequeue(out var first, out var firstPriority), Is.True);
+                Assert.That(first, Is.EqualTo(3));
+                Assert.That(firstPriority, Is.EqualTo(3));
+            }
+            finally
+            {
+                queue.Dispose();
+            }
+        }
+
+        [Test]
         public void EmptyQueue_TryMethodsReturnFalse_AndPeekThrows()
         {
             var queue = new UnsafePriorityQueue<int>(Allocator.Persistent);

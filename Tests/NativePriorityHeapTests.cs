@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.Collections;
 
@@ -53,6 +54,44 @@ namespace KrasCore.Tests
 #else
             Assert.Pass("Collection checks are disabled.");
 #endif
+        }
+
+        [Test]
+        public void Enumerator_VisitsItemsWithoutDequeuing()
+        {
+            var heap = new NativePriorityHeap<OrderedValue>(Allocator.Persistent);
+
+            try
+            {
+                heap.Enqueue(new OrderedValue(3, 30));
+                heap.Enqueue(new OrderedValue(1, 10));
+                heap.Enqueue(new OrderedValue(2, 20));
+                heap.Enqueue(new OrderedValue(1, 5));
+
+                var items = new List<OrderedValue>();
+                var enumerator = heap.GetEnumerator();
+
+                while (enumerator.MoveNext())
+                {
+                    items.Add(enumerator.Current);
+                }
+
+                CollectionAssert.AreEquivalent(new[]
+                {
+                    new OrderedValue(1, 5),
+                    new OrderedValue(1, 10),
+                    new OrderedValue(2, 20),
+                    new OrderedValue(3, 30),
+                }, items);
+                Assert.That(heap.Count, Is.EqualTo(4));
+
+                Assert.That(heap.TryDequeue(out var first), Is.True);
+                Assert.That(first, Is.EqualTo(new OrderedValue(1, 5)));
+            }
+            finally
+            {
+                heap.Dispose();
+            }
         }
 
         private readonly struct OrderedValue : IComparable<OrderedValue>, IEquatable<OrderedValue>

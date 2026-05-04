@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -141,6 +143,12 @@ namespace KrasCore
             _heap.TrimExcess();
         }
 
+        public Enumerator GetEnumerator()
+        {
+            CheckRead();
+            return new Enumerator(ref this);
+        }
+
         public void Dispose()
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -176,6 +184,40 @@ namespace KrasCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             AtomicSafetyHandle.CheckWriteAndThrow(m_Safety);
 #endif
+        }
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private UnsafePriorityHeap<T>.Enumerator _enumerator;
+
+            internal Enumerator(ref NativePriorityHeap<T> heap)
+            {
+                _enumerator = heap._heap.GetEnumerator();
+            }
+
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _enumerator.Current;
+            }
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose()
+            {
+                _enumerator.Dispose();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                return _enumerator.MoveNext();
+            }
+
+            public void Reset()
+            {
+                _enumerator.Reset();
+            }
         }
     }
 }

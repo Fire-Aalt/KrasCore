@@ -61,6 +61,42 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void Enumerator_VisitsItemsAndPrioritiesWithoutDequeuing()
+        {
+            var list = new NativePriorityQueue<int>(Allocator.Persistent);
+
+            try
+            {
+                list.Enqueue(30, 3);
+                list.Enqueue(10, 1);
+                list.Enqueue(40, 4);
+                list.Enqueue(20, 2);
+
+                var items = new List<int>();
+                var priorities = new List<int>();
+                var enumerator = list.GetEnumerator();
+
+                while (enumerator.MoveNext())
+                {
+                    items.Add(enumerator.Current);
+                    priorities.Add(enumerator.CurrentPriority);
+                }
+
+                CollectionAssert.AreEquivalent(new[] { 10, 20, 30, 40 }, items);
+                CollectionAssert.AreEquivalent(new[] { 1, 2, 3, 4 }, priorities);
+                Assert.That(list.Count, Is.EqualTo(4));
+
+                Assert.That(list.TryDequeue(out var first, out var firstPriority), Is.True);
+                Assert.That(first, Is.EqualTo(10));
+                Assert.That(firstPriority, Is.EqualTo(1));
+            }
+            finally
+            {
+                list.Dispose();
+            }
+        }
+
+        [Test]
         public void CustomComparer_CanInvertPriorityOrdering()
         {
             var list = new NativePriorityQueue<int, DescendingComparer>(Allocator.Persistent);
@@ -84,6 +120,41 @@ namespace KrasCore.Tests
                 Assert.That(list.TryDequeue(out var third, out var thirdPriority), Is.True);
                 Assert.That(third, Is.EqualTo(1));
                 Assert.That(thirdPriority, Is.EqualTo(1));
+            }
+            finally
+            {
+                list.Dispose();
+            }
+        }
+
+        [Test]
+        public void CustomComparer_Enumerator_VisitsItemsAndPrioritiesWithoutDequeuing()
+        {
+            var list = new NativePriorityQueue<int, DescendingComparer>(Allocator.Persistent);
+
+            try
+            {
+                list.Enqueue(1, 1);
+                list.Enqueue(2, 2);
+                list.Enqueue(3, 3);
+
+                var items = new List<int>();
+                var priorities = new List<int>();
+                var enumerator = list.GetEnumerator();
+
+                while (enumerator.MoveNext())
+                {
+                    items.Add(enumerator.Current);
+                    priorities.Add(enumerator.CurrentPriority);
+                }
+
+                CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, items);
+                CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, priorities);
+                Assert.That(list.Count, Is.EqualTo(3));
+
+                Assert.That(list.TryDequeue(out var first, out var firstPriority), Is.True);
+                Assert.That(first, Is.EqualTo(3));
+                Assert.That(firstPriority, Is.EqualTo(3));
             }
             finally
             {

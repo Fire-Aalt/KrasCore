@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -133,6 +135,11 @@ namespace KrasCore
             }
 
             _nodes.Capacity = _nodes.Length;
+        }
+
+        public Enumerator GetEnumerator()
+        {
+            return new Enumerator(ref this);
         }
 
         public void Dispose()
@@ -271,6 +278,53 @@ namespace KrasCore
         private static void ThrowHeapEmpty()
         {
             throw new InvalidOperationException("The priority heap is empty.");
+        }
+
+        public struct Enumerator : IEnumerator<T>
+        {
+            private UnsafeList<T> _nodes;
+            private int _index;
+            private T _current;
+
+            public Enumerator(ref UnsafePriorityHeap<T> heap)
+            {
+                _nodes = heap._nodes;
+                _index = -1;
+                _current = default;
+            }
+
+            public T Current
+            {
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                get => _current;
+            }
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose()
+            {
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool MoveNext()
+            {
+                var nextIndex = _index + 1;
+                if (!_nodes.IsCreated || nextIndex >= _nodes.Length)
+                {
+                    _current = default;
+                    return false;
+                }
+
+                _index = nextIndex;
+                _current = _nodes.Ptr[nextIndex];
+                return true;
+            }
+
+            public void Reset()
+            {
+                _index = -1;
+                _current = default;
+            }
         }
     }
 }
