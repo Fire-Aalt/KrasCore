@@ -13,6 +13,7 @@
     "Unity.Addressables",
     "Unity.Addressables.Editor",
     "BovineLabs.Anchor",
+    "BovineLabs.Anchor.Debug",
     "Unity.AppUI",
     "Unity.AppUI.MVVM"
   ],
