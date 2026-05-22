@@ -115,7 +115,8 @@ namespace KrasCore.Editor
                 return path;
             }
             var folderPath = Directory.GetParent(path).FullName;
-            return "Assets" + folderPath[Application.dataPath.Length..];
+            var root = Application.dataPath.Length - "Assets".Length;
+            return folderPath[root..];
         }
 
         public static void SaveAssetToDatabase(Object asset, string assetPath)
