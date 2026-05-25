@@ -1,12 +1,15 @@
+// <copyright file="SearchElement.cs" company="BovineLabs">
+//     Copyright (c) BovineLabs. All rights reserved.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
 namespace KrasCore.Editor.UI
 {
-    using System;
-    using System.Collections.Generic;
-    using BovineLabs.Core.Editor.SearchWindow;
-    using UnityEditor;
-    using UnityEngine;
-    using UnityEngine.UIElements;
-
     public class SearchElement : BaseField<int>
     {
         private static readonly Color DARK_BASE = new(0.251f, 0.251f, 0.251f, 1f); // #404040

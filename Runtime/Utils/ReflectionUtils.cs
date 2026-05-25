@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
@@ -6,6 +7,34 @@ namespace KrasCore
 {
     public static class ReflectionUtils
     {
+        private static Assembly[] _allAssemblies;
+        /// <summary> Gets all currently loaded assemblies in the AppDomain. </summary>
+        public static Assembly[] AllAssemblies => _allAssemblies ??= AppDomain.CurrentDomain.GetAssemblies();
+        
+        
+        /// <summary> Checks if an assembly references another assembly. </summary>
+        /// <param name="assembly"> The assembly to check. </param>
+        /// <param name="reference"> The reference to check if the assembly has. </param>
+        /// <returns> True if referencing. </returns>
+        public static bool IsAssemblyReferencingAssembly(this Assembly assembly, Assembly reference)
+        {
+            if (assembly == reference)
+            {
+                return true;
+            }
+
+            var referenceName = reference.GetName().Name;
+            return assembly.GetReferencedAssemblies().Any(referenced => referenced.Name == referenceName);
+        }
+
+        /// <summary> Gets all assemblies that reference the provided assembly. </summary>
+        /// <param name="reference"> The reference. </param>
+        /// <returns> All assemblies that reference the provided assembly. </returns>
+        public static IEnumerable<Assembly> GetAllAssemblyWithReference(Assembly reference)
+        {
+            return AllAssemblies.Where(a => IsAssemblyReferencingAssembly(a, reference));
+        }
+        
         // Finds a field by name on the type or any base type (including private fields).
         public static FieldInfo GetFieldInHierarchy(Type startType, string fieldName)
         {
@@ -24,53 +53,9 @@ namespace KrasCore
         public static Assembly GetAssemblyWithType<T>()
         {
             var assemblyName = typeof(T).Assembly.GetName().Name;
-            
-            var assembly = AppDomain.CurrentDomain.GetAssemblies()
-                .First(a => a.GetName().Name == assemblyName);
+            var assembly = AllAssemblies.First(a => a.GetName().Name == assemblyName);
 
             return assembly;
-        }
-        
-        public static void CallMethod(object targetObject, string methodName, params object[] parameters)
-        {
-            var method = GetCallMethod(targetObject, methodName);
-
-            method.Invoke(targetObject, parameters);
-        }
-
-        public static T CallMethodReturn<T>(object targetObject, string methodName, params object[] parameters)
-        {
-            var method = GetCallMethod(targetObject, methodName);
-            
-            return (T)method.Invoke(targetObject, parameters);
-        }
-        
-        public static TReturn CallMethodOut<TReturn, TOut>(object targetObject, string methodName, out TOut result, params object[] parameters)
-        {
-            var method = GetCallMethod(targetObject, methodName);
-            
-            var newParams = new object[parameters != null ? parameters.Length + 1 : 1];
-            
-            var ret = (TReturn)method.Invoke(targetObject, newParams);
-            result = (TOut)newParams[^1];
-            return ret;
-        }
-        
-        public static bool TryCallMethod(object targetObject, string methodName, params object[] parameters)
-        {
-            if (!TryGetCallMethod(targetObject, methodName, out var method)) return false;
-
-            method.Invoke(targetObject, parameters);
-            return true;
-        }
-
-        public static bool TryCallMethodReturn<T>(object targetObject, string methodName, out T result, params object[] parameters)
-        {
-            result = default;
-            if (!TryGetCallMethod(targetObject, methodName, out var method)) return false;
-            
-            result = (T)method.Invoke(targetObject, parameters);
-            return true;
         }
         
         public static MethodInfo GetCallMethod(object targetObject, string methodName)

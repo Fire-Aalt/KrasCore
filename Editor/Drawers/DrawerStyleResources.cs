@@ -11,8 +11,6 @@ namespace KrasCore.Editor
         public static readonly StyleSheet EnumToggleButtonsStyleSheet;
         public static readonly StyleSheet InlineScriptableObjectStyleSheet;
 
-        private const string ValidationRoot = "com.firealt.krascore";
-
         static DrawerStyleResources()
         {
             CommonStyleSheet = Load<StyleSheet>("Styles/DrawerCommon.uss");
@@ -22,7 +20,7 @@ namespace KrasCore.Editor
 
         private static T Load<T>(string path) where T : Object
         {
-            return AssetDatabaseUtils.LoadEditorResource<T>(path, ValidationRoot);
+            return AssetDatabaseUtils.LoadEditorResource<T>(path, "com.firealt.krascore");
         }
     }
 }
