@@ -23,6 +23,8 @@ namespace KrasCore
 
         public bool IsCreated;
 
+        public int Length => JobsUtility.ThreadIndexCount;
+        
         public UnsafeThreadData(AllocatorManager.AllocatorHandle allocator)
         {
             this = default;

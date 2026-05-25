@@ -36,6 +36,8 @@ namespace KrasCore
 
         public bool IsCreated => _unsafePerThreadData != null && _unsafePerThreadData->IsCreated;
 
+        public int Length => _unsafePerThreadData->Length;
+        
         public NativeThreadData(AllocatorManager.AllocatorHandle allocator)
         {
             this = default;

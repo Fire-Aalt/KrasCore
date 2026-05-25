@@ -4,6 +4,11 @@
     "references": [
         "BovineLabs.Core.Extensions",
         "BovineLabs.Core",
+        "BovineLabs.Quill",
+        "BovineLabs.Bridge",
+        "BovineLabs.Bridge.Data",
+        "BovineLabs.Essence",
+        "BovineLabs.Essence.Data",
         "Unity.Mathematics",
         "Unity.Burst",
         "Unity.Collections",
@@ -15,12 +20,7 @@
         "Unity.Physics.Custom",
         "Unity.Transforms",
         "Unity.Entities.Hybrid",
-        "Unity.Scenes",
-        "BovineLabs.Quill",
-        "BovineLabs.Bridge",
-        "BovineLabs.Bridge.Data",
-        "BovineLabs.Essence",
-        "BovineLabs.Essence.Data"
+        "Unity.Scenes"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

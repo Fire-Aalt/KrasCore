@@ -1,5 +1,4 @@
 using Unity.Entities;
-using Unity.Scenes;
 
 namespace KrasCore
 {
@@ -8,7 +7,7 @@ namespace KrasCore
     [UpdateInGroup(typeof(BovineLabs.Core.Groups.AfterSceneSystemGroup))]
 #else
     [UpdateInGroup(typeof(InitializationSystemGroup))]
-    [UpdateAfter(typeof(SceneSystemGroup))]
+    [UpdateAfter(typeof(Unity.Scenes.SceneSystemGroup))]
 #endif
     public partial class AfterSceneSystemGroup : ComponentSystemGroup { }
 }

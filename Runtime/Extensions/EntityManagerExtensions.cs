@@ -5,7 +5,21 @@ using Unity.Entities;
 namespace KrasCore
 {
     public static class EntityManagerExtensions
-    {
+    {        
+        private const EntityQueryOptions QUERY_OPTIONS = EntityQueryOptions.IncludeSystems;
+        
+        public static T GetUnmanagedSingleton<T>(this EntityManager em, bool completeDependency = true)
+            where T : unmanaged, IComponentData
+        {
+            using var query = new EntityQueryBuilder(Allocator.Temp).WithAll<T>().WithOptions(QUERY_OPTIONS).Build(em);
+            if (completeDependency)
+            {
+                query.CompleteDependency();
+            }
+
+            return query.GetSingleton<T>();
+        }
+        
         // From https://forum.unity.com/threads/really-hoped-for-refrw-refro-getcomponentrw-ro-entity.1369275/
         /// <summary>
         /// Gets the value of a component for an entity associated with a system.
@@ -25,7 +39,7 @@ namespace KrasCore
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             return new RefRW<T>(data, access->DependencyManager->Safety.GetSafetyHandle(typeIndex, false));
 #else
-        return new RefRW<T>(data);
+            return new RefRW<T>(data);
 #endif
         }
     }
