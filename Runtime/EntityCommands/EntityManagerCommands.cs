@@ -14,9 +14,9 @@ namespace KrasCore.EntityCommands
 
         public EntityManagerCommands(EntityManager entityManager, Entity localEntity = default, BlobAssetStore blobAssetStore = default)
         {
-            this._entityManager = entityManager;
+            _entityManager = entityManager;
             Entity = localEntity;
-            this._blobAssetStore = blobAssetStore;
+            _blobAssetStore = blobAssetStore;
         }
 
         public Entity Entity { get; set; }
