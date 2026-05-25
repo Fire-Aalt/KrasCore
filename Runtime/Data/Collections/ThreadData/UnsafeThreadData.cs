@@ -37,7 +37,7 @@ namespace KrasCore
             perThreadDataStride = CalculatePerThreadDataStride();
 
             int maxThreadCount = JobsUtility.ThreadIndexCount;
-            int align = UnsafeUtility.AlignOf<T>();
+            int align = CalculatePerThreadDataAlignment();
             int allocationSize = perThreadDataStride * maxThreadCount;
 
             perThreadData = (byte*)UnsafeUtility.Malloc(allocationSize, align, allocatorHandle.ToAllocator);
@@ -63,8 +63,15 @@ namespace KrasCore
             int roundedToCacheLine = ((dataSize + PER_THREAD_DATA_SIZE - 1) / PER_THREAD_DATA_SIZE) * PER_THREAD_DATA_SIZE;
             int minCacheLineSize = roundedToCacheLine < PER_THREAD_DATA_SIZE ? PER_THREAD_DATA_SIZE : roundedToCacheLine;
 
-            int alignment = UnsafeUtility.AlignOf<T>();
+            int alignment = CalculatePerThreadDataAlignment();
             return ((minCacheLineSize + alignment - 1) / alignment) * alignment;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int CalculatePerThreadDataAlignment()
+        {
+            int alignment = UnsafeUtility.AlignOf<T>();
+            return alignment < PER_THREAD_DATA_SIZE ? PER_THREAD_DATA_SIZE : alignment;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

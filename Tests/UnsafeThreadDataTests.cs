@@ -61,6 +61,34 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public unsafe void Layout_PadsAndAlignsThreadSlotsToCacheLine()
+        {
+            var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
+
+            try
+            {
+                var stride = data.GetPerThreadDataStride();
+                var cacheLineSize = JobsUtility.CacheLineSize;
+
+                Assert.That(stride, Is.GreaterThanOrEqualTo(cacheLineSize));
+                Assert.That(stride % cacheLineSize, Is.Zero);
+
+                var baseAddress = (ulong)data.GetPerThreadDataPtr();
+                Assert.That(baseAddress % (ulong)cacheLineSize, Is.Zero);
+
+                for (var i = 0; i < JobsUtility.ThreadIndexCount; i++)
+                {
+                    var slotAddress = (ulong)(data.GetPerThreadDataPtr() + (i * stride));
+                    Assert.That(slotAddress % (ulong)cacheLineSize, Is.Zero);
+                }
+            }
+            finally
+            {
+                data.Dispose();
+            }
+        }
+
+        [Test]
         public void ThreadWriter_SetAndGetRef_WritesCurrentThreadSlot()
         {
             var data = new UnsafeThreadData<TestData>(Allocator.Persistent);
