@@ -3,10 +3,10 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-namespace KrasCore.Editor
+namespace KrasCore
 {
     [RequireMatchingQueriesForUpdate]
-    [WorldSystemFilter(WorldSystemFilterFlags.Editor)]
+    [WorldSystemFilter(WorldSystemFilterFlags.Editor | WorldSystemFilterFlags.Default)]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
     [UpdateBefore(typeof(TransformSystemGroup))]
     public partial class HybridEntitySyncSystem : SystemBase
@@ -52,7 +52,6 @@ namespace KrasCore.Editor
                 var transform = link.MonoBehaviour.transform;
                 postTransformRW.ValueRW = new PostTransformMatrix { Value = float4x4.Scale(transform.lossyScale) };
             }
-            
         }
     }
 }

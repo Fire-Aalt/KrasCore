@@ -1,8 +1,6 @@
-using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace KrasCore.Editor
+namespace KrasCore
 {
     public static class HybridEntityUtils
     {
@@ -10,25 +8,30 @@ namespace KrasCore.Editor
         
         static HybridEntityUtils()
         {
-            ShowRuntime = EditorPrefs.GetBool("Unity.Entities.Streaming.SubScene.LiveConversionSceneViewShowRuntime", false);
+#if UNITY_EDITOR
+            ShowRuntime = UnityEditor.EditorPrefs.GetBool("Unity.Entities.Streaming.SubScene.LiveConversionSceneViewShowRuntime", false);
+#endif
         }
         
         public static bool IsEntityEnabled(MonoBehaviour mb)
         {
-            if (InSubScene(mb))
+            if (!Application.isPlaying && InSubScene(mb))
             {
                 return mb.isActiveAndEnabled && !ShowRuntime;
             }
             return mb.isActiveAndEnabled;
         }
-        
-        public static bool InSubScene(MonoBehaviour component) => component.gameObject.scene.isSubScene;
-        public static bool InPrefabStage(MonoBehaviour component) => EditorSceneManager.IsPreviewScene(component.gameObject.scene);
+
+#if UNITY_EDITOR
+        public static bool InPrefabStage(MonoBehaviour component) => UnityEditor.SceneManagement.EditorSceneManager.IsPreviewScene(component.gameObject.scene);
+#endif
         
         public static bool IsNonUniformScale(Transform transform)
         {
             var localScale = transform.localScale;
             return !Mathf.Approximately(localScale.x, localScale.y) || !Mathf.Approximately(localScale.y, localScale.z);
         }
+        
+        private static bool InSubScene(MonoBehaviour component) => component.gameObject.scene.isSubScene;
     }
 }

@@ -1,8 +1,7 @@
-#if UNITY_EDITOR
 using Unity.Entities;
 using UnityEngine;
 
-namespace KrasCore.Editor
+namespace KrasCore
 {
     public class HybridEntitySync : IComponentData
     {
@@ -18,4 +17,3 @@ namespace KrasCore.Editor
         }
     }
 }
-#endif

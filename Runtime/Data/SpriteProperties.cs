@@ -26,7 +26,7 @@ namespace KrasCore.Data
             {
                 uvAtlas = new float4(1f, 1f, 0, 0);
                 normalizedPivot = new float2(0.5f, 0.5f);
-                rectScale = new float2(0f, 0f);
+                rectScale = new float2(1f, 1f);
             }
         }
 
