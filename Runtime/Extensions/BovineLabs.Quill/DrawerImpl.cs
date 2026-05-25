@@ -1,5 +1,5 @@
 #if BL_QUILL
-using BovineLabs.Core.Utility;
+using KrasCore.Collections.Pooled;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -66,7 +66,7 @@ namespace KrasCore.Quill
             var ringCount = latitudeBands - 1;
             var triangleCount = 2 * longitudeCount * ringCount;
 
-            using var pooledRings = PooledNativeList<float3>.Make();
+            using var pooledRings = PooledNativeList<float3>.Rent();
             var rings = pooledRings.AsArray(ringCount * longitudeCount);
             
             var triangles = pooledTriangles.AsArray(triangleCount);

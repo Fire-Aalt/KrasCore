@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace KrasCore.Pooling
+namespace KrasCore.Collections.Pooled
 {
     /// <summary>
     /// A pooled wrapper around NativeList that reuses allocated memory across instances to reduce allocation pressure.
@@ -25,8 +25,8 @@ namespace KrasCore.Pooling
         /// </summary>
         /// <value>The wrapped NativeList that can be used for all list operations.</value>
         public NativeList<T> List => _list;
-
-        private PooledNativeList<T> Create()
+        
+        private PooledNativeList<T> Create(int minCapacity)
         {
             ref var data = ref PooledNativeList.Pool.Data;
 
@@ -41,7 +41,7 @@ namespace KrasCore.Pooling
             if (lp.Length == 0)
             {
                 // Nothing in the pool, just create a new one
-                _list = new NativeList<T>(0, data.Allocator);
+                _list = new NativeList<T>(minCapacity, data.Allocator);
             }
             else
             {
@@ -50,7 +50,16 @@ namespace KrasCore.Pooling
                 lp.RemoveAt(lp.Length - 1);
 
                 _list = UnsafeUtility.As<NativeList<byte>, NativeList<T>>(ref byteList);
-                _list.m_ListData->m_capacity = byteList.Capacity / UnsafeUtility.SizeOf<T>();
+                
+                var capacity = byteList.Capacity / UnsafeUtility.SizeOf<T>();
+                if (capacity < minCapacity)
+                {
+                    _list.Capacity = minCapacity;
+                }
+                else
+                {
+                    _list.m_ListData->m_capacity = capacity;
+                }
             }
 
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
@@ -70,11 +79,18 @@ namespace KrasCore.Pooling
         /// This method is thread-safe and will reuse previously disposed instances when available.
         /// The returned instance must be disposed to return it to the pool.
         /// </remarks>
-        public static PooledNativeList<T> Make()
+        public static PooledNativeList<T> Rent(int minCapacity = 0)
         {
-            return default(PooledNativeList<T>).Create();
+            return default(PooledNativeList<T>).Create(minCapacity);
         }
-
+        
+        public NativeArray<T> AsArray(int length, NativeArrayOptions options = NativeArrayOptions.ClearMemory) 
+        {
+            _list.Resize(length, options);
+            return _list.AsArray();
+        }
+        
+        
         /// <summary>
         /// Disposes the PooledNativeList and returns the underlying memory to the thread-local pool for reuse.
         /// </summary>
@@ -104,8 +120,8 @@ namespace KrasCore.Pooling
             byteList.m_Safety = _oldHandle;
 #endif
 
-            // Only add back to pool if we haven't exceeded the max size
-            if (lp.Length < PooledNativeList.MAX_POOL_SIZE_PER_THREAD)
+            // Only add back to pool if we haven't exceeded the max size for lists and max allocation size
+            if (lp.Length < PooledNativeList.MAX_POOL_SIZE_PER_THREAD && byteList.Capacity < PooledNativeList.MAX_BYTES_PER_LIST)
             {
                 lp.Add(byteList);
             }
@@ -125,7 +141,10 @@ namespace KrasCore.Pooling
 
     internal static class PooledNativeList
     {
-        internal const int MAX_POOL_SIZE_PER_THREAD = 8;
+        // About 1MB per thread
+        internal const int MAX_POOL_SIZE_PER_THREAD = 16;
+        internal const int MAX_BYTES_PER_LIST = 64 * 1024;
+
         internal static readonly SharedStatic<Data> Pool = SharedStatic<Data>.GetOrCreate<Data>();
 
         /// <summary>
