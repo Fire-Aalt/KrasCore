@@ -1,6 +1,7 @@
 // <copyright file="UIDProcessor.cs" company="BovineLabs">
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -144,7 +145,7 @@ namespace KrasCore.Editor
 
             public Processor(Type type)
             {
-                this._type = type;
+                _type = type;
                 _filter = $"t:{type.Name}";
             }
 

@@ -3,7 +3,6 @@ using System.Reflection;
 using ArtificeToolkit.Editor;
 using ArtificeToolkit.Editor.Artifice_CustomAttributeDrawers;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor

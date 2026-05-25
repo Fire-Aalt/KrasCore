@@ -15,8 +15,8 @@ namespace KrasCore.Editor
     [Configurable]
     public class ShowAnchorToolbarButton
     {
-        private const string Path = "KrasCore/Show Anchor Toolbar";
-        private static readonly string Name = StringUtils.RemoveAllWhitespace(Path);
+        private const string PATH = "FireAlt/Core/Show Anchor Toolbar";
+        private static readonly string Name = StringUtils.RemoveAllWhitespace(PATH);
         
         [ConfigVar("krascore.anchor-toolbar.show-on-start", true, "Should the toolbar be shown on startup", true, true)]
         private static readonly SharedStatic<bool> ShowOnStart = SharedStatic<bool>.GetOrCreate<ShowAnchorToolbarButton, EnabledVar>();
@@ -50,7 +50,7 @@ namespace KrasCore.Editor
             }
         }
 
-        [MainToolbarElement(Path, defaultDockPosition = MainToolbarDockPosition.Middle)]
+        [MainToolbarElement(PATH, defaultDockPosition = MainToolbarDockPosition.Middle)]
         public static MainToolbarElement ShowAnchorToolbar() {
             var icon = EditorGUIUtility.IconContent("CustomTool").image as Texture2D;
             var content = new MainToolbarContent(icon);

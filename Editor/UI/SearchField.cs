@@ -1,4 +1,3 @@
-using BovineLabs.Core.Editor.SearchWindow;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor.UI

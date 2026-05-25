@@ -2,7 +2,6 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
-using BovineLabs.Core.Editor.SearchWindow;
 using UnityEngine.UIElements;
 
 namespace KrasCore.Editor.UI

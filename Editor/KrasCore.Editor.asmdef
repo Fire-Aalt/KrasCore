@@ -2,9 +2,10 @@
   "name": "KrasCore.Editor",
   "rootNamespace": "KrasCore.Editor",
   "references": [
-    "KrasCore",
     "BovineLabs.Core",
     "BovineLabs.Core.Editor",
+    "BovineLabs.Anchor",
+    "BovineLabs.Anchor.Debug",
     "Unity.Mathematics",
     "Unity.Collections",
     "Unity.Entities",
@@ -12,10 +13,9 @@
     "Unity.Transforms",
     "Unity.Addressables",
     "Unity.Addressables.Editor",
-    "BovineLabs.Anchor",
-    "BovineLabs.Anchor.Debug",
     "Unity.AppUI",
-    "Unity.AppUI.MVVM"
+    "Unity.AppUI.MVVM",
+    "KrasCore"
   ],
   "includePlatforms": [
     "Editor"
@@ -28,14 +28,14 @@
   "defineConstraints": [],
   "versionDefines": [
     {
-      "name": "com.unity.addressables",
-      "expression": "",
-      "define": "ADDRESSABLES"
-    },
-    {
       "name": "com.bovinelabs.anchor",
       "expression": "",
       "define": "BL_ANCHOR"
+    },
+    {
+      "name": "com.unity.addressables",
+      "expression": "",
+      "define": "ADDRESSABLES"
     }
   ],
   "noEngineReferences": false

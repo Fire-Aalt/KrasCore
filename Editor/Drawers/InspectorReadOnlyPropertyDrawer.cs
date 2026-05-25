@@ -1,4 +1,3 @@
-using BovineLabs.Core.Editor.Inspectors;
 using UnityEditor;
 using UnityEngine.UIElements;
 
@@ -9,7 +8,7 @@ namespace KrasCore.Editor
     {
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            var propertyField = PropertyUtil.CreateProperty(property, property.serializedObject);
+            var propertyField = PropertyUtils.CreateProperty(property, property.serializedObject);
             propertyField.SetEnabled(false);
             return propertyField;
         }

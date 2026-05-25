@@ -9,7 +9,7 @@ namespace KrasCore.Editor
 {
     public static class LeakDetectionLevelDropdown
     {
-        private const string Path = "KrasCore/Leak Detection Level";
+        private const string PATH = "FireAlt/Core/Leak Detection Level";
 
         private static Image _iconImage;
         private static TextElement _label;
@@ -30,7 +30,7 @@ namespace KrasCore.Editor
             }
         }
         
-        [MainToolbarElement(Path, defaultDockPosition = MainToolbarDockPosition.Middle)]
+        [MainToolbarElement(PATH, defaultDockPosition = MainToolbarDockPosition.Middle)]
         public static MainToolbarElement LeakDetectionLevel()
         {
             var content = new MainToolbarContent(GetText(), GetIcon(), string.Empty);
@@ -97,7 +97,7 @@ namespace KrasCore.Editor
         
         private static void Refresh()
         {
-            MainToolbar.Refresh(Path);
+            MainToolbar.Refresh(PATH);
         }
     }
 }
