@@ -9,7 +9,7 @@ namespace KrasCore.Collections
     internal static class ListPool
     {
         // Retains at most about 1 MiB of pooled list buffers per worker thread.
-        private const int MAX_POOL_SIZE_PER_THREAD = 16;
+        private const int MAX_POOL_SIZE_PER_THREAD = 32;
         private const int MAX_BYTES_PER_LIST = 64 * 1024;
 
         internal static readonly SharedStatic<Data> Pool = SharedStatic<Data>.GetOrCreate<Data>();
@@ -83,6 +83,8 @@ namespace KrasCore.Collections
         /// </remarks>
 #if !UNITY_EDITOR
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+#else    
+        [UnityEditor.InitializeOnLoadMethod]
 #endif
         public static void Initialize()
         {

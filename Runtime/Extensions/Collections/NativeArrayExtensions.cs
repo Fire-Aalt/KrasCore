@@ -23,11 +23,8 @@ namespace KrasCore
         public static unsafe UnsafeArray<byte> ToBytesUnsafe<T>(this NativeArray<T> array, Allocator allocator)
             where T : unmanaged
         {
-            var bytesView = array.AsBytes();
             var bytes = new UnsafeArray<byte>(array.Length * UnsafeUtility.SizeOf<T>(), allocator);
-            
-            UnsafeUtility.MemCpy(bytes.GetUnsafePtr(),
-                bytesView.GetUnsafeReadOnlyPtr(), array.Length * UnsafeUtility.SizeOf<T>());
+            UnsafeUtility.MemCpy(bytes.GetUnsafePtr(), array.GetUnsafeReadOnlyPtr(), array.Length * UnsafeUtility.SizeOf<T>());
             return bytes;
         }
     }
