@@ -70,6 +70,72 @@ namespace KrasCore.Tests
         }
 
         [Test]
+        public void PooledNativeArray_Array_HasRequestedLengthAndWritableElements()
+        {
+            var pooled = NativeArrayPool<int>.Rent(3);
+
+            try
+            {
+                var array = pooled.Array;
+
+                Assert.That(array.Length, Is.EqualTo(3));
+                Assert.That(array[0], Is.Zero);
+                Assert.That(array[1], Is.Zero);
+                Assert.That(array[2], Is.Zero);
+
+                array[0] = 70;
+                array[1] = 80;
+                array[2] = 90;
+
+                Assert.That(pooled.Array[0], Is.EqualTo(70));
+                Assert.That(pooled.Array[1], Is.EqualTo(80));
+                Assert.That(pooled.Array[2], Is.EqualTo(90));
+            }
+            finally
+            {
+                pooled.Dispose();
+            }
+        }
+
+        [Test]
+        public void PooledNativeArray_ArrayCopies_AliasSameBuffer()
+        {
+            var pooled = NativeArrayPool<int>.Rent(2);
+
+            try
+            {
+                var first = pooled.Array;
+                var second = pooled.Array;
+
+                first[0] = 100;
+                second[1] = 200;
+
+                Assert.That(second[0], Is.EqualTo(100));
+                Assert.That(first[1], Is.EqualTo(200));
+                Assert.That(pooled.Array[0], Is.EqualTo(100));
+                Assert.That(pooled.Array[1], Is.EqualTo(200));
+            }
+            finally
+            {
+                pooled.Dispose();
+            }
+        }
+
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+        [Test]
+        public void PooledNativeArray_Dispose_InvalidatesArrayCopies()
+        {
+            var pooled = NativeArrayPool<int>.Rent(1);
+            var array = pooled.Array;
+
+            array[0] = 1234;
+            pooled.Dispose();
+
+            Assert.Throws<ObjectDisposedException>(() => _ = array[0]);
+        }
+#endif
+
+        [Test]
         public unsafe void NativeThenUnsafe_RentsSameReturnedAllocationFromSharedPool()
         {
             var native = NativeListPool<int>.Rent(4);
@@ -126,6 +192,66 @@ namespace KrasCore.Tests
             finally
             {
                 native.Dispose();
+            }
+        }
+
+        [Test]
+        public unsafe void NativeArrayThenNativeList_RentsSameReturnedAllocationFromSharedPool()
+        {
+            var nativeArray = NativeArrayPool<int>.Rent(4);
+            IntPtr arrayBuffer;
+
+            try
+            {
+                var array = nativeArray.Array;
+                array[0] = 321;
+                arrayBuffer = (IntPtr)NativeArrayUnsafeUtility.GetUnsafePtr(array);
+            }
+            finally
+            {
+                nativeArray.Dispose();
+            }
+
+            var nativeList = NativeListPool<int>.Rent(1);
+
+            try
+            {
+                Assert.That((IntPtr)nativeList.List.GetUnsafeList()->Ptr, Is.EqualTo(arrayBuffer));
+                Assert.That(nativeList.List.Length, Is.Zero);
+                Assert.That(nativeList.List.Capacity, Is.GreaterThanOrEqualTo(1));
+            }
+            finally
+            {
+                nativeList.Dispose();
+            }
+        }
+
+        [Test]
+        public unsafe void UnsafeListThenNativeArray_RentsSameReturnedAllocationFromSharedPool()
+        {
+            var unsafeList = UnsafeListPool<int>.Rent(4);
+            IntPtr unsafeBuffer;
+
+            try
+            {
+                unsafeList.List.Add(654);
+                unsafeBuffer = (IntPtr)unsafeList.List.Ptr;
+            }
+            finally
+            {
+                unsafeList.Dispose();
+            }
+
+            var nativeArray = NativeArrayPool<int>.Rent(2);
+
+            try
+            {
+                Assert.That((IntPtr)NativeArrayUnsafeUtility.GetUnsafePtr(nativeArray.Array), Is.EqualTo(unsafeBuffer));
+                Assert.That(nativeArray.Array.Length, Is.EqualTo(2));
+            }
+            finally
+            {
+                nativeArray.Dispose();
             }
         }
 
