@@ -1,7 +1,15 @@
 {
-    "name": "KrasCore",
+    "name": "FireAlt.Core.BovineLabs",
     "rootNamespace": "KrasCore",
     "references": [
+        "KrasCore",
+        "BovineLabs.Core.Extensions",
+        "BovineLabs.Core",
+        "BovineLabs.Quill",
+        "BovineLabs.Bridge",
+        "BovineLabs.Bridge.Data",
+        "BovineLabs.Essence",
+        "BovineLabs.Essence.Data",
         "Unity.Mathematics",
         "Unity.Burst",
         "Unity.Collections",
@@ -21,8 +29,15 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "BL_CORE"
+    ],
     "versionDefines": [
+        {
+            "name": "com.bovinelabs.core",
+            "expression": "",
+            "define": "BL_CORE"
+        },
         {
             "name": "com.bovinelabs.quill",
             "expression": "",
@@ -37,11 +52,6 @@
             "name": "com.bovinelabs.bridge",
             "expression": "",
             "define": "BL_BRIDGE"
-        },
-        {
-            "name": "com.unity.addressables",
-            "expression": "",
-            "define": "ADDRESSABLES"
         }
     ],
     "noEngineReferences": false

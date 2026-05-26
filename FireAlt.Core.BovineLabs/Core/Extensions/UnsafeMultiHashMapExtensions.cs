@@ -2,21 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using BovineLabs.Core.Collections;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 
 namespace KrasCore
 {
     public static class UnsafeMultiHashMapExtensions
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe ref T GetValueAsRef<T>(this UnsafeArray<T> array, int index)
-            where T : unmanaged
-        {
-            return ref UnsafeUtility.ArrayElementAsRef<T>(array.GetUnsafePtr(), index);
-        }
-        
         /// <summary>
         /// Returns an enumerator over the values of an individual key.
         /// </summary>

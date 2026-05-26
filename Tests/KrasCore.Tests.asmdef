@@ -6,7 +6,6 @@
         "Unity.Entities",
         "Unity.PerformanceTesting",
         "Unity.Collections",
-        "Unity.Jobs",
         "Unity.Burst",
         "Unity.Mathematics",
         "BovineLabs.Core"
