@@ -1,9 +1,8 @@
-using System;
-using BovineLabs.Core.Utility;
+using KrasCore.Collections.Pooled;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Entities;
-using Random = Unity.Mathematics.Random;
+using Unity.Mathematics;
 
 namespace KrasCore
 {
@@ -38,7 +37,7 @@ namespace KrasCore
                     return variant;
                 }
             }
-            throw new Exception("Result is out of range");
+            throw new System.Exception("Result is out of range");
         }
         
         public static int NextVariant(float randomValue, ref BlobArray<int> weights, int weightSum)
@@ -54,7 +53,7 @@ namespace KrasCore
                     return variant;
                 }
             }
-            throw new Exception("Result is out of range");
+            throw new System.Exception("Result is out of range");
         }
         
         public static int NextVariant<T>(float randomValue, ref BlobArray<T> weights, int weightSum)
@@ -71,12 +70,12 @@ namespace KrasCore
                     return variant;
                 }
             }
-            throw new Exception("Result is out of range");
+            throw new System.Exception("Result is out of range");
         }
 
         public static NativeList<int> SelectRandomIndices(ref Random rng, int indicesCount, int maxSelectedCount)
         {
-            var possibleIndices = PooledNativeList<int>.Make();
+            using var possibleIndices = NativeListPool<int>.Rent();
             for (int i = 0; i < indicesCount; i++)
             {
                 possibleIndices.List.Add(i);
@@ -89,7 +88,6 @@ namespace KrasCore
                 selectedIndices.Add(possibleIndices.List[selectedIndex]);
                 possibleIndices.List.RemoveAtSwapBack(selectedIndex);
             }
-            possibleIndices.Dispose();
 
             return selectedIndices;
         }

@@ -41,7 +41,7 @@ namespace KrasCore.Quill
 
         public static void SolidCircle(float3 center, float radius, float3 up, int sideCount, Color color, float duration = 0f)
         {
-            using var pooledTriangles = PooledNativeList<float3x3>.Rent();
+            using var pooledTriangles = NativeListPool<float3x3>.Rent();
 
             var triangles = DrawerImpl.SolidCircle(pooledTriangles, center, radius, up, sideCount);
             GlobalDraw.SolidTriangles(triangles, color, duration);
@@ -49,7 +49,7 @@ namespace KrasCore.Quill
 
         public static void SolidPlane(float3 center, float2 size, float3 up, Color color, float duration = 0f)
         {
-            using var pooledTriangles = PooledNativeList<float3x3>.Rent();
+            using var pooledTriangles = NativeListPool<float3x3>.Rent();
 
             var triangles = DrawerImpl.SolidPlane(pooledTriangles, center, size, up);
             GlobalDraw.SolidTriangles(triangles, color, duration);
@@ -57,7 +57,7 @@ namespace KrasCore.Quill
 
         public static void SolidSphere(float3 center, float radius, int sideCount, Color color, float duration = 0f)
         {
-            using var pooledTriangles = PooledNativeList<float3x3>.Rent();
+            using var pooledTriangles = NativeListPool<float3x3>.Rent();
             
             var triangles = DrawerImpl.SolidSphere(pooledTriangles, center, radius, sideCount);
             GlobalDraw.SolidTriangles(triangles, color, duration);
@@ -81,7 +81,7 @@ namespace KrasCore.Quill
         public static void Trajectory(in float3 initialPos, float gravity, float initialVelocity,
             float angleDeg, float angleDivergence, in Color color)
         {
-            using var pooledPoints = PooledNativeList<float3>.Rent();
+            using var pooledPoints = NativeListPool<float3>.Rent();
             
             DrawerImpl.Trajectory(pooledPoints.List, initialPos, gravity, initialVelocity, angleDeg, angleDivergence);
             GlobalDraw.Lines(pooledPoints.List.AsArray(), color);

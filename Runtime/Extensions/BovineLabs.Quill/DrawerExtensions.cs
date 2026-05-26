@@ -43,7 +43,7 @@ namespace KrasCore.Quill
         public static void SolidCircle(this Drawer drawer, float3 center, float radius, float3 up, int sideCount, Color color, float duration = 0f)
         {
             if (!drawer.IsEnabled) return;
-            using var pooledTriangles = PooledNativeList<float3x3>.Rent();
+            using var pooledTriangles = NativeListPool<float3x3>.Rent();
 
             var triangles = DrawerImpl.SolidCircle(pooledTriangles, center, radius, up, sideCount);
             drawer.SolidTriangles(triangles, color, duration);
@@ -52,7 +52,7 @@ namespace KrasCore.Quill
         public static void SolidPlane(this Drawer drawer, float3 center, float2 size, float3 up, Color color, float duration = 0f)
         {
             if (!drawer.IsEnabled) return;
-            using var pooledTriangles = PooledNativeList<float3x3>.Rent();
+            using var pooledTriangles = NativeListPool<float3x3>.Rent();
 
             var triangles = DrawerImpl.SolidPlane(pooledTriangles, center, size, up);
             drawer.SolidTriangles(triangles, color, duration);
@@ -61,7 +61,7 @@ namespace KrasCore.Quill
         public static void SolidSphere(this Drawer drawer, float3 center, float radius, int sideCount, Color color, float duration = 0f)
         {
             if (!drawer.IsEnabled) return;
-            using var pooledTriangles = PooledNativeList<float3x3>.Rent();
+            using var pooledTriangles = NativeListPool<float3x3>.Rent();
             
             var triangles = DrawerImpl.SolidSphere(pooledTriangles, center, radius, sideCount);
             drawer.SolidTriangles(triangles, color, duration);
@@ -73,7 +73,7 @@ namespace KrasCore.Quill
             float angleDeg, float angleDivergence, Color color)
         {
             if (!drawer.IsEnabled) return;
-            using var pooledPoints = PooledNativeList<float3>.Rent();
+            using var pooledPoints = NativeListPool<float3>.Rent();
             
             DrawerImpl.Trajectory(pooledPoints.List, initialPos, gravity, initialVelocity, angleDeg, angleDivergence);
             drawer.Lines(pooledPoints.List.AsArray(), color);

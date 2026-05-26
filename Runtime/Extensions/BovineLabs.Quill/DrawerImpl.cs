@@ -66,7 +66,7 @@ namespace KrasCore.Quill
             var ringCount = latitudeBands - 1;
             var triangleCount = 2 * longitudeCount * ringCount;
 
-            using var pooledRings = PooledNativeList<float3>.Rent();
+            using var pooledRings = NativeListPool<float3>.Rent();
             var rings = pooledRings.AsArray(ringCount * longitudeCount);
             
             var triangles = pooledTriangles.AsArray(triangleCount);
