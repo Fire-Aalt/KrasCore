@@ -1,6 +1,6 @@
 #if BL_QUILL
 using BovineLabs.Quill;
-using KrasCore.Collections.Pooled;
+using KrasCore.Collections;
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Physics.Authoring;

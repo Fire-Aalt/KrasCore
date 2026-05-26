@@ -1,4 +1,4 @@
-using KrasCore.Collections.Pooled;
+using KrasCore.Collections;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Entities;
