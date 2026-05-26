@@ -3,6 +3,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
+using UnityEngine;
 
 namespace KrasCore.Collections.Pooled
 {
@@ -129,7 +130,6 @@ namespace KrasCore.Collections.Pooled
             return _list.AsArray();
         }
         
-        
         /// <summary>
         /// Disposes the PooledNativeList and returns the underlying memory to the thread-local pool for reuse.
         /// </summary>
@@ -170,7 +170,7 @@ namespace KrasCore.Collections.Pooled
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (!data.IsCreated)
             {
-                throw new InvalidOperationException("PooledNativeList pool not initialized.");
+                throw new InvalidOperationException("ListPool is not initialized.");
             }
 #endif
 
@@ -269,7 +269,7 @@ namespace KrasCore.Collections.Pooled
                 return ref _buffer.GetThreadDataRef(JobsUtility.ThreadIndex).ThreadList;
             }
 
-            public void Dispose()
+            public unsafe void Dispose()
             {
                 if (!IsCreated)
                 {
@@ -281,6 +281,7 @@ namespace KrasCore.Collections.Pooled
                     foreach (var list in threadData.ThreadList)
                     {
                         list.Value.Dispose();
+                        AllocatorManager.Free(Pool.Data.Allocator, list.GetUnsafePtr());
                     }
                     threadData.ThreadList.Dispose();
                 }
