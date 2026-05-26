@@ -121,6 +121,58 @@ namespace KrasCore.Tests
             }
         }
 
+        [Test]
+        public void PooledUnsafeArray_Array_HasRequestedLengthAndWritableElements()
+        {
+            var pooled = UnsafeArrayPool<int>.Rent(3);
+
+            try
+            {
+                var array = pooled.Array;
+
+                Assert.That(array.Length, Is.EqualTo(3));
+                Assert.That(array[0], Is.Zero);
+                Assert.That(array[1], Is.Zero);
+                Assert.That(array[2], Is.Zero);
+
+                array[0] = 700;
+                array[1] = 800;
+                array[2] = 900;
+
+                Assert.That(pooled.Array[0], Is.EqualTo(700));
+                Assert.That(pooled.Array[1], Is.EqualTo(800));
+                Assert.That(pooled.Array[2], Is.EqualTo(900));
+            }
+            finally
+            {
+                pooled.Dispose();
+            }
+        }
+
+        [Test]
+        public void PooledUnsafeArray_ArrayCopies_AliasSameBuffer()
+        {
+            var pooled = UnsafeArrayPool<int>.Rent(2);
+
+            try
+            {
+                var first = pooled.Array;
+                var second = pooled.Array;
+
+                first[0] = 1000;
+                second[1] = 2000;
+
+                Assert.That(second[0], Is.EqualTo(1000));
+                Assert.That(first[1], Is.EqualTo(2000));
+                Assert.That(pooled.Array[0], Is.EqualTo(1000));
+                Assert.That(pooled.Array[1], Is.EqualTo(2000));
+            }
+            finally
+            {
+                pooled.Dispose();
+            }
+        }
+
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
         [Test]
         public void PooledNativeArray_Dispose_InvalidatesArrayCopies()
@@ -252,6 +304,65 @@ namespace KrasCore.Tests
             finally
             {
                 nativeArray.Dispose();
+            }
+        }
+
+        [Test]
+        public unsafe void UnsafeArrayThenNativeArray_RentsSameReturnedAllocationFromSharedPool()
+        {
+            var unsafeArray = UnsafeArrayPool<int>.Rent(4);
+            IntPtr unsafeArrayBuffer;
+
+            try
+            {
+                var array = unsafeArray.Array;
+                array[0] = 987;
+                unsafeArrayBuffer = (IntPtr)array.GetUnsafePtr();
+            }
+            finally
+            {
+                unsafeArray.Dispose();
+            }
+
+            var nativeArray = NativeArrayPool<int>.Rent(2);
+
+            try
+            {
+                Assert.That((IntPtr)NativeArrayUnsafeUtility.GetUnsafePtr(nativeArray.Array), Is.EqualTo(unsafeArrayBuffer));
+                Assert.That(nativeArray.Array.Length, Is.EqualTo(2));
+            }
+            finally
+            {
+                nativeArray.Dispose();
+            }
+        }
+
+        [Test]
+        public unsafe void NativeListThenUnsafeArray_RentsSameReturnedAllocationFromSharedPool()
+        {
+            var nativeList = NativeListPool<int>.Rent(4);
+            IntPtr nativeListBuffer;
+
+            try
+            {
+                nativeList.List.Add(789);
+                nativeListBuffer = (IntPtr)nativeList.List.GetUnsafeList()->Ptr;
+            }
+            finally
+            {
+                nativeList.Dispose();
+            }
+
+            var unsafeArray = UnsafeArrayPool<int>.Rent(2);
+
+            try
+            {
+                Assert.That((IntPtr)unsafeArray.Array.GetUnsafePtr(), Is.EqualTo(nativeListBuffer));
+                Assert.That(unsafeArray.Array.Length, Is.EqualTo(2));
+            }
+            finally
+            {
+                unsafeArray.Dispose();
             }
         }
 
