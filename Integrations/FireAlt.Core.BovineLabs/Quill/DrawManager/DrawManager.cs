@@ -8,7 +8,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Pool;
 
-namespace KrasCore.Quill
+namespace FireAlt.Core.Quill
 {
     [InitializeOnLoad]
     internal static class DrawManager

@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
 #if BL_CORE_EXTENSIONS

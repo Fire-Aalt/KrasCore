@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public struct RuntimeMaterialLookup : IComponentData, IEnableableComponent
     {

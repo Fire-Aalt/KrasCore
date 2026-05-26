@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor.UI
+namespace FireAlt.Core.Editor.UI
 {
     /// <summary> Copy of com.unity.platforms\Editor\Unity.Build.Editor\SearchWindow\SearchWindow.cs. </summary>
     public class SearchWindow : EditorWindow

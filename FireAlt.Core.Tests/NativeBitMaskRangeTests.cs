@@ -2,7 +2,7 @@ using NUnit.Framework;
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace KrasCore.Tests
+namespace FireAlt.Core.Tests
 {
     public class NativeBitMaskRangeTests
     {

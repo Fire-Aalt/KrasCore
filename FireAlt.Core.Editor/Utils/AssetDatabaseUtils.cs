@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class AssetDatabaseUtils
     {

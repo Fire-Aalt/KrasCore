@@ -1,4 +1,4 @@
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class StringUtils
     {

@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using Unity.Rendering;
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [BurstCompile]
     public static class RendererUtility

@@ -2,7 +2,7 @@ using NUnit.Framework;
 using Unity.Entities;
 using UnityEngine;
 
-namespace KrasCore.Tests
+namespace FireAlt.Core.Tests
 {
     public class RuntimeMaterialTests
     {

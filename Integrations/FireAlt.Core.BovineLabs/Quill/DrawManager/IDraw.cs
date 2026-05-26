@@ -1,5 +1,5 @@
 #if BL_QUILL
-namespace KrasCore.Quill
+namespace FireAlt.Core.Quill
 {
     public interface IDraw
     {

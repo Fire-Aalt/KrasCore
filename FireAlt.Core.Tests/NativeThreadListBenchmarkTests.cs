@@ -6,7 +6,7 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Unity.PerformanceTesting;
 
-namespace KrasCore.Tests
+namespace FireAlt.Core.Tests
 {
     public class NativeThreadListBenchmarkTests
     {

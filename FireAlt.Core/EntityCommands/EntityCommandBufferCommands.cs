@@ -5,7 +5,7 @@
 using Unity.Collections;
 using Unity.Entities;
 
-namespace KrasCore.EntityCommands
+namespace FireAlt.Core.EntityCommands
 {
     public struct EntityCommandBufferCommands : IEntityCommands
     {

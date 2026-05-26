@@ -1,7 +1,7 @@
 using System;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public readonly unsafe struct Ref<T> : IEquatable<Ref<T>>
         where T : unmanaged

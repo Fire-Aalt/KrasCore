@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
 //using Cysharp.Threading.Tasks;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     /// <summary>
     /// Creates an instance of a material of a VisualElement

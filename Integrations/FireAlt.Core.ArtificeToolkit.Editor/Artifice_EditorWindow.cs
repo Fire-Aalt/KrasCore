@@ -3,7 +3,7 @@ using ArtificeToolkit.Editor;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public class Artifice_EditorWindow : EditorWindow
     {

@@ -4,7 +4,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class ScopedEditorPrefs
     {

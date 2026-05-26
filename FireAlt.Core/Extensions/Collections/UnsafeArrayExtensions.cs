@@ -2,7 +2,7 @@ using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class UnsafeArrayExtensions
     {

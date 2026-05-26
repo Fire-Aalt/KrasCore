@@ -1,10 +1,10 @@
 #if BL_QUILL
 using BovineLabs.Quill;
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace KrasCore.Quill
+namespace FireAlt.Core.Quill
 {
     public static class DrawerExtensions
     {

@@ -3,7 +3,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [CustomPropertyDrawer(typeof(InlineScriptableObjectAttribute))]
     public class InlineScriptableObjectPropertyDrawer : PropertyDrawer

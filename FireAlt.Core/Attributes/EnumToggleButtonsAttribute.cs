@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
     public class EnumToggleButtonsAttribute : PropertyAttribute

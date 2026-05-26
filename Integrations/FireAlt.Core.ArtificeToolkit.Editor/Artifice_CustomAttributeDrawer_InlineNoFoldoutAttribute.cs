@@ -3,7 +3,7 @@ using ArtificeToolkit.Editor.Artifice_CustomAttributeDrawers;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [Artifice_CustomAttributeDrawer(typeof(InlineNoFoldoutAttribute))]
     public class Artifice_CustomAttributeDrawer_InlineNoFoldoutAttribute : Artifice_CustomAttributeDrawer

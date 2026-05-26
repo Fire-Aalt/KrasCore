@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace KrasCore.Collections
+namespace FireAlt.Core.Collections
 {
     internal static class ListPool
     {

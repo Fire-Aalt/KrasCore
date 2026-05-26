@@ -7,7 +7,7 @@ using Unity.Entities;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine.LowLevel;
 
-namespace KrasCore.Testing
+namespace FireAlt.Core.Testing
 {
     public abstract class ECSTestsFixture
     {

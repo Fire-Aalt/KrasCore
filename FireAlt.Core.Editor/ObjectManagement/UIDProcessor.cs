@@ -9,7 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     /// <summary> An <see cref="AssetPostprocessor" /> that ensures <see cref="IUID" /> types always have a unique ID even if 2 branches merge. </summary>
     public class UIDProcessor : AssetPostprocessor

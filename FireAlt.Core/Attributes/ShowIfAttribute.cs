@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = true, Inherited = true)]
     public class ShowIfAttribute : PropertyAttribute

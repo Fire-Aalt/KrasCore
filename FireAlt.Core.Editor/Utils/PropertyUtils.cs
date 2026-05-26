@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEditor.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class PropertyUtils
     {

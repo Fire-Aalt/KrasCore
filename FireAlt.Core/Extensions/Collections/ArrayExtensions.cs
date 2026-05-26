@@ -1,6 +1,6 @@
 using Unity.Assertions;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class ArrayExtensions
     {

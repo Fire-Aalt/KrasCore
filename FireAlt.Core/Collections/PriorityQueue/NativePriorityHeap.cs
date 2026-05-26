@@ -8,7 +8,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     /// <summary>
     /// A job-safe binary heap where item ordering is defined by <see cref="IComparable{T}"/> on <typeparamref name="T"/>.

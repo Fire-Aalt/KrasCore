@@ -1,10 +1,10 @@
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class RandomUtils
     {

@@ -1,8 +1,8 @@
-# KrasCore
+# FireAlt.Core
 A library of Unity extensions and utils that I use regularly both at Runtime and Editor.
 
 ## Overview
-`KrasCore` is a Unity package of runtime and editor utilities used across DOTS/ECS, rendering, tooling, and general project helpers.
+`FireAlt.Core` is a Unity package of runtime and editor utilities used across DOTS/ECS, rendering, tooling, and general project helpers.
 
 Main folders:
 - `Runtime/`: gameplay/runtime code, ECS systems, data containers, extensions.
@@ -77,5 +77,5 @@ Several features compile conditionally:
 - `BL_QUILL`
 - `BL_ESSENSE`
 
-Check `Runtime/KrasCore.asmdef` and `Editor/KrasCore.Editor.asmdef` for package references and version defines.
+Check `Runtime/FireAlt.Core.asmdef` and `Editor/FireAlt.Core.Editor.asmdef` for package references and version defines.
 

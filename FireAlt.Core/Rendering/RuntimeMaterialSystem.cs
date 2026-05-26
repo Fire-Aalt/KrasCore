@@ -4,7 +4,7 @@ using Unity.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [RequireMatchingQueriesForUpdate]
     [UpdateInGroup(typeof(RuntimeBakingSystemGroup))]

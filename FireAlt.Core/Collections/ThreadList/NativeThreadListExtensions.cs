@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class NativeThreadListExtensions
     {

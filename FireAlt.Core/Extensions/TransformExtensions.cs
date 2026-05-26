@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class TransformExtensions
     {

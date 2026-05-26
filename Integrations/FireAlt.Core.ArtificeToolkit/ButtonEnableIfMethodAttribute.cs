@@ -1,7 +1,7 @@
 // using System;
 // using ArtificeToolkit.Attributes;
 //
-// namespace KrasCore
+// namespace FireAlt.Core
 // {
 //     [AttributeUsage(AttributeTargets.Method)]
 //     public class ButtonEnableIfMethodAttribute : CustomAttribute

@@ -1,6 +1,6 @@
 using ArtificeToolkit.Attributes;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public class EnableIfMethodAttribute : CustomAttribute, IArtifice_ArrayAppliedAttribute
     {

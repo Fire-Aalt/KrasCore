@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.Collections;
 
-namespace KrasCore.Tests
+namespace FireAlt.Core.Tests
 {
     public class UnsafePriorityQueueTests
     {

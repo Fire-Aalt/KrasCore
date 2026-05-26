@@ -3,7 +3,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using static Unity.Mathematics.math;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "matching mathematics package")]
     [SuppressMessage("ReSharper", "SA1300", Justification = "matching mathematics package")]

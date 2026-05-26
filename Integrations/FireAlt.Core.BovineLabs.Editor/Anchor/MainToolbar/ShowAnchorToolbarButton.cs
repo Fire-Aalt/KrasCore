@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Button = Unity.AppUI.UI.Button;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [Configurable]
     public class ShowAnchorToolbarButton

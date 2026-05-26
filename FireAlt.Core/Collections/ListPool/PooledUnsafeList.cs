@@ -2,7 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace KrasCore.Collections
+namespace FireAlt.Core.Collections
 {
     /// <summary>
     /// Entry point for renting pooled <see cref="UnsafeList{T}" /> wrappers.

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(UIDocument))]

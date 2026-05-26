@@ -1,6 +1,6 @@
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor.UI
+namespace FireAlt.Core.Editor.UI
 {
     [UxmlElement]
     internal partial class SearchField : TextField

@@ -1,7 +1,7 @@
 using System;
 using Unity.Entities;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class DynamicBufferExtensions
     {

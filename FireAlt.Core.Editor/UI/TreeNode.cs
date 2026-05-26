@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace KrasCore.Editor.UI
+namespace FireAlt.Core.Editor.UI
 {
     internal class TreeNode<T>
     {

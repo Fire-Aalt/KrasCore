@@ -1,7 +1,7 @@
 using Unity.Properties;
 using UnityEditor;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class SerializationUtils
     {

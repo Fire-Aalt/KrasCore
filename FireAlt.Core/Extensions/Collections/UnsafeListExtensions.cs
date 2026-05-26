@@ -2,7 +2,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class UnsafeListExtensions
     {

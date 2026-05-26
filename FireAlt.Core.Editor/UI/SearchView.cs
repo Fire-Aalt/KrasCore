@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor.UI
+namespace FireAlt.Core.Editor.UI
 {
     public class SearchView : VisualElement
     {

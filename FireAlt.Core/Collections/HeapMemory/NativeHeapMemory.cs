@@ -7,7 +7,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     /// <summary>
     /// A job-safe heap-style allocator backed by contiguous native memory that returns <see cref="MemoryPtr"/> handles.

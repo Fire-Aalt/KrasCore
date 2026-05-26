@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(AfterSceneSystemGroup))]

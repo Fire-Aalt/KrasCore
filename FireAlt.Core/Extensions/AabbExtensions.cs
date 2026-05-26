@@ -1,7 +1,7 @@
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class AabbExtensions
     {

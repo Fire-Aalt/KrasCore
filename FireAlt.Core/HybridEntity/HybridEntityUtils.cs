@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class HybridEntityUtils
     {

@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public struct VFXColorRGBA
     {

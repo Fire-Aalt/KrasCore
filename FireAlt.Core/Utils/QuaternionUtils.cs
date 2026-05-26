@@ -2,7 +2,7 @@ using Unity.Transforms;
 using static Unity.Mathematics.math;
 using quaternion = Unity.Mathematics.quaternion;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public class QuaternionUtils
     {

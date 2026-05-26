@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class MainToolbarUtils
     {

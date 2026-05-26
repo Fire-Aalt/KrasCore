@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class UnsafeMultiHashMapExtensions
     {

@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [CustomPropertyDrawer(typeof(MinMaxRangeAttribute))]
     public class MinMaxRangeAttributeDrawer : PropertyDrawer

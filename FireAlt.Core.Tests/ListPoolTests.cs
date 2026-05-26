@@ -1,20 +1,12 @@
 using System;
-using System.Reflection;
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
 using NUnit.Framework;
-using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace KrasCore.Tests
+namespace FireAlt.Core.Tests
 {
     public class ListPoolTests
     {
-        [SetUp]
-        public void SetUp()
-        {
-            InitializeListPool();
-        }
-
         [Test]
         public void PooledNativeList_AsArray_ResizesAndAliasesList()
         {
@@ -364,13 +356,6 @@ namespace KrasCore.Tests
             {
                 unsafeArray.Dispose();
             }
-        }
-
-        private static void InitializeListPool()
-        {
-            var type = typeof(NativeListPool<int>).Assembly.GetType("KrasCore.Collections.ListPool", true);
-            var method = type.GetMethod("Initialize", BindingFlags.Public | BindingFlags.Static);
-            method.Invoke(null, null);
         }
     }
 }

@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public struct SampledAnimationCurve
     {

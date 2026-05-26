@@ -2,7 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     
     public static class NativeHashSetExtensions

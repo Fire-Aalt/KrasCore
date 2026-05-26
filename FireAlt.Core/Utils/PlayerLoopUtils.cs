@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class PlayerLoopUtils
     {

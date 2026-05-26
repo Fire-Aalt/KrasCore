@@ -1,7 +1,7 @@
 using System.Reflection;
 using UnityEngine;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class InternalComponentUtils
     {

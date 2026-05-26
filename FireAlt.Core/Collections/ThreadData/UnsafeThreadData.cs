@@ -7,7 +7,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct UnsafeThreadData<T> : INativeDisposable

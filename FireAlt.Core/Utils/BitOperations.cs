@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     /// <summary>
     /// Bit array utility class.

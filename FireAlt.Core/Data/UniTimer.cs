@@ -1,6 +1,6 @@
 using Unity.Core;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public struct UniTimer
     {

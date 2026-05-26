@@ -5,7 +5,7 @@ using ArtificeToolkit.Editor.Artifice_CustomAttributeDrawers;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [Artifice_CustomAttributeDrawer(typeof(EnableIfMethodAttribute))]
     public class Artifice_CustomAttributeDrawer_EnableIfMethodAttribute : Artifice_CustomAttributeDrawer

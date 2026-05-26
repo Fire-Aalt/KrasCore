@@ -7,7 +7,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Start = {StartIndex}, Count = {Count}, IsValid = {IsValid}")]

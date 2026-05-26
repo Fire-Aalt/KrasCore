@@ -1,4 +1,4 @@
-using KrasCore;
+using FireAlt.Core;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;

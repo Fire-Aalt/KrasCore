@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class ReflectionUtils
     {

@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using Unity.Collections;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class UnsafeArrayUtility
     {

@@ -4,7 +4,7 @@ using Unity.Entities;
 
 // https://gitlab.com/tertle/com.bovinelabs.core
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static unsafe class BlobBuilderExtensions
     {

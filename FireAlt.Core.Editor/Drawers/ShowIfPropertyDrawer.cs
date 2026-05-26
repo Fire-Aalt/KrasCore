@@ -8,7 +8,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [CustomPropertyDrawer(typeof(ShowIfAttribute))]
     public class ShowIfPropertyDrawer : PropertyDrawer

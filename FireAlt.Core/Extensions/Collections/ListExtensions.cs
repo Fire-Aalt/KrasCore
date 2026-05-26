@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class ListExtensions
     {

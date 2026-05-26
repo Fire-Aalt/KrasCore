@@ -1,12 +1,12 @@
 #if BL_QUILL
 using BovineLabs.Quill;
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
 using Unity.Burst;
 using Unity.Mathematics;
 using Unity.Physics.Authoring;
 using UnityEngine;
 
-namespace KrasCore.Quill
+namespace FireAlt.Core.Quill
 {
     [BurstCompile]
     public static class GlobalDrawEx

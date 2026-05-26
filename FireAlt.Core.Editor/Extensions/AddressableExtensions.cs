@@ -5,7 +5,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     public static class AddressableExtensions
     {

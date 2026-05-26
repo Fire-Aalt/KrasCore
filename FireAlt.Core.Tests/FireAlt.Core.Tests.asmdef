@@ -1,6 +1,6 @@
 {
-    "name": "KrasCore.Tests",
-    "rootNamespace": "KrasCore.Tests",
+    "name": "FireAlt.Core.Tests",
+    "rootNamespace": "FireAlt.Core.Tests",
     "references": [
         "FireAlt.Core",
         "Unity.Entities",

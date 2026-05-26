@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [CustomPropertyDrawer(typeof(InspectorReadOnlyAttribute))]
     public class InspectorReadOnlyPropertyDrawer : PropertyDrawer

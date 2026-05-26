@@ -4,7 +4,7 @@ using BovineLabs.Bridge.Data;
 using BovineLabs.Bridge.Data.Camera;
 using Unity.Entities;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     [UpdateInGroup(typeof(BridgeSyncSystemGroup))]
     [UpdateAfter(typeof(CameraMatrixShiftSyncSystem))]

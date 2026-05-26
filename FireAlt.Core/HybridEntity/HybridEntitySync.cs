@@ -1,7 +1,7 @@
 using Unity.Entities;
 using UnityEngine;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public class HybridEntitySync : IComponentData
     {

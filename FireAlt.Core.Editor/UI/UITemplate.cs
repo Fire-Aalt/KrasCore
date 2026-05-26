@@ -5,7 +5,7 @@
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor.UI
+namespace FireAlt.Core.Editor.UI
 {
     /// <summary>
     /// Manages loading a pair of uxml/uss files in the same folder.

@@ -1,10 +1,10 @@
 #if BL_QUILL
-using KrasCore.Collections;
+using FireAlt.Core.Collections;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace KrasCore.Quill
+namespace FireAlt.Core.Quill
 {
     public static class DrawerImpl
     {

@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace KrasCore.Editor
+namespace FireAlt.Core.Editor
 {
     [CustomPropertyDrawer(typeof(EnumToggleButtonsAttribute))]
     public class EnumToggleButtonsPropertyDrawer : PropertyDrawer

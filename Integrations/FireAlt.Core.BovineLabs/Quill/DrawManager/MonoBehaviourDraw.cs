@@ -1,7 +1,7 @@
 #if BL_QUILL
 using UnityEngine;
 
-namespace KrasCore.Quill
+namespace FireAlt.Core.Quill
 {
     public abstract class MonoBehaviourDraw : MonoBehaviour, IDraw
     {

@@ -2,7 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Entities;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class EntityManagerExtensions
     {        

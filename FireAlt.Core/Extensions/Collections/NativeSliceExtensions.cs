@@ -1,6 +1,6 @@
 using Unity.Collections;
 
-namespace KrasCore
+namespace FireAlt.Core
 {
     public static class NativeSliceExtensions
     {
