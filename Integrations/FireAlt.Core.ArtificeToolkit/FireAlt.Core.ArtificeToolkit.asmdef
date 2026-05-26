@@ -1,12 +1,12 @@
 {
-    "name": "KrasCore.ArtificeToolkit",
-    "rootNamespace": "KrasCore.ArtificeToolkit",
+    "name": "FireAlt.Core.ArtificeToolkit",
+    "rootNamespace": "FireAlt.Core.ArtificeToolkit",
     "references": [
         "Unity.Mathematics",
         "Unity.Collections",
         "Unity.Entities",
         "abzorba.artificetoolkit.runtime",
-        "KrasCore"
+        "FireAlt.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

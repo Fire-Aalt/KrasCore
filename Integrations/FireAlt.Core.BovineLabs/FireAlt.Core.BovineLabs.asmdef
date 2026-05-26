@@ -1,0 +1,58 @@
+{
+    "name": "FireAlt.Core.BovineLabs",
+    "rootNamespace": "FireAlt.Core.BovineLabs",
+    "references": [
+        "FireAlt.Core",
+        "BovineLabs.Core.Extensions",
+        "BovineLabs.Core",
+        "BovineLabs.Quill",
+        "BovineLabs.Bridge",
+        "BovineLabs.Bridge.Data",
+        "BovineLabs.Essence",
+        "BovineLabs.Essence.Data",
+        "Unity.Mathematics",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Entities",
+        "Unity.Entities.Graphics",
+        "Unity.Mathematics.Extensions",
+        "Unity.Physics",
+        "Unity.Physics.Hybrid",
+        "Unity.Physics.Custom",
+        "Unity.Transforms",
+        "Unity.Entities.Hybrid",
+        "Unity.Scenes"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "BL_CORE"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.bovinelabs.core",
+            "expression": "",
+            "define": "BL_CORE"
+        },
+        {
+            "name": "com.bovinelabs.quill",
+            "expression": "",
+            "define": "BL_QUILL"
+        },
+        {
+            "name": "com.bovinelabs.essence",
+            "expression": "",
+            "define": "BL_ESSENSE"
+        },
+        {
+            "name": "com.bovinelabs.bridge",
+            "expression": "",
+            "define": "BL_BRIDGE"
+        }
+    ],
+    "noEngineReferences": false
+}

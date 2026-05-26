@@ -1,15 +1,15 @@
 {
-    "name": "KrasCore.Editor.ArtificeToolkit",
-    "rootNamespace": "KrasCore.Editor.ArtificeToolkit",
+    "name": "FireAlt.Core.ArtificeToolkit.Editor",
+    "rootNamespace": "FireAlt.Core.ArtificeToolkit.Editor",
     "references": [
         "Unity.Mathematics",
         "Unity.Collections",
         "Unity.Entities",
         "abzorba.artificetoolkit.runtime",
         "abzorba.artificetoolkit.editor",
-        "KrasCore",
-        "KrasCore.Editor",
-        "KrasCore.ArtificeToolkit"
+        "FireAlt.Core",
+        "FireAlt.Core.Editor",
+        "FireAlt.Core.ArtificeToolkit"
     ],
     "includePlatforms": [
         "Editor"

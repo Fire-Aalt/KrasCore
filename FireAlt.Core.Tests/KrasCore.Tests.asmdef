@@ -2,7 +2,7 @@
     "name": "KrasCore.Tests",
     "rootNamespace": "KrasCore.Tests",
     "references": [
-        "KrasCore",
+        "FireAlt.Core",
         "Unity.Entities",
         "Unity.PerformanceTesting",
         "Unity.Collections",

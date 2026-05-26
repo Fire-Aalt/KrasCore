@@ -1,8 +1,8 @@
 {
-    "name": "FireAlt.Core.BovineLabs",
-    "rootNamespace": "KrasCore",
+    "name": "FireAlt.Core.BovineLabs.Editor",
+    "rootNamespace": "FireAlt.Core.BovineLabs.Editor",
     "references": [
-        "KrasCore",
+        "FireAlt.Core",
         "BovineLabs.Core.Extensions",
         "BovineLabs.Core",
         "BovineLabs.Quill",
@@ -37,6 +37,11 @@
             "name": "com.bovinelabs.core",
             "expression": "",
             "define": "BL_CORE"
+        },
+        {
+            "name": "com.bovinelabs.anchor",
+            "expression": "",
+            "define": "BL_ANCHOR"
         },
         {
             "name": "com.bovinelabs.quill",

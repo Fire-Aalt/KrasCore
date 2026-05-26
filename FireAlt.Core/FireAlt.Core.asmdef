@@ -1,6 +1,6 @@
 {
-    "name": "KrasCore",
-    "rootNamespace": "KrasCore",
+    "name": "FireAlt.Core",
+    "rootNamespace": "FireAlt.Core",
     "references": [
         "Unity.Mathematics",
         "Unity.Burst",
@@ -13,6 +13,7 @@
         "Unity.Physics.Custom",
         "Unity.Transforms",
         "Unity.Entities.Hybrid",
+        "Unity.Addressables",
         "Unity.Scenes"
     ],
     "includePlatforms": [],
