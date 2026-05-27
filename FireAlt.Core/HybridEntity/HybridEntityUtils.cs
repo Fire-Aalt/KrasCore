@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Jobs;
 
 namespace FireAlt.Core
 {
@@ -27,6 +28,12 @@ namespace FireAlt.Core
 #endif
         
         public static bool IsNonUniformScale(Transform transform)
+        {
+            var localScale = transform.localScale;
+            return !Mathf.Approximately(localScale.x, localScale.y) || !Mathf.Approximately(localScale.y, localScale.z);
+        }
+        
+        public static bool IsNonUniformScale(TransformAccess transform)
         {
             var localScale = transform.localScale;
             return !Mathf.Approximately(localScale.x, localScale.y) || !Mathf.Approximately(localScale.y, localScale.z);

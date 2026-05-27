@@ -9,7 +9,7 @@ namespace FireAlt.Core.Groups
     [UpdateAfter(typeof(BovineLabs.Core.LifeCycle.SceneInitializeSystem))]
 #endif
 #else
-    [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+    [UpdateInGroup(typeof(BeginSimulationSystemGroup))]
 #endif
     public partial class LateInitializationSystemGroup : ComponentSystemGroup { }
 }
