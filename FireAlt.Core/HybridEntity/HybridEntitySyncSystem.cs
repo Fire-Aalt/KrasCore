@@ -4,7 +4,6 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
-using UnityEngine;
 using UnityEngine.Jobs;
 using UnityEngine.Profiling;
 
@@ -12,13 +11,25 @@ namespace FireAlt.Core
 {
     [RequireMatchingQueriesForUpdate]
     [WorldSystemFilter(WorldSystemFilterFlags.Editor | WorldSystemFilterFlags.Default)]
-    [UpdateInGroup(typeof(BeginSimulationSystemGroup))]
+    [UpdateInGroup(typeof(AfterTransformSystemGroup))]
     public partial class HybridEntitySyncSystem : SystemBase
     {
+        protected override void OnCreate()
+        {
+            EntityManager.CreateSingleton(new SyncTransformToEntityContainer(8, Allocator.Persistent));
+        }
+
+        protected override void OnDestroy()
+        {
+            SystemAPI.GetSingleton<SyncTransformToEntityContainer>().Dispose();
+        }
+
         protected override void OnUpdate()
         {
+            var singleton = SystemAPI.GetSingletonRW<SyncTransformToEntityContainer>().ValueRW;
+            
             Profiler.BeginSample("Initialize New Entities");
-            if (!SystemAPI.QueryBuilder().WithAll<HybridEntitySync>().WithAbsent<Transform>().Build().IsEmpty)
+            if (!SystemAPI.QueryBuilder().WithAll<HybridEntitySync>().WithAbsent<SyncTransformToEntity>().Build().IsEmpty)
             {
                 var initEcb = new EntityCommandBuffer(Allocator.Temp);
                 
@@ -26,10 +37,27 @@ namespace FireAlt.Core
                              .WithEntityAccess()
                              .WithOptions(EntityQueryOptions.IncludeDisabledEntities | EntityQueryOptions.IncludePrefab))
                 {
-                    initEcb.AddComponent(self, link.MonoBehaviour.transform);
+                    initEcb.AddComponent(self, new SyncTransformToEntity
+                    {
+                        TransformId = singleton.ReusableTransformAccessArray.AddTransform(self, link.MonoBehaviour.transform)
+                    });
                 }
                 
                 initEcb.Playback(EntityManager);
+            }
+            Profiler.EndSample();
+            
+            
+            Profiler.BeginSample("Cleanup Old Entities");
+            var cleanupQuery = SystemAPI.QueryBuilder().WithAll<SyncTransformToEntity>().WithAbsent<HybridEntitySync>().Build();
+            if (!cleanupQuery.IsEmpty)
+            {
+                foreach (var link in SystemAPI.Query<SyncTransformToEntity>()
+                             .WithOptions(EntityQueryOptions.IncludeDisabledEntities | EntityQueryOptions.IncludePrefab))
+                {
+                    singleton.ReusableTransformAccessArray.ReleaseTransform(link.TransformId);
+                }
+                EntityManager.RemoveComponent<SyncTransformToEntity>(cleanupQuery);
             }
             Profiler.EndSample();
             
@@ -55,17 +83,13 @@ namespace FireAlt.Core
             }
             Profiler.EndSample();
 
-            var query = SystemAPI.QueryBuilder().WithAll<HybridEntitySync, Transform>().Build();
-            var transformAccessArray = query.GetTransformAccessArray();
-            var entities = query.ToEntityListAsync(WorldUpdateAllocator, Dependency, out var dependency);
-
             Dependency = new SyncTransformsJob
             {
-                Entities = entities.AsDeferredJobArray(),
+                Entities = singleton.ReusableTransformAccessArray.AlignedEntities.AsDeferredJobArray(),
                 LocalToWorld = SystemAPI.GetComponentLookup<LocalToWorld>(),
                 LocalTransform = SystemAPI.GetComponentLookup<LocalTransform>(),
                 PostTransformMatrix = SystemAPI.GetComponentLookup<PostTransformMatrix>(),
-            }.ScheduleReadOnly(transformAccessArray, 16, dependency);
+            }.ScheduleReadOnly(singleton.ReusableTransformAccessArray.Array, 64, Dependency);
         }
         
         [BurstCompile]
