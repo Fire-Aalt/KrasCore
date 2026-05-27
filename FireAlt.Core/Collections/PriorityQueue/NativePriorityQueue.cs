@@ -8,7 +8,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     /// <summary>
     /// A job-safe priority queue that stores payload values and explicit integer priorities.

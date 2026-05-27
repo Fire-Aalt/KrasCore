@@ -9,7 +9,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     public struct DefaultPriorityComparer : IComparer<int>
     {

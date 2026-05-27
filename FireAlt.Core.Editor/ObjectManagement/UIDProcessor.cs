@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FireAlt.Core.ObjectManagement;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;

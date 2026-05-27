@@ -9,7 +9,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using UnityEngine.Internal;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     /// <summary> An unsafe version of <see cref="NativeArray{T}" />. </summary>
     /// <typeparam name="T"> The type that array holds. </typeparam>

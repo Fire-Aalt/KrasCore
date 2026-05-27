@@ -1,10 +1,10 @@
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
-    public class CameraDistort : MonoBehaviour
+    public class Camera2Point5DDistort : MonoBehaviour
     {
         [SerializeField, HideInInspector]
         private Camera _camera;

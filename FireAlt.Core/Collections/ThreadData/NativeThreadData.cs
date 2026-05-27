@@ -6,7 +6,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     /// <summary>
     /// A job-safe per-thread storage container that keeps one <typeparamref name="T"/> value per worker thread.

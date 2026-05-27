@@ -2,9 +2,8 @@ using Unity.Assertions;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
-//using Cysharp.Threading.Tasks;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     /// <summary>
     /// Creates an instance of a material of a VisualElement
@@ -31,12 +30,6 @@ namespace FireAlt.Core
                 });
             }
         }
-
-        // public async UniTaskVoid CreateTask(VisualElement target)
-        // {
-        //     await UniTask.WaitUntil(target, t => t.resolvedStyle.unityMaterial.material != null);
-        //     Create(target);
-        // }
 
         private void Create(VisualElement target)
         {

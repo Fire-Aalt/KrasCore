@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using FireAlt.Core.Inspectors;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;

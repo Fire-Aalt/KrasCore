@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Game
+namespace FireAlt.Core.Editor
 {
     public static class FindMissingScriptsTool
     {

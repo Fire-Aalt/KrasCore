@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Inspectors
 {
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Enum, AllowMultiple = false)]
     public class EnumToggleButtonsAttribute : PropertyAttribute

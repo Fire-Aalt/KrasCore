@@ -1,4 +1,5 @@
 using System;
+using FireAlt.Core.Collections;
 using NUnit.Framework;
 using Unity.Burst;
 using Unity.Collections;

@@ -1,3 +1,4 @@
+using FireAlt.Core.Rendering;
 using NUnit.Framework;
 using Unity.Entities;
 using UnityEngine;

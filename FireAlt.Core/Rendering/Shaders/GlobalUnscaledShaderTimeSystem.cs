@@ -1,9 +1,8 @@
-using FireAlt.Core;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
 
-namespace Game
+namespace FireAlt.Core.Rendering
 {
     public static class GlobalUnscaledShaderTimeSystem
     {

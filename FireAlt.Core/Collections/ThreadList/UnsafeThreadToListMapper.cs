@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     public struct UnsafeThreadToListMapper<T> : IDisposable where T : unmanaged
     {

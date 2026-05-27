@@ -1,3 +1,4 @@
+using FireAlt.Core.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
 namespace FireAlt.Core.Extensions

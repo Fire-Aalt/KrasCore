@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     public struct VFXColorRGB
     {

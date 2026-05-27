@@ -1,6 +1,6 @@
 using Unity.Entities;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Groups
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
 #if BL_CORE_EXTENSIONS

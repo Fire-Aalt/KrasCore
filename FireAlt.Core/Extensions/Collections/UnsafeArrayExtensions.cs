@@ -1,3 +1,4 @@
+using FireAlt.Core.Collections;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

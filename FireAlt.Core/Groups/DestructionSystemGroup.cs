@@ -1,8 +1,9 @@
 using Unity.Entities;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Groups
 {
     [WorldSystemFilter(WorldSystemFilterFlags.Default | WorldSystemFilterFlags.Editor)]
     [UpdateInGroup(typeof(AfterSceneSystemGroup))]
-    public partial class InstantiationSystemGroup : ComponentSystemGroup { }
+    [UpdateAfter(typeof(InstantiationSystemGroup))]
+    public partial class DestructionSystemGroup : ComponentSystemGroup { }
 }

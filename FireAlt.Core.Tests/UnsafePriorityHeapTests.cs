@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FireAlt.Core.Collections;
 using NUnit.Framework;
 using Unity.Collections;
 

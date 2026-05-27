@@ -1,3 +1,4 @@
+using FireAlt.Core.Inspectors;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;

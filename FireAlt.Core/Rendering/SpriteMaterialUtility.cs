@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     public static class SpriteMaterialUtility
     {

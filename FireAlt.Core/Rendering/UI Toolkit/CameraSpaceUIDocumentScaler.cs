@@ -1,15 +1,15 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(UIDocument))]
     public class CameraSpaceUIDocumentScaler : MonoBehaviour
     {
-        private const float OrthoGraphicCameraRefSize = 5.39f;
-        private const float PerspectiveCameraRefFOV = 56.6f;
-        private const float PerspectiveCameraRefDistance = 10f;
+        private const float ORTHO_GRAPHIC_CAMERA_REF_SIZE = 5.39f;
+        private const float PERSPECTIVE_CAMERA_REF_FOV = 56.6f;
+        private const float PERSPECTIVE_CAMERA_REF_DISTANCE = 10f;
         
         [SerializeField, HideInInspector]
         private UIDocument _uiDocument;
@@ -150,7 +150,7 @@ namespace FireAlt.Core
         
         private float GetOrthographicCameraScale()
         {
-            return referenceCamera.orthographicSize / OrthoGraphicCameraRefSize;
+            return referenceCamera.orthographicSize / ORTHO_GRAPHIC_CAMERA_REF_SIZE;
         }
         
         private float GetPerspectiveCameraScale()
@@ -159,13 +159,13 @@ namespace FireAlt.Core
             
             var currentDistance = Vector3.Distance(referenceCamera.transform.position, transform.position);
 
-            const float halfBase = 0.5f * PerspectiveCameraRefFOV * deg2Rad;
+            const float halfBase = 0.5f * PERSPECTIVE_CAMERA_REF_FOV * deg2Rad;
             var halfCurrent = 0.5f * referenceCamera.fieldOfView * deg2Rad;
 
             var tanBase = Mathf.Tan(halfBase);
             var tanCurrent = Mathf.Tan(halfCurrent);
             
-            var cameraScale = (currentDistance * tanCurrent) / (PerspectiveCameraRefDistance * tanBase);
+            var cameraScale = (currentDistance * tanCurrent) / (PERSPECTIVE_CAMERA_REF_DISTANCE * tanBase);
             return cameraScale;
         }
         

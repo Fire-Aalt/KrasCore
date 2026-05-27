@@ -8,7 +8,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     [StructLayout(LayoutKind.Sequential)]
     [DebuggerDisplay("Count = {Count}, Capacity = {Capacity}, IsCreated = {IsCreated}")]

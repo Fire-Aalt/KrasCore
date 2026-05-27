@@ -1,9 +1,8 @@
 using Unity.Burst;
 using Unity.Mathematics;
-using Unity.Rendering;
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     [BurstCompile]
     public static class RendererUtility

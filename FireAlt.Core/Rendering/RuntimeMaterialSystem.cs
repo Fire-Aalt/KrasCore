@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using FireAlt.Core.Groups;
 using Unity.Entities;
 using Unity.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Rendering
 {
     [RequireMatchingQueriesForUpdate]
     [UpdateInGroup(typeof(RuntimeBakingSystemGroup))]

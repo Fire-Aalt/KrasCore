@@ -1,9 +1,10 @@
 using System.Runtime.CompilerServices;
+using FireAlt.Core.Collections;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class NativeThreadListExtensions
     {

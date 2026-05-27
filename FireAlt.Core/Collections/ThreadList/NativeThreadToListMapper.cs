@@ -2,7 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Jobs;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     /// <summary>
     /// A convenience wrapper that pairs a <see cref="NativeThreadList{T}"/> producer container with a flattened <see cref="NativeList{T}"/> output list.

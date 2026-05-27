@@ -7,7 +7,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct UnsafeThreadList<T> : INativeDisposable

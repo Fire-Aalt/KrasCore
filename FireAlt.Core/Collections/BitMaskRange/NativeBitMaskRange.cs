@@ -7,7 +7,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     /// <summary>
     /// A job-safe bit-mask container for tracking active indices and querying the active span quickly.

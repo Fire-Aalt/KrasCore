@@ -1,4 +1,5 @@
 using System;
+using FireAlt.Core.Collections;
 using NUnit.Framework;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;

@@ -2,7 +2,7 @@ using System;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace FireAlt.Core.Data
+namespace FireAlt.Core.Rendering
 {
     [Serializable]
     public struct SpriteProperties : IEquatable<SpriteProperties>

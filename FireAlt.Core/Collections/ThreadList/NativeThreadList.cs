@@ -15,7 +15,7 @@ using Unity.Jobs;
 using Unity.Jobs.LowLevel.Unsafe;
 using Debug = UnityEngine.Debug;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Collections
 {
     /// <summary>
     /// A job-safe per-thread append container that stores values in thread-local lists and supports later merged or segmented reads.

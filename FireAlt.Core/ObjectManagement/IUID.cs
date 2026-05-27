@@ -2,7 +2,7 @@
 //     Copyright (c) BovineLabs. All rights reserved.
 // </copyright>
 
-namespace FireAlt.Core
+namespace FireAlt.Core.ObjectManagement
 {
     /// <summary>
     /// Marking a scriptable object with this interface will automatically generate a branch safe unique ID for all objects of the same type.
