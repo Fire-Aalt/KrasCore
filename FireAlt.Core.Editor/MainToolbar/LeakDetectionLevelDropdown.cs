@@ -9,7 +9,7 @@ namespace FireAlt.Core.Editor
 {
     public static class LeakDetectionLevelDropdown
     {
-        private const string PATH = "FireAlt/Core/Leak Detection Level";
+        private const string PATH = "FireAlt/Leak Detection Level";
 
         private static Image _iconImage;
         private static TextElement _label;

@@ -15,7 +15,7 @@ namespace FireAlt.Core.Editor
     [Configurable]
     public class ShowAnchorToolbarButton
     {
-        private const string PATH = "FireAlt/Core/Show Anchor Toolbar";
+        private const string PATH = "FireAlt/Show Anchor Toolbar";
         private static readonly string Name = StringUtils.RemoveAllWhitespace(PATH);
         
         [ConfigVar("krascore.anchor-toolbar.show-on-start", true, "Should the toolbar be shown on startup", true, true)]
