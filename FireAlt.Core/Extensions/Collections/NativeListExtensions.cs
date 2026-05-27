@@ -1,7 +1,7 @@
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class NativeListExtensions
     {

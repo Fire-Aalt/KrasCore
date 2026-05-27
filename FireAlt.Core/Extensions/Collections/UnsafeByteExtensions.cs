@@ -1,6 +1,6 @@
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class UnsafeByteExtensions
     {

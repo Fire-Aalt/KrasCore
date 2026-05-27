@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class ListExtensions
     {

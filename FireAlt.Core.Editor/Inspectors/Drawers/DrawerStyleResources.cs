@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FireAlt.Core.Editor
+namespace FireAlt.Core.Editor.Inspectors
 {
     [InitializeOnLoad]
     public static class DrawerStyleResources

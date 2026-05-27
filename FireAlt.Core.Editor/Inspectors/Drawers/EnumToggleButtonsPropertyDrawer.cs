@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-namespace FireAlt.Core.Editor
+namespace FireAlt.Core.Editor.Inspectors
 {
     [CustomPropertyDrawer(typeof(EnumToggleButtonsAttribute))]
     public class EnumToggleButtonsPropertyDrawer : PropertyDrawer
@@ -26,21 +26,21 @@ namespace FireAlt.Core.Editor
             private EnumToggleButtonsField(string label, bool hideLabel, VisualElement inputElement)
                 : base(label, inputElement)
             {
-                this.InputElement = inputElement;
-                this.AddToClassList("kras-enum-toggle-root");
-                this.AddToClassList(alignedFieldUssClassName);
+                InputElement = inputElement;
+                AddToClassList("kras-enum-toggle-root");
+                AddToClassList(alignedFieldUssClassName);
 
-                this.InputElement.AddToClassList("unity-property-field__input");
-                this.InputElement.AddToClassList("kras-enum-toggle-input");
+                InputElement.AddToClassList("unity-property-field__input");
+                InputElement.AddToClassList("kras-enum-toggle-input");
 
                 if (hideLabel)
                 {
-                    this.AddToClassList(noLabelVariantUssClassName);
+                    AddToClassList(noLabelVariantUssClassName);
                 }
                 else
                 {
-                    this.labelElement.AddToClassList("unity-property-field__label");
-                    this.labelElement.AddToClassList("kras-enum-toggle-label");
+                    labelElement.AddToClassList("unity-property-field__label");
+                    labelElement.AddToClassList("kras-enum-toggle-label");
                 }
             }
 
@@ -54,7 +54,7 @@ namespace FireAlt.Core.Editor
                 return new PropertyField(property);
             }
 
-            var enumType = this.fieldInfo?.FieldType;
+            var enumType = fieldInfo?.FieldType;
             if (enumType == null || !enumType.IsEnum)
             {
                 return new PropertyField(property);

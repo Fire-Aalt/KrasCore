@@ -2,7 +2,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class UnsafeListExtensions
     {

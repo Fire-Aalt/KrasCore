@@ -1,6 +1,6 @@
 using Unity.Assertions;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class ArrayExtensions
     {

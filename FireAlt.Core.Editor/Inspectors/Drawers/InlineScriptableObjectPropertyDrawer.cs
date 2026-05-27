@@ -3,7 +3,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace FireAlt.Core.Editor
+namespace FireAlt.Core.Editor.Inspectors
 {
     [CustomPropertyDrawer(typeof(InlineScriptableObjectAttribute))]
     public class InlineScriptableObjectPropertyDrawer : PropertyDrawer
@@ -24,7 +24,7 @@ namespace FireAlt.Core.Editor
                 return container;
             }
 
-            var fieldType = this.fieldInfo?.FieldType;
+            var fieldType = fieldInfo?.FieldType;
             if (fieldType == null || !typeof(ScriptableObject).IsAssignableFrom(fieldType))
             {
                 container.Add(new Label("InlineScriptableObjectAttribute can only be used on ScriptableObject fields."));

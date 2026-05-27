@@ -1,7 +1,7 @@
 using System;
 using Unity.Entities;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class DynamicBufferExtensions
     {
