@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Extensions
 {
     public static class MathematicsExtensions
     {
