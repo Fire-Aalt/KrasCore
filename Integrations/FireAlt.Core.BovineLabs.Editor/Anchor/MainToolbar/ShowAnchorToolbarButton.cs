@@ -3,6 +3,7 @@ using BovineLabs.Anchor;
 using BovineLabs.Anchor.Debug.Toolbar;
 using BovineLabs.Anchor.MVVM;
 using BovineLabs.Core.ConfigVars;
+using FireAlt.Core.Utility;
 using Unity.Burst;
 using UnityEditor;
 using UnityEditor.Toolbars;

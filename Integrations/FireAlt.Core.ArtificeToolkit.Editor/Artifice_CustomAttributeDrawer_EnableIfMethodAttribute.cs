@@ -2,6 +2,7 @@ using System.Linq;
 using System.Reflection;
 using ArtificeToolkit.Editor;
 using ArtificeToolkit.Editor.Artifice_CustomAttributeDrawers;
+using FireAlt.Core.Utility;
 using UnityEditor;
 using UnityEngine.UIElements;
 

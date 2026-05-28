@@ -1,3 +1,4 @@
+using FireAlt.Core.Utility;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.PlayerLoop;

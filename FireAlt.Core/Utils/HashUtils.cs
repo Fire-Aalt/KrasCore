@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     public static class HashUtils
     {

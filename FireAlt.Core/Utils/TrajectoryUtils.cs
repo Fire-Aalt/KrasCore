@@ -2,7 +2,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     public static class TrajectoryUtils
     {

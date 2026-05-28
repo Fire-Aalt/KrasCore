@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     public static class ReflectionUtils
     {

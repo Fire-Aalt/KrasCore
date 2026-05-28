@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     /// <summary>
     /// Bit array utility class.

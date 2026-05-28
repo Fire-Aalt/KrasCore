@@ -1,5 +1,6 @@
 #if BL_QUILL
 using FireAlt.Core.Collections;
+using FireAlt.Core.Utility;
 using Unity.Assertions;
 using Unity.Collections;
 using Unity.Mathematics;

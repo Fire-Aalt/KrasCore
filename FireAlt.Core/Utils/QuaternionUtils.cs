@@ -2,9 +2,9 @@ using Unity.Transforms;
 using static Unity.Mathematics.math;
 using quaternion = Unity.Mathematics.quaternion;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
-    public class QuaternionUtils
+    public static class QuaternionUtils
     {
         public static void SmoothRotationZAxis(ref LocalTransform targetTransform, quaternion targetRot, float t)
         {

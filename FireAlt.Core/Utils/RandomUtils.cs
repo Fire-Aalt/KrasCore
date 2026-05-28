@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     public static class RandomUtils
     {

@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.LowLevel;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     public static class PlayerLoopUtils
     {

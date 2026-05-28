@@ -3,7 +3,7 @@ using System.Diagnostics;
 using FireAlt.Core.Collections;
 using Unity.Collections;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Utility
 {
     public static class UnsafeArrayUtility
     {
