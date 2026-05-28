@@ -1,4 +1,4 @@
-#if BL_ANCHOR
+#if UNITY_EDITOR
 using BovineLabs.Anchor;
 using BovineLabs.Anchor.Debug.Toolbar;
 using BovineLabs.Anchor.MVVM;

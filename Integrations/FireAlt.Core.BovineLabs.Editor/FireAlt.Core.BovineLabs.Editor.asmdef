@@ -22,7 +22,9 @@
         "Unity.Entities.Hybrid",
         "Unity.Scenes"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": true,
     "overrideReferences": false,
