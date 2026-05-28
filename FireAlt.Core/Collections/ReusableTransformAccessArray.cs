@@ -57,9 +57,10 @@ namespace FireAlt.Core.Collections
         }
 
         /// <summary>
-        /// Releases transform reference from the transform container
+        /// Releases transform reference from the transform container. 
+        /// <remarks>Cannot be used in Burst context.</remarks>
         /// </summary>
-        public Transform ReleaseTransform(int id)
+        public Transform ReleaseTransformManaged(int id)
         {
             var transform = _array[id];
             
@@ -70,6 +71,17 @@ namespace FireAlt.Core.Collections
             return transform;
         }
 
+        /// <summary>
+        /// Releases transform reference from the transform container. 
+        /// <remarks>Can be used in Burst context.</remarks>
+        /// </summary>
+        public void ReleaseTransform(int id)
+        {
+            _freeIds.Add(id);
+            _array.RemoveAtSwapBack(id);
+            _alignedEntities.RemoveAtSwapBack(id);
+        }
+        
         public void Dispose()
         {
             _array.Dispose();
