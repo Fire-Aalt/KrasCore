@@ -26,7 +26,7 @@ namespace FireAlt.Core.Collections
         /// Adds transform to the transform container,
         /// and assigns an id for the referencing
         /// </summary>
-        public int AddTransform(Entity entity, Transform trm) 
+        public int AddTransform(Entity entity, Transform trm)  // TODO: In 6.7 LTS use EntityId to make it fully unmanaged
         {
             int refId;
 
