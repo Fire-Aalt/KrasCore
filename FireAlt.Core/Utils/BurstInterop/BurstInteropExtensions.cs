@@ -26,6 +26,18 @@ namespace FireAlt.Core.Utility
         public TSecond Second;
         public TThird Third;
     }
+    
+    public struct BurstManagedQuad<TFirst, TSecond, TThird, TFourth>
+        where TFirst : unmanaged
+        where TSecond : unmanaged
+        where TThird : unmanaged
+        where TFourth : unmanaged
+    {
+        public TFirst First;
+        public TSecond Second;
+        public TThird Third;
+        public TFourth Fourth;
+    }
 
     public static class BurstInteropExtensions
     {
@@ -58,6 +70,16 @@ namespace FireAlt.Core.Utility
             var arguments = new BurstManagedTriple<TFirst, TSecond, TThird> { First = first, Second = second, Third = third };
             wrapper.Invoke(ref arguments);
         }
+        
+        public static void Invoke<TFirst, TSecond, TThird, TFourth>(this BurstInterop wrapper, in TFirst first, in TSecond second, in TThird third, in TFourth fourth)
+            where TFirst : unmanaged
+            where TSecond : unmanaged
+            where TThird : unmanaged
+            where TFourth : unmanaged
+        {
+            var arguments = new BurstManagedQuad<TFirst, TSecond, TThird, TFourth> { First = first, Second = second, Third = third, Fourth = fourth };
+            wrapper.Invoke(ref arguments);
+        }
 
         public static void InvokeOut<TOut>(this BurstInterop wrapper, out TOut value)
             where TOut : unmanaged
@@ -83,6 +105,17 @@ namespace FireAlt.Core.Utility
             var arguments = new BurstManagedTriple<TFirst, TSecond, TOut> { First = first, Second = second };
             wrapper.Invoke(ref arguments);
             value = arguments.Third;
+        }
+        
+        public static void InvokeOut<TFirst, TSecond, TThird, TOut>(this BurstInterop wrapper, in TFirst first, in TSecond second, in TThird third, out TOut value)
+            where TFirst : unmanaged
+            where TSecond : unmanaged
+            where TThird : unmanaged
+            where TOut : unmanaged
+        {
+            var arguments = new BurstManagedQuad<TFirst, TSecond, TThird, TOut> { First = first, Second = second, Third = third };
+            wrapper.Invoke(ref arguments);
+            value = arguments.Fourth;
         }
     }
 }

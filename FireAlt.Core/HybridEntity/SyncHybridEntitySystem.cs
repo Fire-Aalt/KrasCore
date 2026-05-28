@@ -1,97 +1,54 @@
+using FireAlt.Core.Collections;
 using FireAlt.Core.Groups;
+using FireAlt.Core.Utility;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Profiling;
 using Unity.Transforms;
 using UnityEngine.Jobs;
-using UnityEngine.Profiling;
 
 namespace FireAlt.Core
 {
     [RequireMatchingQueriesForUpdate]
     [WorldSystemFilter(WorldSystemFilterFlags.Editor | WorldSystemFilterFlags.Default)]
-    [UpdateInGroup(typeof(AfterTransformSystemGroup))]
-    public partial class HybridEntitySyncSystem : SystemBase
+    [UpdateInGroup(typeof(BeforeTransformSystemGroup))]
+    [UpdateAfter(typeof(SyncHybridEntityManagedSystem))]
+    public partial struct SyncHybridEntitySystem : ISystem
     {
-        protected override void OnCreate()
-        {
-            EntityManager.CreateSingleton(new SyncTransformToEntityContainer(8, Allocator.Persistent));
-        }
-
-        protected override void OnDestroy()
-        {
-            SystemAPI.GetSingleton<SyncTransformToEntityContainer>().Dispose();
-        }
-
-        protected override void OnUpdate()
+        private static readonly ProfilerMarker CleanupMarker = new("Cleanup Old Entities");
+        private static readonly ProfilerMarker SyncMarker = new("Schedule Sync Job");
+        
+        [BurstCompile]
+        public void OnUpdate(ref SystemState state)
         {
             var singleton = SystemAPI.GetSingletonRW<SyncTransformToEntityContainer>().ValueRW;
             
-            Profiler.BeginSample("Initialize New Entities");
-            if (!SystemAPI.QueryBuilder().WithAll<HybridEntitySync>().WithAbsent<SyncTransformToEntity>().Build().IsEmpty)
-            {
-                var initEcb = new EntityCommandBuffer(Allocator.Temp);
-                
-                foreach (var (link, self) in SystemAPI.Query<HybridEntitySync>()
-                             .WithEntityAccess()
-                             .WithOptions(EntityQueryOptions.IncludeDisabledEntities | EntityQueryOptions.IncludePrefab))
-                {
-                    initEcb.AddComponent(self, new SyncTransformToEntity
-                    {
-                        TransformId = singleton.ReusableTransformAccessArray.AddTransform(self, link.MonoBehaviour.transform)
-                    });
-                }
-                
-                initEcb.Playback(EntityManager);
-            }
-            Profiler.EndSample();
-            
-            
-            Profiler.BeginSample("Cleanup Old Entities");
+            CleanupMarker.Begin();
             var cleanupQuery = SystemAPI.QueryBuilder().WithAll<SyncTransformToEntity>().WithAbsent<HybridEntitySync>().Build();
             if (!cleanupQuery.IsEmpty)
             {
-                foreach (var link in SystemAPI.Query<SyncTransformToEntity>()
+                foreach (var link in SystemAPI.Query<RefRO<SyncTransformToEntity>>()
                              .WithOptions(EntityQueryOptions.IncludeDisabledEntities | EntityQueryOptions.IncludePrefab))
                 {
-                    singleton.ReusableTransformAccessArray.ReleaseTransform(link.TransformId);
+                    singleton.ReusableTransformAccessArray.ReleaseTransform(link.ValueRO.TransformId);
                 }
-                EntityManager.RemoveComponent<SyncTransformToEntity>(cleanupQuery);
+                state.EntityManager.RemoveComponent<SyncTransformToEntity>(cleanupQuery);
             }
-            Profiler.EndSample();
+            CleanupMarker.End();
             
-            Profiler.BeginSample("SetEnabled");
-            var ecb = new EntityCommandBuffer(Allocator.Temp);
-            
-            foreach (var (link, self) in SystemAPI.Query<HybridEntitySync>()
-                         .WithEntityAccess()
-                         .WithOptions(EntityQueryOptions.IncludeDisabledEntities))
-            {
-                var mb = link.MonoBehaviour;
-
-                var enabled = HybridEntityUtils.IsEntityEnabled(mb);
-                if (enabled != EntityManager.IsEnabled(self))
-                {
-                    ecb.SetEnabled(self, enabled);
-                }
-            }
-
-            if (!ecb.IsEmpty)
-            {
-                ecb.Playback(EntityManager);
-            }
-            Profiler.EndSample();
-
-            Dependency = new SyncTransformsJob
+            SyncMarker.Begin();
+            state.Dependency = new SyncTransformsJob
             {
                 Entities = singleton.ReusableTransformAccessArray.AlignedEntities.AsDeferredJobArray(),
                 LocalToWorld = SystemAPI.GetComponentLookup<LocalToWorld>(),
                 LocalTransform = SystemAPI.GetComponentLookup<LocalTransform>(),
                 PostTransformMatrix = SystemAPI.GetComponentLookup<PostTransformMatrix>(),
-            }.ScheduleReadOnly(singleton.ReusableTransformAccessArray.Array, 64, Dependency);
+            }.ScheduleReadOnly(singleton.ReusableTransformAccessArray.Array, 64, state.Dependency);
+            SyncMarker.End();
         }
-        
+
         [BurstCompile]
         private struct SyncTransformsJob : IJobParallelForTransform
         {

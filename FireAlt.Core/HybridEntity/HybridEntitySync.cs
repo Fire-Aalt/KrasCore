@@ -3,13 +3,9 @@ using UnityEngine;
 
 namespace FireAlt.Core
 {
-    public class HybridEntitySync : IComponentData
+    public struct HybridEntitySync : IComponentData
     {
-        public readonly MonoBehaviour MonoBehaviour;
-
-        public HybridEntitySync()
-        {
-        }
+        public UnityObjectRef<MonoBehaviour> MonoBehaviour;
 
         public HybridEntitySync(MonoBehaviour monoBehaviour)
         {
