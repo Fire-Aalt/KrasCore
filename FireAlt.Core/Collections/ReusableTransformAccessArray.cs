@@ -65,8 +65,8 @@ namespace FireAlt.Core.Collections
             var transform = _array[id];
             
             _freeIds.Add(id);
-            _array.RemoveAtSwapBack(id);
-            _alignedEntities.RemoveAtSwapBack(id);
+            _array.SetTransformHandle(id, default);
+            _alignedEntities[id] = Entity.Null;
             
             return transform;
         }
@@ -78,8 +78,8 @@ namespace FireAlt.Core.Collections
         public void ReleaseTransform(int id)
         {
             _freeIds.Add(id);
-            _array.RemoveAtSwapBack(id);
-            _alignedEntities.RemoveAtSwapBack(id);
+            _array.SetTransformHandle(id, default);
+            _alignedEntities[id] = Entity.Null;
         }
         
         public void Dispose()
