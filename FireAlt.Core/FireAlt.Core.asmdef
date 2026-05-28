@@ -2,8 +2,6 @@
     "name": "FireAlt.Core",
     "rootNamespace": "FireAlt.Core",
     "references": [
-        "BovineLabs.Core",
-        "BovineLabs.Core.Extensions",
         "Unity.Mathematics",
         "Unity.Burst",
         "Unity.Collections",
