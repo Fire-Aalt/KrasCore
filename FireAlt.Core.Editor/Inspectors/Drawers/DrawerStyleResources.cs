@@ -20,7 +20,7 @@ namespace FireAlt.Core.Editor.Inspectors
 
         private static T Load<T>(string path) where T : Object
         {
-            return AssetDatabaseUtils.LoadEditorResource<T>(path, "com.firealt.krascore");
+            return AssetDatabaseUtils.LoadEditorResource<T>(path, "com.firealt.core");
         }
     }
 }
