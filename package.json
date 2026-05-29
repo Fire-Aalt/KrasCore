@@ -1,10 +1,10 @@
 {
-  "name": "com.firealt.krascore",
+  "name": "com.firealt.core",
   "version": "1.0.0",
-  "displayName": "FireAlt KrasCore",
+  "displayName": "FireAlt Core",
   "description": "A collection of editor and runtime utils/extensions",
   "unity": "6000.23",
-  "documentationUrl": "https://github.com/Fire-Aalt/KrasCore/blob/main/README.md",
+  "documentationUrl": "https://github.com/Fire-Aalt/com.firealt.core/blob/main/README.md",
 
   "author": {
     "name": "FireAlt",
