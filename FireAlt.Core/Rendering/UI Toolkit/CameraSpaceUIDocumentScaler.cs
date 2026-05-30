@@ -39,7 +39,7 @@ namespace FireAlt.Core.Rendering
         private void OnValidate()
         {
             _uiDocument = GetComponent<UIDocument>();
-            _uiDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Dynamic;
+            _uiDocument.worldSpaceSizeMode = WorldSpaceSizeMode.Dynamic;
             _uiDocument.pivot = Pivot.Center;
         }
 
