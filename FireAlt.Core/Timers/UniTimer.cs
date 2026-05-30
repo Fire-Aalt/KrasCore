@@ -1,6 +1,6 @@
 using Unity.Core;
 
-namespace FireAlt.Core
+namespace FireAlt.Core.Timers
 {
     public struct UniTimer
     {
