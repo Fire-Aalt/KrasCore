@@ -9,9 +9,11 @@ namespace FireAlt.Core.Utility
     {
         private static Assembly[] _allAssemblies;
         /// <summary> Gets all currently loaded assemblies in the AppDomain. </summary>
+#if UNITY_6000_6_OR_NEWER
+        public static Assembly[] AllAssemblies => _allAssemblies ??= UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies().ToArray();
+#else
         public static Assembly[] AllAssemblies => _allAssemblies ??= AppDomain.CurrentDomain.GetAssemblies();
-        
-        
+#endif
         /// <summary> Checks if an assembly references another assembly. </summary>
         /// <param name="assembly"> The assembly to check. </param>
         /// <param name="reference"> The reference to check if the assembly has. </param>
