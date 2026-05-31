@@ -13,7 +13,7 @@ namespace FireAlt.Core.Editor.UI
     /// <summary> Copy of com.unity.platforms\Editor\Unity.Build.Editor\SearchWindow\SearchWindow.cs. </summary>
     public class SearchWindow : EditorWindow
     {
-        public const string RootUIPath = "Packages/com.firealt.krascore/Editor Default Resources/SearchWindow/";
+        public const string RootUIPath = "Packages/com.firealt.core/Editor Default Resources/SearchWindow/";
 
         private SearchView searchView;
 
